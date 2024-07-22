@@ -1,0 +1,21 @@
+CIGS (Seleniuro de Cobre-Indio-Galio):
+  EgRef: 1.15
+  dEgdT: null
+CIS (Sulfuro de Cobre-Indio):
+  EgRef: 1.01
+  dEgdT: -0.00011
+CdTe (Telururo de Cadmio):
+  EgRef: 1.475
+  dEgdT: -0.0003
+amorphous (Silicio amorfo):
+  EgRef: 1.7
+  dEgdT: null
+monoSi (Silicio monocristalino):
+  EgRef: 1.121
+  dEgdT: -0.0002677
+multiSi (Silicio multicristalino):
+  EgRef: 1.121
+  dEgdT: -0.0002677
+polySi (Silicio policristalino):
+  EgRef: 1.121
+  dEgdT: -0.0002677
