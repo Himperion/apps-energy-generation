@@ -26,11 +26,10 @@ parameters = {
     "P_nom" : "Pontencia nominal (W)"
 }
 
-options_columns_Vwind = [
-    "Vwind(m/s)",
-    "Vwind 10msnm(m/s)",
-    "Vwind 50msnm(m/s)"
-]
+items_options_columns_df = {
+    "Vwind" : ["Vwind(m/s)", "Vwind 10msnm(m/s)", "Vwind 50msnm(m/s)"]
+}
+
 
 #%% main
 
@@ -64,11 +63,12 @@ with tab2:
 
     if app_6_submitted:        
         if archive_Vwind is not None:
-            df_Vwind = pd.read_excel(archive_Vwind)
+            df_input = pd.read_excel(archive_Vwind)
+            
+            df_turbine, check, columns_options_sel = funtions.check_dataframe_input(dataframe=df_input,
+                                                                                    options=items_options_columns_df)
 
-            bool_check, column_Vwind, df_Vwind = funtions.check_dataframe_file(dataframe=df_Vwind, options=options_columns_Vwind)
-
-            if bool_check:
+            if check:
                 params_turbine = {
                     "D" : D, 
                     "rho" : rho, 
@@ -79,22 +79,29 @@ with tab2:
                     }
                 
                 df_powerTurbine = funtions.get_dataframe_power_wind_turbine(params=params_turbine,
-                                                                            df_Vwind=df_Vwind,
-                                                                            column_Vwind=column_Vwind)
+                                                                            dataframe=df_turbine,
+                                                                            column=columns_options_sel)
                 
                 df_values = funtions.get_values_curve_turbine(params=params_turbine)
                 
                 sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados", "📈 Curva de potencia", "📉 Curva de eficiencia"])
 
                 with sub_tab1:
-                    st.dataframe(df_powerTurbine)
+                    tab_res1, tab_res2 = st.tabs(["📑 Dataframe", "📝 Grafica de datos"])
 
-                    excel = to_excel(df_powerTurbine)
+                    with tab_res1:
+                        st.dataframe(df_powerTurbine)
 
-                    st.download_button(label="📄 Descargar muestras",
-                                       data=excel,
-                                       file_name=funtions.name_file_head(name="powerTurbine.xlsx"),
-                                       mime="xlsx")
+                        excel = to_excel(df_powerTurbine)
+
+                        st.download_button(label="📄 Descargar muestras",
+                                            data=excel,
+                                            file_name=funtions.name_file_head(name="powerTurbine.xlsx"),
+                                            mime="xlsx")
+                        
+                        with tab_res2:
+                    
+                            funtions_st.graphicalDataframe(dataframe=df_powerTurbine)
 
                 with sub_tab2:
                     column_xy = ("V_wind", "P_turbine")

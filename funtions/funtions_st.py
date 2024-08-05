@@ -188,3 +188,23 @@ def curveTurbine(df_values: pd.DataFrame, column_xy: tuple, label_xy: tuple, lab
 
     return
 
+def graphicalDataframe(dataframe: pd.DataFrame):
+
+    columns = dataframe.columns.to_list()
+
+    if "dates (Y-M-D hh:mm:ss)" in columns:
+        columns.remove("dates (Y-M-D hh:mm:ss)")
+
+        options = st.selectbox(label="Visualizar datos en el tiempo:",
+                                options=columns,
+                                placeholder="Seleccione una opción",
+                                index=0)
+        
+        st.text(options)
+
+
+
+    return
+
+
+

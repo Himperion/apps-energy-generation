@@ -351,40 +351,57 @@ def get_values_curve_turbine(params):
 
     return df_values
 
-def get_dataframe_power_wind_turbine(params: dict, df_Vwind: pd.DataFrame, column_Vwind: str) -> pd.DataFrame:
+def get_dataframe_power_wind_turbine(params: dict, dataframe: pd.DataFrame, column: dict) -> pd.DataFrame:
 
-    df_Vwind["Pturbine(kW)"] = ""
-    df_Vwind["efficiency_turbine(%)"] = ""
+    column_label = column[next(iter(column))]
 
-    for index, row in df_Vwind.iterrows():
-        Vwind = row[column_Vwind]
+    dataframe["Pturbine(kW)"] = ""
+    dataframe["efficiency_turbine(%)"] = ""
+
+    for index, row in dataframe.iterrows():
+        Vwind = row[column_label]
         Pturbine, n = get_power_wind_turbine(params, Vwind)
 
-        df_Vwind.loc[index, "Pturbine(kW)"] = round(Pturbine/1000, 4)
-        df_Vwind.loc[index, "efficiency_turbine(%)"] = round(n*100, 4)
+        dataframe.loc[index, "Pturbine(kW)"] = round(Pturbine/1000, 4)
+        dataframe.loc[index, "efficiency_turbine(%)"] = round(n*100, 4)
 
-    return df_Vwind
+    return dataframe
 
-def check_dataframe_file(dataframe: pd.DataFrame, options: list) -> bool:
+def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
 
-    bool_check, column_Vwind = False, ""
-    list_column, list_column_drop = [], []
+    columns_options, columns_options_sel, columns_options_check = {}, {}, {}
+    columns_options_drop, check = [], True
+
     header = dataframe.columns
 
-    for i in range(0,len(header),1):
-        if header[i] in options:
-            list_column.append(header[i])
+    for key in options:
+        list_options = options[key]
+        columns_aux = []
+        for column in header:
+            if column in list_options:
+                columns_aux.append(column)
+        columns_options[key] = columns_aux
 
-    if len(list_column) != 0:
-        bool_check = True
-        column_Vwind = list_column[0]
+    for key in columns_options:
+        list_columns_options = columns_options[key]
+        if len(list_columns_options) != 0:
+            columns_options_sel[key] = list_columns_options[0]
+            columns_options_check[key] = True
 
-        if len(list_column) > 1:
-            for i in range(1, len(list_column), 1):
-                list_column_drop.append(list_column[i])
+            if len(list_columns_options) > 1:
+                for i in range(1,len(list_columns_options),1):
+                    columns_options_drop.append(options[i])
 
-            dataframe = dataframe.drop(columns=list_column_drop)
+        else:
+            columns_options_sel[key] = None
+            columns_options_check[key] = False
 
-    return bool_check, column_Vwind, dataframe
+    if len(columns_options_drop) != 0:
+        dataframe = dataframe.drop(columns=columns_options_drop)
+
+    for key in columns_options_check:
+        check = check and columns_options_check[key]
+
+    return dataframe, check, columns_options_sel
 
     
