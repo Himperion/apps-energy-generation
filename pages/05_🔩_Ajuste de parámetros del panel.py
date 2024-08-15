@@ -66,7 +66,7 @@ with tab1:
     with col1:
         st.write("")
     with col2:
-        st.image("images\\app2_img1.png")
+        st.image("images//app2_img1.png")
     
 with tab2:      
     with st.container(border=True):
