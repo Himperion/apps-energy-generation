@@ -23,7 +23,7 @@ parameters = {
     "V_in" : "Velocidad de arranque (m/s)",
     "V_nom" : "Velocidad nominal (m/s)",
     "V_max" : "Velocidad máxima (m/s)",
-    "P_nom" : "Pontencia nominal (W)"
+    "P_nom" : "Pontencia nominal (kW)"
 }
 
 items_options_columns_df = {
@@ -53,7 +53,7 @@ with tab2:
         V_in = st.number_input(parameters["V_in"], min_value=2.0, max_value=6.0, step=None, format="%.3f", value=3.5)
         V_nom = st.number_input(parameters["V_nom"], min_value=9.0, max_value=16.0, step=None, format="%.3f", value=12.0)
         V_max = st.number_input(parameters["V_max"], min_value=30.0, max_value=80.0, step=None, format="%.3f", value=60.0)
-        P_nom = st.number_input(parameters["P_nom"], min_value=400.0, max_value=550e3, step=None, format="%.3f", value=800.0)
+        P_nom = st.number_input(parameters["P_nom"], min_value=0.01, max_value=550.0, step=None, format="%.3f", value=0.8)
 
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Datos del sitio"))
@@ -101,7 +101,7 @@ with tab2:
                                        mime="xlsx")
 
                 with sub_tab2:
-                    column_xy = ("V_wind", "P_turbine")
+                    column_xy = ("V_wind", "P_gen")
                     label_xy = ("Velocidad de viento (m/s)", "Potencia del aerogenerador (W)")
                     label_title = "Curva aerogenerador"
 

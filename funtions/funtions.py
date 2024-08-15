@@ -344,18 +344,18 @@ def get_power_wind_turbine(params, V_wind):
     D, rho, V_in, V_nom, V_max, P_nom = get_param_turbine_2_dict(params)
 
     A_barrido = np.pi*((0.5*D)**2)
-    P_ideal = 0.5*rho*(V_wind**3)*A_barrido
-    P_betz = 0.593*P_ideal
+    P_ideal = (0.5*rho*(V_wind**3)*A_barrido)/1000
+    P_betz = round(0.593*P_ideal, 4)
 
     if V_in <= V_wind < V_nom:
-        P_gen = P_nom*((V_wind**3 - V_in**3)/(V_nom**3 - V_in**3))
+        P_gen = round(P_nom*((V_wind**3 - V_in**3)/(V_nom**3 - V_in**3)), 4)
     elif V_nom <= V_wind < V_max:
-        P_gen = P_nom
+        P_gen = round(P_nom, 4)
     else:
         P_gen = 0
 
     if P_gen > 0:
-        n = P_gen/P_ideal
+        n = round((P_gen/P_ideal)*100, 4)
     else:
         n = 0
 
@@ -372,7 +372,7 @@ def get_values_curve_turbine(params):
         P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, V_wind_list[i])
         
         list_P_gen.append(round(P_gen/1000, 4))
-        list_n.append(round(n, 4))
+        list_n.append(round(n*100, 4))
         list_P_ideal.append(round(P_ideal/1000, 4))
         list_P_betz.append(round(P_betz/1000, 4))
     
@@ -389,16 +389,20 @@ def get_dataframe_power_wind_turbine(params: dict, dataframe: pd.DataFrame, colu
 
     column_label = column[next(iter(column))]
 
-    dataframe["Pturbine(kW)"] = ""
-    dataframe["efficiency_turbine(%)"] = ""
+    dataframe["Pideal(kW)"] = ""
+    dataframe["Pbetz(kW)"] = ""
+    dataframe["Pgen(kW)"] = ""
+    dataframe["efficiency(%)"] = ""
 
     for index, row in dataframe.iterrows():
         Vwind = row[column_label]
         P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, Vwind)
 
-        dataframe.loc[index, "Pturbine(kW)"] = P_gen
-        dataframe.loc[index, "efficiency_turbine(%)"] = n
-
+        dataframe.loc[index, "Pideal(kW)"] =P_ideal
+        dataframe.loc[index, "Pbetz(kW)"] =P_betz
+        dataframe.loc[index, "Pgen(kW)"] = P_gen
+        dataframe.loc[index, "efficiency(%)"] = n
+        
     return dataframe
 
 def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
