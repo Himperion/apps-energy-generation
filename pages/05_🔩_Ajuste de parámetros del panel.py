@@ -1,38 +1,56 @@
 import streamlit as st
+import pandas as pd
 import numpy as np
 import yaml
+from io import BytesIO
 from funtions import funtions, funtions_st
+
+#%% funtions
+
+@st.cache_data
+def to_excel(df: pd.DataFrame):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Sheet1")
+    
+    processed_data = output.getvalue()
+        
+    return processed_data
 
 #%% global variables
 
-with open('values_Egap.yaml', 'r') as archivo:
+with open("files/[PV] - values_Egap.yaml", 'r') as archivo:
     dict_value_Egap = yaml.safe_load(archivo)
+
+with open("files//[PV] - params.yaml", 'r') as archivo:
+    dict_params = yaml.safe_load(archivo)
+
+with open("files//[PV] - dict_replace.yaml", 'r') as archivo:
+    dict_rename = yaml.safe_load(archivo)
 
 text = {
     "subheader_1" : "Los párametros de **Single diode** se calculan para un módulo fotovoltaico en condiciones **STC** de operación. Sí se desea hacer un análisis del panel fotovoltaico en condiciones distintas al **STC** es necesario aplicar ajustes a los parámetros para que reflejen un comportamiento acorde a los cambios en la operación.",
-    "subheader_2" : "Este aplicativo web para efectuar la corrección de parámetros del módulo se logra mediante la librería **PVLIB** de Python que permite simular sistemas de energía fotovoltaicos." 
+    "subheader_2" : "Este aplicativo web para efectuar la corrección de parámetros del módulo se logra mediante la librería **PVLIB** de Python que permite simular sistemas de energía fotovoltaicos.",
+    "subheader_3" : "El aplicativo permite obtener los siguientes parámetros:"
 }
-
-label_params_1 = "**Iph:** Corriente fotoinducida (A):"
-label_params_2 = "**Isat:** Corriente de saturación del diodo (A):"
-label_params_3 = "**Rs:** Resistencia serie (Ohm):"
-label_params_4 = "**Rp:** Resistencia en paralelo (Ohm):"
-label_params_5 = "**nNsVth:** Producto del factor de idealida, el número de celdas en serie y el voltaje térmico en condiciones STC:"
-label_params_6 = "**Gef:** Irradiancia efectiva (W/m^2):"
-label_params_7 = "**Toper:** Temperatura de operación del módulo (°C):"
-label_params_8 = "**Módulos conectados en serie:**"
-label_params_9 = "**Ramas en paralelo:**"
 
 options_sel_oper = ["📗 Única", "📚 Múltiple"]
 
-options_columns_Gef = [
-    "Gef(W/m^2)",
-    "Gin(W/m²)"
-]
+items_options_columns_df = {
+    "Geff" : ["Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)"],
+    "Toper" : ["Toper(°C)"]
+}
 
-options_columns_Toper = [
-    "Toper(°C)"
-]
+template = {
+    "directory": "files",
+    "name_file": "[Plantilla] - Ajuste de parámetros del panel",
+    "format_file": "xlsx",
+    "description": "Irradiancia efectiva y Temperatura de operación del módulo"
+}
+
+keys_show_output = ["Iph", "Isat", "Rs", "Rp", "nNsVt", "Voc", "Isc", "Impp", "Vmpp", "Pmpp"]
+dict_show_output = funtions.get_options_params(dict_params=dict_params, options_keys=keys_show_output)
+list_show_output = [key for key in dict_show_output]
 
 #%% main
 
@@ -49,27 +67,42 @@ with tab1:
         st.write("")
     with col2:
         st.image("images\\app2_img1.png")
-    with col3:
-        st.write("")
-
-    st.markdown(text["subheader_2"])
-
+    
 with tab2:      
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Parámetros del módulo"))
-        Alfa = st.number_input("**Alfa:** Coeficiente de temperatura de la Isc (%/°C)", min_value=0.0, max_value=1.0, step=0.0001, format="%.4f", value=0.055)
-        Iph = st.number_input(label_params_1, min_value=0.0, max_value=200.0, step=None, format="%.4f", value=8.09)
-        Isat = st.number_input(label_params_2, min_value=0.0, max_value=200.0, step=None, format="%.17e", value=8.60373454419776e-10)
-        Rs = st.number_input(label_params_3, min_value=0.0, max_value=1.0, step=None, format="%.6f", value=0.458303)
-        Rp = st.number_input(label_params_4, min_value=0.0, max_value=800.0, step=None, format="%.6f", value=171.288822)
-        nNsVth = st.number_input(label_params_5, min_value=0.0, max_value=10.0, step=None, format="%.6f", value=1.916018)
-        cell_type = st.selectbox("**Tecnologia del módulo:**", options=list(dict_value_Egap.keys()))
+        
+        Alfa = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Alfa"]),
+                                                   variable=dict_params["Alfa"]["number_input"])
+        
+        Iph = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Iph"]),
+                                                   variable=dict_params["Iph"]["number_input"])
+        
+        Isat = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Isat"]),
+                                                   variable=dict_params["Isat"]["number_input"])
+        
+        Rs = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Rs"]),
+                                                 variable=dict_params["Rs"]["number_input"])
+        
+        Rp = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Rp"]),
+                                                 variable=dict_params["Rp"]["number_input"])
+        
+        nNsVt = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["nNsVt"]),
+                                                    variable=dict_params["nNsVt"]["number_input"])
+        
+        cell_type = st.selectbox("Tecnologia", options=list(dict_value_Egap.keys()), index=6)
 
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Conexión de los módulos"))
-        col1, col2 = st.columns([0.50, 0.50])
-        array_serie = col1.number_input(label_params_8, min_value=1, max_value=100, step=None, value=1)
-        array_parallel = col2.number_input(label_params_9, min_value=1, max_value=100, step=None, value=1)
+        col1, col2 = st.columns(2)
+
+        with col1:
+            PVs = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["PVs"]),
+                                                      variable=dict_params["PVs"]["number_input"])
+        
+        with col2:
+            PVp = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["PVp"]),
+                                                      variable=dict_params["PVp"]["number_input"])
 
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Condiciones de operación del módulo"))
@@ -80,52 +113,103 @@ with tab2:
                                         "Ingreso de múltiples condiciones de irradiancia y temperatura de operación."])
         
         if option_sel == options_sel_oper[0]:
-            col1, col2 = st.columns([0.50, 0.50])
-            Geff = col1.number_input(label_params_6, min_value=0, max_value=1000, step=None, value=1000)
-            Toper = col2.number_input(label_params_7, min_value=0, max_value=100, step=None, value=25)
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                Geff = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Geff"]),
+                                                           variable=dict_params["Geff"]["number_input"])
+                
+            with col2:
+                Toper = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Toper"]),
+                                                            variable=dict_params["Toper"]["number_input"])
+            
         elif option_sel == options_sel_oper[1]:
             archive_Gef_Toper = st.file_uploader("Cargar archivo {0} y {1}".format("**Irradiancia efectiva** (m/s)",
                                                                                    "**Temperatura de operación del módulo** (°C)."),
                                                  type={"xlsx"})
+                
+            funtions_st.get_download_button(**template)
+
+    show_output = funtions_st.get_expander_params(list_show_output)
 
     app_5_submitted = st.button("Aceptar")
 
     if app_5_submitted:
         STD_params = {
-                'photocurrent': Iph,
-                'saturation_current': Isat,
-                'resistance_series': Rs,
-                'resistance_shunt': Rp,
-                'nNsVth': nNsVth
-                }
+            "photocurrent": Iph,
+            "saturation_current": Isat,
+            "resistance_series": Rs,
+            "resistance_shunt": Rp,
+            "nNsVth": nNsVt
+            }
+        
+        Input_desoto = {
+            "Alfa": Alfa,
+            "SDE_params": STD_params,
+            "cell_type": cell_type,
+            "dict_value_Egap": dict_value_Egap,
+            "array_serie": PVs,
+            "array_parallel": PVp
+        }
+
+        labels_output = funtions.get_labels_params_output(show_output, dict_show_output)
+        
+        if option_sel == options_sel_oper[0]:
+
+            conditions = pd.DataFrame([(1000, 25), (Geff, Toper)], columns=['Geff', 'Toper'])
+            df_info, v, i, p = funtions.get_params_desoto(conditions=conditions, rename=dict_rename, curve=True, **Input_desoto)
+
+            sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Parámetros Ajustados", "📈 Curva I-V", "📉 Curva P-V"])
+
+            with sub_tab1:
+                head_column = ["", "Condiciones STC", "Ajuste de operación"]
+
+                funtions_st.get_print_params_dataframe(df_info, labels_output, dict_params, head_column)
+
+            with sub_tab2:
+                funtions_st.curveMulti_x_y(conditions, v, i, df_info, option="current")
+
+            with sub_tab3:
+                funtions_st.curveMulti_x_y(conditions, v, p, df_info, option="power")
+        
+        if option_sel == options_sel_oper[1]:
+            if archive_Gef_Toper is not None:
+                df_input = pd.read_excel(archive_Gef_Toper)
+
+                df_pv, check, columns_options_sel = funtions.check_dataframe_input(dataframe=df_input,
+                                                                                   options=items_options_columns_df)
                 
-        conditions, corr_param_pv = funtions.get_calcparams_desoto(Geff, Toper, Alfa, STD_params, cell_type, dict_value_Egap, array_serie, array_parallel)
-        curve_info, v, i, p = funtions.get_values_curve_I_V_version2(SDE_params=corr_param_pv)
+                if check:
+                    df_conditions = funtions.get_dataframe_conditions(dataframe=df_pv, columns_options_sel=columns_options_sel)
 
-        sub_tab1, sub_tab2, sub_tab3 = st.tabs(["Parámetros Ajustados", "Curva I-V", "Curva P-V"])
-        
-        with sub_tab1:
-            funtions_st.get_print_params(params=corr_param_pv, 
-                                            params_label=["Iph", "Isat", "Rs", "Rp", "nNsVt"])
+                    df_info = funtions.get_params_desoto(conditions=df_conditions, rename=dict_rename, curve=False, **Input_desoto)
 
-            col1, col2 = st.columns(2)
-            col1.markdown("**:red[{0}:]**".format("Isc"))
-            col1.markdown("**:red[{0}:]**".format("Voc"))
-            col1.markdown("**:red[{0}:]**".format("Impp"))
-            col1.markdown("**:red[{0}:]**".format("Vmpp"))
-            col1.markdown("**:red[{0}:]**".format("Pmpp"))
+                    dict_replace = funtions.get_dict_replace(dict_rename, dict_params)
+                    
+                    df_info.rename(columns=dict_replace, inplace=True)
+                    df_info.drop(columns=["i_x", "i_xx"], inplace=True)
+                    df_info = df_info[[item.split(":")[0] for item in show_output]]
+                    df_info = pd.concat([df_pv, df_info], axis=1)
 
-            col2.markdown(np.round(curve_info.loc[1, "i_sc"], decimals=4))
-            col2.markdown(np.round(curve_info.loc[1, "v_oc"], decimals=4))
-            col2.markdown(np.round(curve_info.loc[1, "i_mp"], decimals=4))
-            col2.markdown(np.round(curve_info.loc[1, "v_mp"], decimals=4))
-            col2.markdown(np.round(curve_info.loc[1, "p_mp"], decimals=4))
-        
-        with sub_tab2:
-            funtions_st.curveMulti_x_y(conditions, v, i, curve_info, option="current")
+                    
+                    st.dataframe(df_info)
+
+                    excel = to_excel(df_info)
+                    
+                    st.download_button(label="📄 Descargar muestras",
+                                       data=excel,
+                                       file_name=funtions.name_file_head(name="parametersPV.xlsx"),
+                                       mime="xlsx")
+
+
                 
-        with sub_tab3:
-            funtions_st.curveMulti_x_y(conditions, v, p, curve_info, option="power")
-        
+
+                    
+
+                
+                else:
+                    st.warning("Falta cargar archivo **Excel** (.xlsx)", icon="⚠️")
+
+            
 
     

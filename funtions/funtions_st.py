@@ -107,32 +107,78 @@ def get_print_params(params, params_label):
 
     return
 
-def curve_x_y(x, y, p_x, p_y, p_label, p_line, title, xlabe, ylabe):
+def get_col_for_length(length):
+
+    if length == 1:
+        col1 = st.columns(1)
+        return [col1]
+    elif length == 2:
+        col1, col2 = st.columns(2)
+        return [col1, col2]
+    elif length == 3:
+        col1, col2, col3 = st.columns(3)
+        return [col1, col2, col3]
+
+    return
+
+def get_print_params_dataframe(dataframe: pd.DataFrame, params_label: list, dict_param: dict, head_column: list):
+
+    dataframe = dataframe[params_label]
+        
+    colors_string = [":grey[{0}]", ":blue[{0}]", ":red[{0}]"]
+
+    list_columns_title = get_col_for_length(len(head_column))
+
+    for i in range(0,len(head_column),1):
+        list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
+
+    for i in range(0,len(params_label),1):
+        label = funtions.get_label_params(dict_param=dict_param[params_label[i]])
+
+        list_columns = get_col_for_length(len(head_column))
+
+        list_columns[0].markdown(colors_string[0].format(label))
+
+        for index, row in dataframe.iterrows():
+            list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
+            
+    return
+
+def curve_x_y(x, y, points, lines, title, xlabel, ylabel):
+
+    p_x, p_y = [], []
 
     fig, ax = plt.subplots()
     ax.plot(x, y, 'r-')
 
-    for i in range(0,len(p_line),1):
-        pi_x = [p_x[p_line[i][0]], p_x[p_line[i][1]]]
-        pi_y = [p_y[p_line[i][0]], p_y[p_line[i][1]]]
+    for item in lines:
+        x_item = [points[item[0]][0], points[item[1]][0]]
+        y_item = [points[item[0]][1], points[item[1]][1]]
 
-        ax.plot(pi_x, pi_y, color='blue', linestyle='--')
-    
+        ax.plot(x_item, y_item, color='blue', linestyle='--')
+
+    for key, value in points.items():
+        ax.annotate(text=key,
+                    xy=value,
+                    textcoords="offset points",
+                    xytext=(5,0),
+                    ha="left")
+        
+        p_x.append(value[0])
+        p_y.append(value[1])
+
     ax.set_title(title)             
     ax.scatter(p_x, p_y, color='blue', label='Puntos de interés')
 
-    for i in range(0,len(p_label),1):
-        ax.annotate(p_label[i], (p_x[i], p_y[i]), textcoords="offset points", xytext=(5,0), ha='left')
-
-    ax.set_xlabel(xlabe)
-    ax.set_ylabel(ylabe)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
     ax.grid(True)
 
     st.pyplot(fig)
 
     return
 
-def curveMulti_x_y(conditions, x, y, curve_info, option):
+def curveMulti_x_y(conditions: pd.DataFrame, x, y, df_info: pd.DataFrame, option: str):
 
     list_color = ["tab:blue", "tab:orange"]
 
@@ -140,13 +186,13 @@ def curveMulti_x_y(conditions, x, y, curve_info, option):
 
     for idx, case in conditions.iterrows():
         label = ("$G_{eff}$ " + f"{case['Geff']} $W/m^2$\n"
-                 "$T_{cell}$ " + f"{case['Tcell']} $\\degree C$")
+                 "$T_{cell}$ " + f"{case['Toper']} $\\degree C$")
         
         ax.plot(x[idx], y[idx], label=label)
 
         if option == "current":
-            p_x = curve_info['v_mp'][idx]
-            p_y = curve_info['i_mp'][idx]
+            p_x = df_info.loc[idx, 'Vmpp']
+            p_y = df_info.loc[idx, 'Impp']
 
             pi_x =  [[p_x, p_x], [0, p_x]]
             pi_y = [[0, p_y], [p_y, p_y]]
@@ -154,7 +200,7 @@ def curveMulti_x_y(conditions, x, y, curve_info, option):
             ax.set_ylabel("Corriente (A)")
 
         elif option == "power":
-            p_x = curve_info['v_mp'][idx]
+            p_x = df_info.loc[idx, 'Vmpp']
             p_y = np.max(y[idx])
 
             pi_x = [[p_x, p_x], [0, p_x]]
@@ -202,9 +248,27 @@ def graphicalDataframe(dataframe: pd.DataFrame):
         
         st.text(options)
 
-
-
     return
 
+def get_download_button(directory: str, name_file: str, format_file: str, description: str):
+
+    with open(f"{directory}/{name_file}.{format_file}", "rb") as content_xlsx:
+                st.download_button(label=f"📄 Descargar plantilla **:red[{description}]**:",
+                                   data=content_xlsx,
+                                   file_name=name_file,
+                                   mime=format_file)
+                
+    return
+
+def get_expander_params(list_show_output):
+
+    with st.expander(label="🪛 **{0}**".format("Personalizar parámetros de salida")): 
+        show_output = st.multiselect(label="Seleccionar parámetros", options=list_show_output, default=list_show_output)
+
+    return show_output
+
+def get_widget_number_input(label: str, variable: dict):
+
+    return st.number_input(label=label, **variable)
 
 

@@ -1,0 +1,197 @@
+Alfa:
+  description: Alfa Coeficiente de temperatura de la Isc
+  label: Alfa
+  number_input:
+    format: '%.4f'
+    max_value: 1.0
+    min_value: 0.0
+    step: null
+    value: 0.055
+  unit: "(%/\xB0C)"
+Beta:
+  description: Coeficiente de temperatura de la Voc
+  label: Beta
+  number_input:
+    format: '%.4f'
+    max_value: 0.0
+    min_value: -0.9999
+    step: 0.0001
+    value: -0.34
+  unit: "(%/\xB0C)"
+C:
+  description: Coeficiente de temperatura
+  label: C
+  unit: "(\xB0C)"
+Delta:
+  description: Coeficiente de temperatura de la Pmax
+  label: Delta
+  number_input:
+    format: '%.4f'
+    max_value: 0.0
+    min_value: -0.9999
+    step: 0.0001
+    value: -0.47
+  unit: "(%/\xB0C)"
+Geff:
+  description: Irradiancia efectiva
+  label: Gef
+  number_input:
+    format: null
+    max_value: 1000
+    min_value: 0
+    step: null
+    value: 1000
+  unit: (W/m^2)
+Impp:
+  description: "Corriente del punto de m\xE1xima potencia"
+  label: Impp
+  number_input:
+    format: '%.3f'
+    max_value: 200.0
+    min_value: 0.0
+    step: null
+    value: 7.47
+  unit: (A)
+Iph:
+  description: Corriente fotoinducida
+  label: Iph
+  number_input:
+    format: '%.4f'
+    max_value: 200.0
+    min_value: 0.0
+    step: null
+    value: 8.09
+  unit: (A)
+Isat:
+  description: "Corriente de saturaci\xF3n del diodo"
+  label: Isat
+  number_input:
+    format: '%.17e'
+    max_value: 200.0
+    min_value: 0.0
+    step: null
+    value: 8.60373454419776e-10
+  unit: (A)
+Isc:
+  description: Corriente de cortocircuito
+  label: Isc
+  number_input:
+    format: '%.3f'
+    max_value: 200.0
+    min_value: 0.0
+    step: null
+    value: 8.09
+  unit: (A)
+NOCT:
+  description: "Temperatura de operaci\xF3n nominal de la celda"
+  label: NOCT
+  number_input:
+    format: null
+    max_value: 90
+    min_value: 1
+    step: null
+    value: 45
+  unit: "(\xB0C)"
+Ns:
+  description: "N\xFAmero de celdas en serie"
+  label: Ns
+  number_input:
+    format: null
+    max_value: 200
+    min_value: 1
+    step: null
+    value: 72
+  unit: ''
+PVp:
+  description: Ramas en paralelo
+  label: PVp
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 1
+  unit: ''
+PVs:
+  description: "M\xF3dulos conectados en serie"
+  label: PVs
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 1
+  unit: ''
+Pmpp:
+  description: "Punto de m\xE1xima potencia"
+  label: Pmpp
+  unit: (kW)
+Rp:
+  description: Resistencia en paralelo
+  label: Rp
+  number_input:
+    format: '%.6f'
+    max_value: 800.0
+    min_value: 0.0
+    step: null
+    value: 171.288822
+  unit: (Ohm)
+Rs:
+  description: Resistencia serie
+  label: Rs
+  number_input:
+    format: '%.6f'
+    max_value: 1.0
+    min_value: 0.0
+    step: null
+    value: 0.458303
+  unit: (Ohm)
+Toper:
+  description: "Temperatura de operaci\xF3n del m\xF3dulo"
+  label: Toper
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 0
+    step: null
+    value: 25
+  unit: "(\xB0C)"
+Vmpp:
+  description: "Voltaje de punto de m\xE1xima potencia"
+  label: Vmpp
+  number_input:
+    format: '%.3f'
+    max_value: 200.0
+    min_value: 0.0
+    step: null
+    value: 34.8
+  unit: (V)
+Voc:
+  description: Voltaje de circuito abierto
+  label: Voc
+  number_input:
+    format: '%.3f'
+    max_value: 200.0
+    min_value: 0.0
+    step: 0.1
+    value: 44.0
+  unit: (V)
+Vt:
+  description: "Voltaje t\xE9rmico"
+  label: Vt
+  unit: (V)
+n:
+  description: Factor de idealidad del diodo
+  label: n
+  unit: ''
+nNsVt:
+  description: "Producto del factor de idealida, el n\xFAmero de celdas en serie y\
+    \ el voltaje t\xE9rmico en condiciones STC"
+  label: nNsVt
+  number_input:
+    format: '%.6f'
+    max_value: 10.0
+    min_value: 0.0
+    step: null
+    value: 1.916018
+  unit: ''

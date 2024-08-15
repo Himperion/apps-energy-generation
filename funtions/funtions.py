@@ -187,12 +187,14 @@ def parameters_values(data_pv):
     param_pv = {
         'Iph': Iph,
         'n': n,
+        'Vt': Vt,
         'nNsVt': nNsVt,
         'Isat': Isat,
         'Cstc': Cstc,
         'Rs': Rs,
         'Rp': Rp,
-        'Egap': data_pv['Egap']
+        'Egap': data_pv['Egap'],
+        'C': Cstc
         }
 
     return param_pv
@@ -208,8 +210,7 @@ def get_STD_params(Voc, Isc, Vmpp, Impp, Alfa, Beta, Delta, NOCT, Ns, cell_type,
                'Delta': Delta,
                'TONC': NOCT,
                'Ns': Ns,
-               'Egap': 1.6022E-19*dict_value_Egap[cell_type]['EgRef']
-               }
+               'Egap': 1.6022E-19*dict_value_Egap[cell_type]['EgRef']}
     
     param_pv = parameters_values(data_pv)
 
@@ -222,21 +223,25 @@ def get_STD_params(Voc, Isc, Vmpp, Impp, Alfa, Beta, Delta, NOCT, Ns, cell_type,
 
     return data_pv, param_pv, SDE_params
 
-def get_values_curve_I_V(SDE_params):
-    curve_info = pvlib.pvsystem.singlediode(method='lambertw', **SDE_params)
-    v = np.linspace(0., curve_info['v_oc'], 100)
+def get_values_curve_info(SDE_params: dict):
+
+    return pvlib.pvsystem.singlediode(method='lambertw', **SDE_params)
+
+def get_values_curve_I_V(curve_info: pd.DataFrame, SDE_params:dict):
+  
+    v = np.linspace(0., curve_info['Voc'], 100)
     i = pvlib.pvsystem.i_from_v(voltage=v, method='lambertw', **SDE_params)
     p = v*i
 
     return v, i, p
 
-def get_values_curve_I_V_version2(SDE_params):
-    curve_info = pvlib.pvsystem.singlediode(method='lambertw', **SDE_params)
+def get_values_curve_I_V_version2(curve_info: pd.DataFrame, SDE_params: dict):
+    
     v = pd.DataFrame(np.linspace(0., curve_info['v_oc'], 100))
     i = pd.DataFrame(pvlib.pvsystem.i_from_v(voltage=v, method='lambertw', **SDE_params))
     p = v*i
 
-    return curve_info, v, i, p
+    return v, i, p
 
 def get_fit_cec_sam(cell_type, Vmpp, Impp, Voc, Isc, Alfa, Beta, Delta, Ns):
 
@@ -257,14 +262,11 @@ def get_fit_cec_sam(cell_type, Vmpp, Impp, Voc, Isc, Alfa, Beta, Delta, Ns):
 
     return I_L_ref, I_o_ref, R_s, R_sh_ref, a_ref, Adjust
 
-def get_calcparams_desoto(Geff, Tcell, Alfa, SDE_params, cell_type, dict_value_Egap, array_serie, array_parallel):
-
-    cases = [(1000, 25), (Geff, Tcell)]
-    conditions = pd.DataFrame(cases, columns=['Geff', 'Tcell'])
+def get_calcparams_desoto(conditions, Alfa, SDE_params, cell_type, dict_value_Egap, array_serie, array_parallel):
 
     parameters = {
         'effective_irradiance': conditions['Geff'],
-        'temp_cell': conditions['Tcell'],
+        'temp_cell': conditions['Toper'],
         'alpha_sc': changeUnitsK(Alfa, Base=SDE_params['photocurrent']),
         'a_ref': SDE_params['nNsVth'],
         'I_L_ref': SDE_params['photocurrent'],
@@ -287,7 +289,34 @@ def get_calcparams_desoto(Geff, Tcell, Alfa, SDE_params, cell_type, dict_value_E
         'nNsVth': nNsVth*array_serie
     }
 
-    return conditions, SDE_params
+    curve_info = get_values_curve_info(SDE_params)
+
+    return SDE_params, curve_info
+
+def get_params_desoto(conditions, Alfa, SDE_params, cell_type, dict_value_Egap, array_serie, array_parallel, rename, curve) -> pd.DataFrame:
+
+    SDE_params, curve_info = get_calcparams_desoto(conditions, Alfa, SDE_params, cell_type, dict_value_Egap, array_serie, array_parallel)
+
+    df_desoto = pd.concat([pd.DataFrame(SDE_params), curve_info], axis=1)
+    df_desoto = df_desoto.rename(columns=rename)
+
+    df_desoto["Pmpp"] = df_desoto["Pmpp"]/1000
+
+    if curve:
+        v, i, p = get_values_curve_I_V_version2(curve_info, SDE_params)
+        return df_desoto, v, i, p
+    
+    else:
+        return df_desoto
+
+def get_dataframe_conditions(dataframe: pd.DataFrame, columns_options_sel: dict) -> pd.DataFrame:
+
+    dict_rename = {value: key for key, value in columns_options_sel.items()}
+
+    dataframe = dataframe.rename(columns=dict_rename)
+    dataframe = dataframe.loc[:, [key for key in columns_options_sel]]
+
+    return dataframe
 
 def get_list_tabs_graph(data_columns: list, options_columns_name: list, list_options_columns_label):
 
@@ -315,39 +344,44 @@ def get_power_wind_turbine(params, V_wind):
     D, rho, V_in, V_nom, V_max, P_nom = get_param_turbine_2_dict(params)
 
     A_barrido = np.pi*((0.5*D)**2)
-    P_wind = 0.5*rho*(V_wind**3)*A_barrido
-
-    P_gen = P_nom*((V_wind**3 - V_in**3)/(V_nom**3 - V_in**3))
+    P_ideal = 0.5*rho*(V_wind**3)*A_barrido
+    P_betz = 0.593*P_ideal
 
     if V_in <= V_wind < V_nom:
-        P_turbine = P_gen
+        P_gen = P_nom*((V_wind**3 - V_in**3)/(V_nom**3 - V_in**3))
     elif V_nom <= V_wind < V_max:
-        P_turbine = P_nom
+        P_gen = P_nom
     else:
-        P_turbine = 0
+        P_gen = 0
 
-    if P_turbine > 0:
-        n = P_turbine/P_wind
+    if P_gen > 0:
+        n = P_gen/P_ideal
     else:
         n = 0
 
-    return P_turbine, n
+    return P_gen, n, P_ideal, P_betz
 
 def get_values_curve_turbine(params):
 
     V_wind_list = np.linspace(0., params["V_max"], 200).tolist()
 
-    P_turbine_list, n_turbine_list = [], []
+    list_P_gen, list_n, list_P_ideal, list_P_betz = [], [], [], []
 
     for i in range(0,len(V_wind_list),1):
-        P_turbine, n = get_power_wind_turbine(params, V_wind_list[i])
-        
-        P_turbine_list.append(P_turbine)
-        n_turbine_list.append(n)
 
-    df_values = pd.DataFrame({"V_wind" : V_wind_list,
-                              "P_turbine" : P_turbine_list,
-                              "n_turbine" : n_turbine_list})
+        P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, V_wind_list[i])
+        
+        list_P_gen.append(round(P_gen/1000, 4))
+        list_n.append(round(n, 4))
+        list_P_ideal.append(round(P_ideal/1000, 4))
+        list_P_betz.append(round(P_betz/1000, 4))
+    
+    df_values = pd.DataFrame({"V_wind": V_wind_list,
+                              "P_gen": list_P_gen,
+                              "n_turbine": list_n,
+                              "P_ideal": list_P_ideal,
+                              "P_betz": list_P_betz
+                              })
 
     return df_values
 
@@ -360,10 +394,10 @@ def get_dataframe_power_wind_turbine(params: dict, dataframe: pd.DataFrame, colu
 
     for index, row in dataframe.iterrows():
         Vwind = row[column_label]
-        Pturbine, n = get_power_wind_turbine(params, Vwind)
+        P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, Vwind)
 
-        dataframe.loc[index, "Pturbine(kW)"] = round(Pturbine/1000, 4)
-        dataframe.loc[index, "efficiency_turbine(%)"] = round(n*100, 4)
+        dataframe.loc[index, "Pturbine(kW)"] = P_gen
+        dataframe.loc[index, "efficiency_turbine(%)"] = n
 
     return dataframe
 
@@ -404,4 +438,34 @@ def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
 
     return dataframe, check, columns_options_sel
 
+def get_label_params(dict_param: dict) -> str:
+
+    return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
+
+def get_options_params(dict_params: dict, options_keys: list) -> list:
+
+    dict_options_params = {}
+
+    for key in options_keys:
+        string_aux =  f"{dict_params[key]['label']}{dict_params[key]['unit']}: {dict_params[key]['description']}"
+        dict_options_params[string_aux] = key
+        
+    return dict_options_params
+
+def get_labels_params_output(show_output, dict_show_output):
+
+    labels_output = []
+    for key in show_output:
+        labels_output.append(dict_show_output[key])
+
+    return labels_output
+
+def get_dict_replace(dict_rename: dict, dict_params: dict) ->dict:
+
+    dict_replace = {}
+
+    for key, value in dict_rename.items():
+        dict_replace[value] = f"{dict_params[value]['label']}{dict_params[value]['unit']}"
+
+    return dict_replace
     

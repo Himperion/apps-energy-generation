@@ -30,6 +30,12 @@ items_options_columns_df = {
     "Vwind" : ["Vwind(m/s)", "Vwind 10msnm(m/s)", "Vwind 50msnm(m/s)"]
 }
 
+template = {
+    "directory": "files",
+    "name_file": "[Plantilla] - Potencia aerogenerador",
+    "format_file": "xlsx",
+    "description": "Velocidad del viento"
+}
 
 #%% main
 
@@ -54,11 +60,9 @@ with tab2:
         rho = st.number_input(parameters["rho"], min_value=0.4, max_value=1.4, step=None, format="%.3f", value=1.225)
 
         archive_Vwind = st.file_uploader("Cargar archivo **Velocidad del viento** (m/s)", type={"xlsx"})
-        
-        with open("files/Aerogenerador_plantilla.xlsx", "rb") as content_xlsx:
-            st.download_button(label="📄 Descargar plantilla **:red[{0}]**:".format("Velocidad del viento"),
-                               data=content_xlsx, file_name="Aerogenerador_plantilla.xlsx", mime="xlsx")
             
+        funtions_st.get_download_button(**template)
+       
     app_6_submitted = st.button("Aceptar")
 
     if app_6_submitted:        
@@ -87,21 +91,14 @@ with tab2:
                 sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados", "📈 Curva de potencia", "📉 Curva de eficiencia"])
 
                 with sub_tab1:
-                    tab_res1, tab_res2 = st.tabs(["📑 Dataframe", "📝 Grafica de datos"])
-
-                    with tab_res1:
-                        st.dataframe(df_powerTurbine)
-
-                        excel = to_excel(df_powerTurbine)
-
-                        st.download_button(label="📄 Descargar muestras",
-                                            data=excel,
-                                            file_name=funtions.name_file_head(name="powerTurbine.xlsx"),
-                                            mime="xlsx")
-                        
-                        with tab_res2:
+                    st.dataframe(df_powerTurbine)
                     
-                            funtions_st.graphicalDataframe(dataframe=df_powerTurbine)
+                    excel = to_excel(df_powerTurbine)
+                    
+                    st.download_button(label="📄 Descargar muestras",
+                                       data=excel,
+                                       file_name=funtions.name_file_head(name="powerTurbine.xlsx"),
+                                       mime="xlsx")
 
                 with sub_tab2:
                     column_xy = ("V_wind", "P_turbine")
