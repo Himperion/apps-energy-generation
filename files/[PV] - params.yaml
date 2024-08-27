@@ -6,7 +6,7 @@ Alfa:
     max_value: 1.0
     min_value: 0.0
     step: null
-    value: 0.055
+    value: 0.05
   unit: "(%/\xB0C)"
 Beta:
   description: Coeficiente de temperatura de la Voc
@@ -15,8 +15,8 @@ Beta:
     format: '%.4f'
     max_value: 0.0
     min_value: -0.9999
-    step: 0.0001
-    value: -0.34
+    step: null
+    value: -0.27
   unit: "(%/\xB0C)"
 C:
   description: Coeficiente de temperatura
@@ -29,8 +29,8 @@ Delta:
     format: '%.4f'
     max_value: 0.0
     min_value: -0.9999
-    step: 0.0001
-    value: -0.47
+    step: null
+    value: -0.35
   unit: "(%/\xB0C)"
 Geff:
   description: Irradiancia efectiva
@@ -50,27 +50,27 @@ Impp:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 7.47
+    value: 11.04
   unit: (A)
 Iph:
   description: Corriente fotoinducida
   label: Iph
   number_input:
-    format: '%.4f'
+    format: '%.6f'
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 8.09
+    value: 12.051545
   unit: (A)
 Isat:
   description: "Corriente de saturaci\xF3n del diodo"
   label: Isat
   number_input:
     format: '%.17e'
-    max_value: 200.0
+    max_value: 1.0
     min_value: 0.0
     step: null
-    value: 8.60373454419776e-10
+    value: 4.701633e-11
   unit: (A)
 Isc:
   description: Corriente de cortocircuito
@@ -80,7 +80,7 @@ Isc:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 8.09
+    value: 11.67
   unit: (A)
 NOCT:
   description: "Temperatura de operaci\xF3n nominal de la celda"
@@ -90,7 +90,7 @@ NOCT:
     max_value: 90
     min_value: 1
     step: null
-    value: 45
+    value: 42
   unit: "(\xB0C)"
 Ns:
   description: "N\xFAmero de celdas en serie"
@@ -100,7 +100,7 @@ Ns:
     max_value: 200
     min_value: 1
     step: null
-    value: 72
+    value: 156
   unit: ''
 PVp:
   description: Ramas en paralelo
@@ -134,7 +134,7 @@ Rp:
     max_value: 800.0
     min_value: 0.0
     step: null
-    value: 171.288822
+    value: 93.409074
   unit: (Ohm)
 Rs:
   description: Resistencia serie
@@ -144,7 +144,7 @@ Rs:
     max_value: 1.0
     min_value: 0.0
     step: null
-    value: 0.458303
+    value: 0.217007
   unit: (Ohm)
 Toper:
   description: "Temperatura de operaci\xF3n del m\xF3dulo"
@@ -164,7 +164,7 @@ Vmpp:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 34.8
+    value: 44.4
   unit: (V)
 Voc:
   description: Voltaje de circuito abierto
@@ -173,8 +173,8 @@ Voc:
     format: '%.3f'
     max_value: 200.0
     min_value: 0.0
-    step: 0.1
-    value: 44.0
+    step: null
+    value: 53.1
   unit: (V)
 Vt:
   description: "Voltaje t\xE9rmico"
@@ -193,5 +193,15 @@ nNsVt:
     max_value: 10.0
     min_value: 0.0
     step: null
-    value: 1.916018
+    value: 2.025063
   unit: ''
+Ajuste_Isc:
+  description: "Ajuste del coeficiente de temperatura para la corriente de cortocircuito"
+  label: Ajuste_Isc
+  number_input:
+    format: '%.6f'
+    max_value: 100.0
+    min_value: 0.0
+    step: null
+    value: 9.081115
+  unit: '(%)'

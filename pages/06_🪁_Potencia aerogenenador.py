@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import yaml
 from io import BytesIO
 from funtions import funtions, funtions_st
 
@@ -37,6 +38,9 @@ template = {
     "description": "Velocidad del viento"
 }
 
+with open("files//[AERO] - params.yaml", 'r') as archivo:
+    dict_params = yaml.safe_load(archivo)
+
 #%% main
 
 st.markdown("# 🪁 Potencia aerogenerador")
@@ -49,11 +53,26 @@ with tab1:
 with tab2:
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Parámetros del aerogenerador"))
-        D = st.number_input(parameters["D"], min_value=0.0, max_value=80.0, step=None, format="%.3f", value=1.75)
-        V_in = st.number_input(parameters["V_in"], min_value=2.0, max_value=6.0, step=None, format="%.3f", value=3.5)
-        V_nom = st.number_input(parameters["V_nom"], min_value=9.0, max_value=16.0, step=None, format="%.3f", value=12.0)
-        V_max = st.number_input(parameters["V_max"], min_value=30.0, max_value=80.0, step=None, format="%.3f", value=60.0)
-        P_nom = st.number_input(parameters["P_nom"], min_value=0.01, max_value=550.0, step=None, format="%.3f", value=0.8)
+        #D = st.number_input(parameters["D"], min_value=0.0, max_value=80.0, step=None, format="%.3f", value=1.75)
+        #V_in = st.number_input(parameters["V_in"], min_value=2.0, max_value=6.0, step=None, format="%.3f", value=3.5)
+        #V_nom = st.number_input(parameters["V_nom"], min_value=9.0, max_value=16.0, step=None, format="%.3f", value=12.0)
+        #V_max = st.number_input(parameters["V_max"], min_value=30.0, max_value=80.0, step=None, format="%.3f", value=60.0)
+        #P_nom = st.number_input(parameters["P_nom"], min_value=0.01, max_value=550.0, step=None, format="%.3f", value=0.8)
+
+        D = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["D"]),
+                                                variable=dict_params["D"]["number_input"])
+        
+        V_in = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["V_in"]),
+                                                   variable=dict_params["V_in"]["number_input"])
+        
+        V_nom = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["V_nom"]),
+                                                    variable=dict_params["V_nom"]["number_input"])
+        
+        V_max = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["V_max"]),
+                                                    variable=dict_params["V_max"]["number_input"])
+        
+        P_nom = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["P_nom"]),
+                                                    variable=dict_params["P_nom"]["number_input"])
 
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Datos del sitio"))
@@ -102,7 +121,7 @@ with tab2:
 
                 with sub_tab2:
                     column_xy = ("V_wind", "P_gen")
-                    label_xy = ("Velocidad de viento (m/s)", "Potencia del aerogenerador (W)")
+                    label_xy = ("Velocidad de viento (m/s)", "Potencia del aerogenerador (kW)")
                     label_title = "Curva aerogenerador"
 
                     funtions_st.curveTurbine(df_values, column_xy, label_xy, label_title, "blue")

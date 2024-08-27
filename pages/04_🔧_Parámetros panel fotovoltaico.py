@@ -5,14 +5,11 @@ import matplotlib.pyplot as plt
 import yaml
 from scipy.special import lambertw
 from scipy.optimize import root_scalar, fsolve
-from funtions import funtions, funtions_st
+from funtions import fun_app4
 
 #%% Funtions
 
 #%% global variables
-
-with open("files/[PV] - values_Egap.yaml", 'r') as archivo:
-    dict_value_Egap = yaml.safe_load(archivo)
 
 with open("files//[PV] - params.yaml", 'r') as archivo:
     dict_params = yaml.safe_load(archivo)
@@ -20,11 +17,16 @@ with open("files//[PV] - params.yaml", 'r') as archivo:
 with open("files//[PV] - dict_replace.yaml", 'r') as archivo:
     dict_rename = yaml.safe_load(archivo)
 
+with open("files//[PV] - celltype.yaml", 'r') as archivo:
+    celltype = yaml.safe_load(archivo)
+
 text = {  
      "subheader_1" : "El modelo circuital de los sistemas fotovoltaicos facilita la predicción de variables eléctricas como la tensión, corriente y potencia en diversas condiciones de operación. Esto es crucial para realizar un dimensionamiento completo y preciso del sistema.",
      "subheader_2" : "El modelo **Single diode** se fundamenta en los principios de los dispositivos semiconductores y proporciona una representación de las propiedades eléctricas de un módulo fotovoltaico.",
      "subheader_3" : "La expresión de la corriente del módulo en el circuito equivalente se convierte en la ecuación fundamental del modelo que posibilita una reconstrucción aproximada de la curva de corriente-voltaje (I-V) del panel fotovoltaico."
 }
+
+options_celltype = fun_app4.celltype_options(celltype)
 
 #%% main
 
@@ -48,82 +50,98 @@ with tab1:
     st.markdown(text["subheader_3"])
     st.latex(r"""I=I_{ph}-I_{d}-I_{R_{p}}=I_{ph}-I_{sat}\cdot \left ( e\tfrac{V+I\cdot R_{s}}{N_{s}nv_{t}} -1\right )-\frac{V+I\cdot R_{s}}{R_{p}}""")
 
-    st.markdown(funtions.get_label_params(dict_param=dict_params["Iph"]))
-    st.markdown(funtions.get_label_params(dict_param=dict_params["n"]))
-    st.markdown(funtions.get_label_params(dict_param=dict_params["Vt"]))
-    st.markdown(funtions.get_label_params(dict_param=dict_params["Ns"]))
-    st.markdown(funtions.get_label_params(dict_param=dict_params["Isat"]))
-    st.markdown(funtions.get_label_params(dict_param=dict_params["Rs"]))
-    st.markdown(funtions.get_label_params(dict_param=dict_params["Rp"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Iph"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["n"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Vt"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Ns"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Isat"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rs"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rp"]))
 
 with tab2:
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Características eléctricas"))
         col1, col2 = st.columns(2)
         with col1:
-            Vmpp = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Vmpp"]),
-                                                       variable=dict_params["Vmpp"]["number_input"])
-            
-            Voc = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Voc"]),
-                                                      variable=dict_params["Voc"]["number_input"])
-            
+            Vmpp = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Vmpp"]),
+                                                    variable=dict_params["Vmpp"]["number_input"])
+            Voc = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Voc"]),
+                                                   variable=dict_params["Voc"]["number_input"])
         with col2:
-            Impp = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Impp"]),
-                                                       variable=dict_params["Impp"]["number_input"])
+            Impp = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Impp"]),
+                                                    variable=dict_params["Impp"]["number_input"])
             
-            Isc = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Isc"]),
-                                                      variable=dict_params["Isc"]["number_input"])
+            Isc = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Isc"]),
+                                                   variable=dict_params["Isc"]["number_input"])
             
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Características de temperatura"))
             
-        NOCT = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["NOCT"]),
-                                                   variable=dict_params["NOCT"]["number_input"])
-            
-        Alfa = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Alfa"]),
-                                                   variable=dict_params["Alfa"]["number_input"])
-            
-        Beta = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Beta"]),
-                                                   variable=dict_params["Beta"]["number_input"])
-            
-        Delta = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Delta"]),
-                                                    variable=dict_params["Delta"]["number_input"])
+        NOCT = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["NOCT"]),
+                                                variable=dict_params["NOCT"]["number_input"])
+        Alfa = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Alfa"]),
+                                                variable=dict_params["Alfa"]["number_input"])
+        Beta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Beta"]),
+                                                variable=dict_params["Beta"]["number_input"])
+        Delta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Delta"]),
+                                                 variable=dict_params["Delta"]["number_input"])
         
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Características mecánicas"))
             
-        cell_type = st.selectbox("Tecnologia", options=list(dict_value_Egap.keys()), index=6)
+        cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
-        Ns = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Ns"]),
-                                                 variable=dict_params["Ns"]["number_input"])
+        Ns = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Ns"]),
+                                              variable=dict_params["Ns"]["number_input"])
         
     app_5_submitted = st.button("Aceptar")
 
     if app_5_submitted:
-        data_pv, param_pv, SDE_params = funtions.get_STD_params(Voc, Isc, Vmpp, Impp, Alfa, Beta, Delta, NOCT, Ns, cell_type, dict_value_Egap)
 
-        df_curve_info = pd.concat([pd.DataFrame([param_pv]), pd.DataFrame([data_pv])], axis=1)
-        df_curve_info["Pmax"] = df_curve_info["Vmpp"]*df_curve_info["Impp"]
+        PV_data = {
+            "celltype": fun_app4.for_options_get_celltype(cell_type),
+            "v_mp": Vmpp,
+            "i_mp": Impp,
+            "v_oc": Voc,
+            "i_sc": Isc,
+            "alpha_sc": fun_app4.changeUnitsK(Alfa, Isc),
+            "beta_voc": fun_app4.changeUnitsK(Beta, Voc),
+            "gamma_pmp": Delta,
+            "cells_in_series": Ns
+        }
 
-        v, i, p = funtions.get_values_curve_I_V(df_curve_info, SDE_params)
+        PV_params = fun_app4.get_PV_params(**PV_data)
+        SDE_params = fun_app4.from_PVparams_get_SDEparams(PV_params)
+        v, i, p = fun_app4.get_values_curve_I_V_P(Voc, SDE_params)
+
+        df_curve_info = pd.DataFrame([PV_params]).rename(columns=dict_rename)
 
         sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Parámetros STC", "📈 Curva I-V", "📉 Curva P-V"])
 
         with sub_tab1:
-
             head_column = ["", "Condiciones STC"]
-            labels_output = ["Iph", "Isat", "Rs", "Rp", "nNsVt", "n", "Vt", "C"]
-            
-            funtions_st.get_print_params_dataframe(df_curve_info, labels_output, dict_params, head_column)
+            labels_output = ["Iph", "Isat", "Rs", "Rp", "nNsVt", "Ajuste_Isc"]
+
+            with st.container(border=True):
+                fun_app4.get_print_params_dataframe(df_curve_info, labels_output, dict_params, head_column)
+
+            with st.container(border=True):
+                buffer = fun_app4.get_bytes_yaml(dictionary=PV_params)
+
+                st.download_button(
+                    label="💾 Descargar **:blue[archivo de parámetros]** YAML",
+                    data=buffer,
+                    file_name="PV_params.yaml",
+                    mime="text/yaml"
+                    )
 
         with sub_tab2:
-            
             points = {
-                "Voc": (df_curve_info.loc[0, "Voc"], 0),
-                "Isc": (0, df_curve_info.loc[0, "Isc"]),
-                "MPP": (df_curve_info.loc[0, "Vmpp"], df_curve_info.loc[0, "Impp"]),
-                "Vmpp": (df_curve_info.loc[0, "Vmpp"], 0),
-                "Impp": (0, df_curve_info.loc[0, "Impp"])
+                "Voc": (Voc, 0),
+                "Isc": (0, Isc),
+                "MPP": (Vmpp, Impp),
+                "Vmpp": (Vmpp, 0),
+                "Impp": (0, Impp)
             }
 
             lines = [
@@ -135,14 +153,13 @@ with tab2:
             xlabel = "Voltaje (V)"
             ylabel = "Corriente (A)"
 
-            funtions_st.curve_x_y(v, i, points, lines, title, xlabel, ylabel)
+            fun_app4.curve_x_y(v, i, points, lines, title, xlabel, ylabel)
 
         with sub_tab3:
-
             points = {
-                "Vmpp": (df_curve_info.loc[0, "Vmpp"], 0),
-                "Pmax": (0, df_curve_info.loc[0, "Pmax"]),
-                "MPP": (df_curve_info.loc[0, "Vmpp"], df_curve_info.loc[0, "Pmax"]),
+                "Vmpp": (Vmpp, 0),
+                "Pmax": (0, Vmpp*Impp),
+                "MPP": (Vmpp, Vmpp*Impp),
             }
 
             lines = [
@@ -154,4 +171,4 @@ with tab2:
             xlabel = "Voltaje (V)"
             ylabel = "Potencia (W)"
 
-            funtions_st.curve_x_y(v, p, points, lines, title, xlabel, ylabel)
+            fun_app4.curve_x_y(v, p, points, lines, title, xlabel, ylabel)

@@ -8,3 +8,10 @@ resistance_shunt: Rp
 saturation_current: Isat
 v_mp: Vmpp
 v_oc: Voc
+a_ref: nNsVt
+I_L_ref: Iph
+I_o_ref: Isat
+R_sh_ref: Rp
+R_s: Rs
+Adjust: Ajuste_Isc
+

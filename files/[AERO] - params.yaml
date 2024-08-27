@@ -1,0 +1,60 @@
+D:
+  description: "Di\xE1metro"
+  label: D
+  number_input:
+    format: '%.3f'
+    max_value: 80.0
+    min_value: 0.0
+    step: null
+    value: 1.75
+  unit: (m)
+P_nom:
+  description: Pontencia nominal
+  label: P_nom
+  number_input:
+    format: '%.3f'
+    max_value: 550.0
+    min_value: 0.01
+    step: null
+    value: 0.8
+  unit: (kW)
+V_in:
+  description: Velocidad de arranque
+  label: V_in
+  number_input:
+    format: '%.3f'
+    max_value: 6.0
+    min_value: 2.0
+    step: null
+    value: 3.5
+  unit: (m/s)
+V_max:
+  description: "Velocidad m\xE1xima"
+  label: V_max
+  number_input:
+    format: '%.3f'
+    max_value: 80.0
+    min_value: 30.0
+    step: null
+    value: 60.0
+  unit: (m/s)
+V_nom:
+  description: Velocidad nominal
+  label: V_nom
+  number_input:
+    format: '%.3f'
+    max_value: 16.0
+    min_value: 9.0
+    step: null
+    value: 12.0
+  unit: (m/s)
+rho:
+  description: Densidad del aire
+  label: rho
+  number_input:
+    format: '%.3f'
+    max_value: 1.4
+    min_value: 0.4
+    step: null
+    value: 1.225
+  unit: "(Kg/m\xB3)"

@@ -1,0 +1,28 @@
+amorphous:
+  EgRef: 1.7
+  dEgdT: null
+  label: Silicio amorfo
+cdte:
+  EgRef: 1.475
+  dEgdT: -0.0003
+  label: Telururo de Cadmio
+cigs:
+  EgRef: 1.15
+  dEgdT: null
+  label: Seleniuro de Cobre-Indio-Galio
+cis:
+  EgRef: 1.01
+  dEgdT: -0.00011
+  label: Sulfuro de Cobre-Indio
+monoSi:
+  EgRef: 1.121
+  dEgdT: -0.0002677
+  label: Silicio monocristalino
+multiSi:
+  EgRef: 1.121
+  dEgdT: -0.0002677
+  label: Silicio multicristalino
+polySi:
+  EgRef: 1.121
+  dEgdT: -0.0002677
+  label: Silicio policristalino
