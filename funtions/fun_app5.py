@@ -2,7 +2,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import streamlit as st
+import datetime as dt
 import pvlib
+
+def name_file_head(name: str) -> str:
+    now = dt.datetime.now()
+    return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
 def changeUnitsK(K, Base):
 
@@ -100,6 +105,143 @@ def get_dataframe_conditions(dataframe: pd.DataFrame, columns_options_sel: dict)
 
     return dataframe
 
+def get_singlediode(conditions: pd.DataFrame, PV_params: dict, PVs: int, PVp: int):
+
+    dict_list = {
+        "Iph": [],
+        "Isat": [],
+        "Rs": [],
+        "Rp": [],
+        "nNsVt": [],
+        "Isc": [],
+        "Voc": [],
+        "Impp": [],
+        "Vmpp": [],
+        "Pmpp": [],
+    }
+
+    for index, row in conditions.iterrows():
+        if row["Geff"] != 0:
+            PV_params["effective_irradiance"] = row["Geff"]
+            PV_params["temp_cell"] = row["Toper"]
+
+            photocurrent, saturation_current, resistance_series, resistance_shunt, nNsVth = pvlib.pvsystem.calcparams_cec(**PV_params)
+
+            PV_params_eff = {
+                "photocurrent": photocurrent*PVp,
+                "saturation_current": saturation_current*PVp,
+                "resistance_series": resistance_series*(PVs/PVp),
+                "resistance_shunt": resistance_shunt*(PVs/PVp),
+                "nNsVth": nNsVth*PVs,
+                "method": "lambertw"
+                }
+            
+            singleDiode = dict(pvlib.pvsystem.singlediode(**PV_params_eff))
+        
+        else:
+            PV_params_eff = {
+                "photocurrent": 0.0,
+                "saturation_current": 0.0,
+                "resistance_series": 0.0,
+                "resistance_shunt": 0.0,
+                "nNsVth": 0.0,
+                "method": "lambertw"
+                }
+
+            singleDiode = {
+                "i_sc": 0.0,
+                "v_oc": 0.0,
+                "i_mp": 0.0,
+                "v_mp": 0.0,
+                "p_mp": 0.0,
+                "i_x": 0.0,
+                "i_xx": 0.0,
+            }
+
+        dict_list["Iph"].append(PV_params_eff["photocurrent"])
+        dict_list["Isat"].append(PV_params_eff["saturation_current"])
+        dict_list["Rs"].append(PV_params_eff["resistance_series"])
+        dict_list["Rp"].append(PV_params_eff["resistance_shunt"])
+        dict_list["nNsVt"].append(PV_params_eff["nNsVth"])
+        dict_list["Isc"].append(round(float(singleDiode["i_sc"]), 4))
+        dict_list["Voc"].append(round(float(singleDiode["v_oc"]), 4))
+        dict_list["Impp"].append(round(float(singleDiode["i_mp"]), 4))
+        dict_list["Vmpp"].append(round(float(singleDiode["v_mp"]), 4))
+        dict_list["Pmpp"].append(round(float(singleDiode["p_mp"]), 4))
+
+    df_values = pd.DataFrame({"Iph": dict_list["Iph"],
+                              "Isat": dict_list["Isat"],
+                              "Rs": dict_list["Rs"],
+                              "Rp": dict_list["Rp"],
+                              "nNsVt": dict_list["nNsVt"],
+                              "Isc": dict_list["Isc"],
+                              "Voc": dict_list["Voc"],
+                              "Impp": dict_list["Impp"],
+                              "Vmpp": dict_list["Vmpp"],
+                              "Pmpp": dict_list["Pmpp"]
+                              })
+
+    return pd.concat([conditions, df_values], axis=1)
+
+def get_dict_replace(dict_rename: dict, dict_params: dict) ->dict:
+
+    dict_replace = {}
+
+    for key, value in dict_rename.items():
+        dict_replace[value] = f"{dict_params[value]['label']}{dict_params[value]['unit']}"
+
+    return dict_replace
+
+def get_final_dataframe(df_pv: pd.DataFrame, df_input: pd.DataFrame, dict_replace: dict, dict_conditions: dict, list_output: list) -> pd.DataFrame:
+
+    df_pv["Pmpp"] = round(df_pv["Pmpp"]/1000, 4)
+    df_pv.drop(columns=[key for key in dict_conditions], inplace=True)
+    df_pv.rename(columns=dict_replace, inplace=True)
+    df_pv = df_pv[[item.split(":")[0] for item in list_output]]
+
+    return pd.concat([df_input, df_pv], axis=1)
+
+def get_labels_params_output(show_output, dict_show_output):
+
+    labels_output = []
+    for key in show_output:
+        labels_output.append(dict_show_output[key])
+
+    return labels_output
+
+def get_col_for_length(length):
+
+    if length == 1:
+        col1 = st.columns(1)
+        return [col1]
+    elif length == 2:
+        col1, col2 = st.columns(2)
+        return [col1, col2]
+    elif length == 3:
+        col1, col2, col3 = st.columns(3)
+        return [col1, col2, col3]
+
+    return
+
+def get_current_and_power_with_voltage(df, voltage, photocurrent, saturation_current, resistance_series, resistance_shunt, nNsVth, method):
+
+    voltage = np.linspace(0., df['Voc'].values, 100)
+
+    data_i_from_v = {
+        "voltage": voltage,
+        "photocurrent": df["Iph"].values,
+        "saturation_current": df["Isat"].values,
+        "resistance_series": df["Rs"].values,
+        "resistance_shunt": df["Rp"].values,
+        "nNsVth": df["nNsVt"].values,
+        "method": "lambertw"
+        }
+    
+    current = pvlib.pvsystem.i_from_v(**data_i_from_v)
+    power = voltage*current
+
+    return voltage.T, current.T, power.T
+
 #%% funtions streamlit
 
 def get_widget_number_input(label: str, variable: dict):
@@ -122,3 +264,73 @@ def get_expander_params(list_show_output):
         show_output = st.multiselect(label="Seleccionar parámetros", options=list_show_output, default=list_show_output)
 
     return show_output
+
+def get_print_params_dataframe(dataframe: pd.DataFrame, params_label: list, dict_param: dict, head_column: list):
+
+    dataframe = dataframe[params_label]
+    colors_string = [":grey[{0}]", ":blue[{0}]", ":red[{0}]"]
+
+    with st.container(border=True):
+        list_columns_title = get_col_for_length(len(head_column))
+
+        for i in range(0,len(head_column),1):
+            list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
+
+        for i in range(0,len(params_label),1):
+            label = get_label_params(dict_param=dict_param[params_label[i]])
+
+            list_columns = get_col_for_length(len(head_column))
+
+            list_columns[0].markdown(colors_string[0].format(label))
+
+            for index, row in dataframe.iterrows():
+                list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
+                
+    return
+
+def curveMulti_x_y(conditions: pd.DataFrame, x, y, df_info: pd.DataFrame, option: str):
+
+    list_color = ["tab:blue", "tab:orange"]
+
+    fig, ax = plt.subplots()
+
+    for idx, case in conditions.iterrows():
+        label = ("$G_{eff}$ " + f"{case['Geff']} $W/m^2$\n"
+                 "$T_{cell}$ " + f"{case['Toper']} $\\degree C$")
+        
+        ax.plot(x[idx], y[idx], label=label)
+
+        if option == "current":
+            p_x = df_info.loc[idx, 'Vmpp']
+            p_y = df_info.loc[idx, 'Impp']
+
+            pi_x =  [[p_x, p_x], [0, p_x]]
+            pi_y = [[0, p_y], [p_y, p_y]]
+
+            ax.set_ylabel("Corriente (A)")
+
+        elif option == "power":
+            p_x = df_info.loc[idx, 'Vmpp']
+            p_y = np.max(y[idx])
+
+            pi_x = [[p_x, p_x], [0, p_x]]
+            pi_y = [[0, p_y], [p_y, p_y]]
+
+            ax.set_ylabel("Potencia (W)")
+
+        for i in range(0,len(pi_x), 1):
+            ax.plot(pi_x[i], pi_y[i], color=list_color[idx], linestyle='--')
+
+        ax.plot([p_x], [p_y], ls='', marker='o', color=list_color[idx])
+
+    ax.set_xlabel("Voltaje (V)")
+    ax.grid(True)
+    ax.legend()
+
+    with st.container(border=True):
+        st.pyplot(fig)
+
+    return
+
+
+

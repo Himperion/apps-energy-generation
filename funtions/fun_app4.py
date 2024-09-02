@@ -2,10 +2,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import streamlit as st
+import datetime as dt
 from io import BytesIO
 import pvlib, yaml
 
 #%% funtions general
+
+def name_file_head(name: str) -> str:
+    now = dt.datetime.now()
+    return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
 def changeUnitsK(K, Base):
 
@@ -118,24 +123,24 @@ def get_col_for_length(length):
 def get_print_params_dataframe(dataframe: pd.DataFrame, params_label: list, dict_param: dict, head_column: list):
 
     dataframe = dataframe[params_label]
-        
     colors_string = [":grey[{0}]", ":blue[{0}]", ":red[{0}]"]
 
-    list_columns_title = get_col_for_length(len(head_column))
+    with st.container(border=True):
+        list_columns_title = get_col_for_length(len(head_column))
 
-    for i in range(0,len(head_column),1):
-        list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
+        for i in range(0,len(head_column),1):
+            list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
 
-    for i in range(0,len(params_label),1):
-        label = get_label_params(dict_param=dict_param[params_label[i]])
+        for i in range(0,len(params_label),1):
+            label = get_label_params(dict_param=dict_param[params_label[i]])
 
-        list_columns = get_col_for_length(len(head_column))
+            list_columns = get_col_for_length(len(head_column))
 
-        list_columns[0].markdown(colors_string[0].format(label))
+            list_columns[0].markdown(colors_string[0].format(label))
 
-        for index, row in dataframe.iterrows():
-            list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
-            
+            for index, row in dataframe.iterrows():
+                list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
+                
     return
 
 def curve_x_y(x, y, points, lines, title, xlabel, ylabel):
@@ -168,7 +173,8 @@ def curve_x_y(x, y, points, lines, title, xlabel, ylabel):
     ax.set_ylabel(ylabel)
     ax.grid(True)
 
-    st.pyplot(fig)
+    with st.container(border=True):
+        st.pyplot(fig)
 
     return
 

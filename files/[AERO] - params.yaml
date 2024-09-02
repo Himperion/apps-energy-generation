@@ -8,9 +8,9 @@ D:
     step: null
     value: 1.75
   unit: (m)
-P_nom:
+Pnom:
   description: Pontencia nominal
-  label: P_nom
+  label: Pnom
   number_input:
     format: '%.3f'
     max_value: 550.0
@@ -18,9 +18,9 @@ P_nom:
     step: null
     value: 0.8
   unit: (kW)
-V_in:
+Vin:
   description: Velocidad de arranque
-  label: V_in
+  label: Vin
   number_input:
     format: '%.3f'
     max_value: 6.0
@@ -28,9 +28,9 @@ V_in:
     step: null
     value: 3.5
   unit: (m/s)
-V_max:
+Vmax:
   description: "Velocidad m\xE1xima"
-  label: V_max
+  label: Vmax
   number_input:
     format: '%.3f'
     max_value: 80.0
@@ -38,9 +38,9 @@ V_max:
     step: null
     value: 60.0
   unit: (m/s)
-V_nom:
+Vnom:
   description: Velocidad nominal
-  label: V_nom
+  label: Vnom
   number_input:
     format: '%.3f'
     max_value: 16.0

@@ -4,6 +4,7 @@ import numpy as np
 import yaml
 from io import BytesIO
 #from funtions import funtions, funtions_st
+import pvlib
 from funtions import fun_app5
 
 #%% funtions
@@ -39,7 +40,8 @@ options_celltype = fun_app5.celltype_options(celltype)
 
 select_data_entry_options = ["🔧 Parámetros del panel",
                              "🪟 Datos del panel",
-                             "💾 Cargar archivo de parámetros YAML"]
+                             "💾 Cargar archivo de datos del panel fotovoltaico YAML",
+                             "💾 Cargar archivo de parámetros del panel fotovoltaico YAML"]
 
 options_sel_oper = ["📗 Única",
                     "📚 Múltiple"]
@@ -119,8 +121,6 @@ with tab2:
         with st.container(border=True):
             st.markdown("**:blue[{0}:]**".format("Características de temperatura"))
             
-            NOCT = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["NOCT"]),
-                                                    variable=dict_params["NOCT"]["number_input"])
             Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Alfa"]),
                                                     variable=dict_params["Alfa"]["number_input"])
             Beta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Beta"]),
@@ -131,10 +131,25 @@ with tab2:
         with st.container(border=True):
             st.markdown("**:blue[{0}:]**".format("Características mecánicas"))
             
-            cell_type = st.selectbox("Tecnologia", options=options_celltype, index=0)
+            cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
             Ns = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Ns"]),
                                                   variable=dict_params["Ns"]["number_input"])
+            
+    elif data_entry_options == select_data_entry_options[2] or data_entry_options == select_data_entry_options[3]:
+        with st.container(border=True):
+            uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
+            
+    with st.container(border=True):
+        st.markdown("**:blue[{0}:]**".format("Conexión de los módulos"))
+        col1, col2 = st.columns(2)
+
+        with col1:
+            PVs = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["PVs"]),
+                                                   variable=dict_params["PVs"]["number_input"])
+        with col2:
+            PVp = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["PVp"]),
+                                                   variable=dict_params["PVp"]["number_input"])
             
     with st.container(border=True):
         st.markdown("**:blue[{0}:]**".format("Condiciones de operación del módulo"))
@@ -157,7 +172,7 @@ with tab2:
             label_Gef_Toper = "Cargar archivo {0} y {1}".format("**Irradiancia efectiva** (m/s)", "**Temperatura de operación del módulo** (°C).")
             archive_Gef_Toper = st.file_uploader(label=label_Gef_Toper, type={"xlsx"})
                 
-            fun_app5.get_download_button(**template)
+            fun_app5.get_download_button(**template)            
 
     show_output = fun_app5.get_expander_params(list_show_output)
 
@@ -165,6 +180,7 @@ with tab2:
 
     if app_submitted:
         conditions, PV_params = None, None
+        columns_options_sel = {'Geff': 'Gin(W/m²)', 'Toper': 'Toper(°C)'}
 
         if data_entry_options == select_data_entry_options[0]:
 
@@ -194,189 +210,89 @@ with tab2:
             
             PV_params = fun_app5.get_PV_params(**PV_data)
 
-        elif data_entry_options == select_data_entry_options[2]:
-
-            uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML",
-                                                  type=["yaml", "yml"])
-            
+        elif data_entry_options == select_data_entry_options[2] or data_entry_options == select_data_entry_options[3]:
             if uploaded_file_yaml is not None:
-                PV_params = yaml.safe_load(uploaded_file_yaml)
+                try:
+                    if data_entry_options == select_data_entry_options[2]:
+                        PV_data = yaml.safe_load(uploaded_file_yaml)
+                        PV_params = fun_app5.get_PV_params(**PV_data)
+                    else:
+                        PV_params = yaml.safe_load(uploaded_file_yaml)
+                except:
+                    st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+            else:
+                st.warning("Cargar archivo **YAML** (.yaml)", icon="⚠️")
 
         if option_sel == options_sel_oper[0]:
             conditions = pd.DataFrame([(1000, 25), (Geff, Toper)], columns=['Geff', 'Toper'])
 
-        if option_sel == options_sel_oper[1] and archive_Gef_Toper is not None:
-            df_input = pd.read_excel(archive_Gef_Toper)
+        elif option_sel == options_sel_oper[1]:
+            if archive_Gef_Toper is not None:
+                check = False
+                try:
+                    df_input = pd.read_excel(archive_Gef_Toper)
+                    df_pv, check, columns_options_sel = fun_app5.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
+                except:
+                    st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
 
-            df_pv, check, columns_options_sel = fun_app5.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
-
-            if check:
-                conditions = fun_app5.get_dataframe_conditions(dataframe=df_pv, columns_options_sel=columns_options_sel)
+                if check:
+                    conditions = fun_app5.get_dataframe_conditions(dataframe=df_pv, columns_options_sel=columns_options_sel)
+                else:
+                    st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
             else:
                 st.warning("Falta cargar archivo **Excel** (.xlsx)", icon="⚠️")
 
         if conditions is not None and PV_params is not None:
-            st.text(PV_params)
-            st.dataframe(conditions)
-        
+            
+            dict_replace = fun_app5.get_dict_replace(dict_rename, dict_params)
+            df_pv = fun_app5.get_singlediode(conditions, PV_params, PVs, PVp)
+
+            if option_sel == options_sel_oper[0]:
+                data_i_from_v = {
+                        "voltage": np.linspace(0., df_pv['Voc'].values, 100),
+                        "photocurrent": df_pv["Iph"].values,
+                        "saturation_current": df_pv["Isat"].values,
+                        "resistance_series": df_pv["Rs"].values,
+                        "resistance_shunt": df_pv["Rp"].values,
+                        "nNsVth": df_pv["nNsVt"].values,
+                        "method": "lambertw"
+                    }
                 
-            
-
-    
-            
-    
-    
-            
-
-
-
-    """
-
-
-    with st.container(border=True):
-        st.markdown("**:blue[{0}:]**".format("Parámetros del módulo"))
-        
-        Alfa = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Alfa"]),
-                                                   variable=dict_params["Alfa"]["number_input"])
-        
-        Iph = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Iph"]),
-                                                   variable=dict_params["Iph"]["number_input"])
-        
-        Isat = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Isat"]),
-                                                   variable=dict_params["Isat"]["number_input"])
-        
-        Rs = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Rs"]),
-                                                 variable=dict_params["Rs"]["number_input"])
-        
-        Rp = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Rp"]),
-                                                 variable=dict_params["Rp"]["number_input"])
-        
-        nNsVt = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["nNsVt"]),
-                                                    variable=dict_params["nNsVt"]["number_input"])
-        
-        cell_type = st.selectbox("Tecnologia", options=options_celltype, index=6)
-
-    with st.container(border=True):
-        st.markdown("**:blue[{0}:]**".format("Conexión de los módulos"))
-        col1, col2 = st.columns(2)
-
-        with col1:
-            PVs = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["PVs"]),
-                                                      variable=dict_params["PVs"]["number_input"])
-        
-        with col2:
-            PVp = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["PVp"]),
-                                                      variable=dict_params["PVp"]["number_input"])
-
-    with st.container(border=True):
-        st.markdown("**:blue[{0}:]**".format("Condiciones de operación del módulo"))
-
-        option_sel = st.radio(label="Opciones para el ingreso de condiciones",
-                              options=options_sel_oper,
-                              captions=["Ingreso de una única condición de irradiancia y temperatura de operación.",
-                                        "Ingreso de múltiples condiciones de irradiancia y temperatura de operación."])
-        
-        if option_sel == options_sel_oper[0]:
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                Geff = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Geff"]),
-                                                           variable=dict_params["Geff"]["number_input"])
+                v, i, p = fun_app5.get_current_and_power_with_voltage(df=df_pv, **data_i_from_v)
                 
-            with col2:
-                Toper = funtions_st.get_widget_number_input(label=funtions.get_label_params(dict_param=dict_params["Toper"]),
-                                                            variable=dict_params["Toper"]["number_input"])
-            
-        elif option_sel == options_sel_oper[1]:
-            archive_Gef_Toper = st.file_uploader("Cargar archivo {0} y {1}".format("**Irradiancia efectiva** (m/s)",
-                                                                                   "**Temperatura de operación del módulo** (°C)."),
-                                                 type={"xlsx"})
-                
-            funtions_st.get_download_button(**template)
+                sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Parámetros Ajustados", "📈 Curva I-V", "📉 Curva P-V"])
 
-    show_output = funtions_st.get_expander_params(list_show_output)
-
-    app_5_submitted = st.button("Aceptar")
-
-    
-
-
-    if app_5_submitted:
-        STD_params = {
-            "photocurrent": Iph,
-            "saturation_current": Isat,
-            "resistance_series": Rs,
-            "resistance_shunt": Rp,
-            "nNsVth": nNsVt
-            }
-        
-        Input_desoto = {
-            "Alfa": Alfa,
-            "SDE_params": STD_params,
-            "cell_type": cell_type,
-            "dict_value_Egap": dict_value_Egap,
-            "array_serie": PVs,
-            "array_parallel": PVp
-        }
-
-        labels_output = funtions.get_labels_params_output(show_output, dict_show_output)
-        
-        if option_sel == options_sel_oper[0]:
-
-            conditions = pd.DataFrame([(1000, 25), (Geff, Toper)], columns=['Geff', 'Toper'])
-            df_info, v, i, p = funtions.get_params_desoto(conditions=conditions, rename=dict_rename, curve=True, **Input_desoto)
-
-            sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Parámetros Ajustados", "📈 Curva I-V", "📉 Curva P-V"])
-
-            with sub_tab1:
-                head_column = ["", "Condiciones STC", "Ajuste de operación"]
-
-                funtions_st.get_print_params_dataframe(df_info, labels_output, dict_params, head_column)
-
-            with sub_tab2:
-                funtions_st.curveMulti_x_y(conditions, v, i, df_info, option="current")
-
-            with sub_tab3:
-                funtions_st.curveMulti_x_y(conditions, v, p, df_info, option="power")
-        
-        if option_sel == options_sel_oper[1]:
-            if archive_Gef_Toper is not None:
-                df_input = pd.read_excel(archive_Gef_Toper)
-
-                df_pv, check, columns_options_sel = funtions.check_dataframe_input(dataframe=df_input,
-                                                                                   options=items_options_columns_df)
-                
-                if check:
-                    df_conditions = funtions.get_dataframe_conditions(dataframe=df_pv, columns_options_sel=columns_options_sel)
-
-                    df_info = funtions.get_params_desoto(conditions=df_conditions, rename=dict_rename, curve=False, **Input_desoto)
-
-                    dict_replace = funtions.get_dict_replace(dict_rename, dict_params)
+                with sub_tab1:
+                    labels_output = fun_app5.get_labels_params_output(show_output, dict_show_output)
+                    head_column = ["Parámetro", "Condiciones STC", "Ajuste de operación"]
                     
-                    df_info.rename(columns=dict_replace, inplace=True)
-                    df_info.drop(columns=["i_x", "i_xx"], inplace=True)
-                    df_info = df_info[[item.split(":")[0] for item in show_output]]
-                    df_info = pd.concat([df_pv, df_info], axis=1)
+                    fun_app5.get_print_params_dataframe(df_pv, labels_output, dict_params, head_column)
 
+                with sub_tab2:
+                    fun_app5.curveMulti_x_y(conditions, v, i, df_pv, option="current")
                     
-                    st.dataframe(df_info)
+                with sub_tab3:
+                    fun_app5.curveMulti_x_y(conditions, v, p, df_pv, option="power")
 
-                    excel = to_excel(df_info)
-                    
-                    st.download_button(label="📄 Descargar muestras",
-                                       data=excel,
-                                       file_name=funtions.name_file_head(name="parametersPV.xlsx"),
-                                       mime="xlsx")
+            elif option_sel == options_sel_oper[1]:
 
+                df_pv = fun_app5.get_final_dataframe(df_pv=df_pv,
+                                                     df_input=df_input,
+                                                     dict_replace=dict_replace,
+                                                     dict_conditions=columns_options_sel,
+                                                     list_output=show_output)
 
-                
+                sub_tab1, sub_tab2 = st.tabs(["📋 Parámetros Ajustados", "💾 Descargas"])
 
-                    
+                with sub_tab1:
+                    with st.container(border=True):
+                        st.dataframe(df_pv)
 
-                
-                else:
-                    st.warning("Falta cargar archivo **Excel** (.xlsx)", icon="⚠️")
+                with sub_tab2:
+                    excel = to_excel(df_pv)
 
-            
-
-    """
+                    with st.container(border=True):
+                        st.download_button(label="📄 Descargar **:blue[archivo de pámateros ajustados]** del panel fotovoltaico **XLSX**",
+                                           data=excel,
+                                           file_name=fun_app5.name_file_head(name="PV_paramsAjust.xlsx"),
+                                           mime="xlsx")
