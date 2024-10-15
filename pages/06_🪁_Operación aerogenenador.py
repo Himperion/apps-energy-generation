@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import yaml
 from io import BytesIO
-#from funtions import funtions, funtions_st
 from funtions import fun_app6
 
 #%% funtions
@@ -51,7 +51,7 @@ with tab2:
     
     if data_entry_options == select_data_entry_options[0]:
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Parámetros del aerogenerador"))
+            st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del aerogenerador"))
             
             D = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["D"]),
                                                     variable=dict_params["D"]["number_input"])
@@ -69,7 +69,7 @@ with tab2:
             uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
 
     with st.container(border=True):
-        st.markdown("**:blue[{0}:]**".format("Datos del sitio"))
+        st.markdown("📌 **:blue[{0}:]**".format("Datos del sitio"))
     
         rho = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["rho"]),
                                                   variable=dict_params["rho"]["number_input"])

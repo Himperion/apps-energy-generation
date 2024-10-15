@@ -253,7 +253,7 @@ def get_download_button(directory: str, name_file: str, format_file: str, descri
     with open(f"{directory}/{name_file}.{format_file}", "rb") as content_xlsx:
                 st.download_button(label=f"📄 Descargar plantilla **:red[{description}]**:",
                                    data=content_xlsx,
-                                   file_name=name_file,
+                                   file_name=f"{name_file}.{format_file}",
                                    mime=format_file)
                 
     return

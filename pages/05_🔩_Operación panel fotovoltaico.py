@@ -1,10 +1,9 @@
+# -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
 import numpy as np
 import yaml
 from io import BytesIO
-#from funtions import funtions, funtions_st
-import pvlib
 from funtions import fun_app5
 
 #%% funtions
@@ -85,7 +84,7 @@ with tab2:
     if data_entry_options == select_data_entry_options[0]:
 
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Parámetros del módulo en condiciones STC"))
+            st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del módulo en condiciones STC"))
             
             Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Alfa"]),
                                                     variable=dict_params["Alfa"]["number_input"])
@@ -105,7 +104,7 @@ with tab2:
     elif data_entry_options == select_data_entry_options[1]:
 
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Características eléctricas"))
+            st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
             col1, col2 = st.columns(2)
             with col1:
                 Vmpp = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Vmpp"]),
@@ -119,7 +118,7 @@ with tab2:
                                                        variable=dict_params["Isc"]["number_input"])
             
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Características de temperatura"))
+            st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
             
             Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Alfa"]),
                                                     variable=dict_params["Alfa"]["number_input"])
@@ -129,7 +128,7 @@ with tab2:
                                                      variable=dict_params["Delta"]["number_input"])
         
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Características mecánicas"))
+            st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
             
             cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
@@ -141,7 +140,7 @@ with tab2:
             uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
             
     with st.container(border=True):
-        st.markdown("**:blue[{0}:]**".format("Conexión de los módulos"))
+        st.markdown("🧑‍🔧 **:blue[{0}:]**".format("Conexión de los módulos"))
         col1, col2 = st.columns(2)
 
         with col1:
@@ -152,7 +151,7 @@ with tab2:
                                                    variable=dict_params["PVp"]["number_input"])
             
     with st.container(border=True):
-        st.markdown("**:blue[{0}:]**".format("Condiciones de operación del módulo"))
+        st.markdown("🌞 **:blue[{0}:]**".format("Condiciones de operación del módulo"))
 
         option_sel = st.radio(label="Opciones para el ingreso de condiciones",
                               options=options_sel_oper,
@@ -240,7 +239,7 @@ with tab2:
                 else:
                     st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
             else:
-                st.warning("Falta cargar archivo **Excel** (.xlsx)", icon="⚠️")
+                st.warning("Cargar archivo **Excel** (.xlsx)", icon="⚠️")
 
         if conditions is not None and PV_params is not None:
             

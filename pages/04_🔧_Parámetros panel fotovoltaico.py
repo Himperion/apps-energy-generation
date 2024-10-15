@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -68,13 +70,13 @@ with tab2:
     if data_entry_options == select_data_entry_options[0]:
 
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Características eléctricas"))
+            st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
             col1, col2 = st.columns(2)
             with col1:
                 Vmpp = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Vmpp"]),
                                                         variable=dict_params["Vmpp"]["number_input"])
                 Voc = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Voc"]),
-                                                    variable=dict_params["Voc"]["number_input"])
+                                                       variable=dict_params["Voc"]["number_input"])
             with col2:
                 Impp = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Impp"]),
                                                         variable=dict_params["Impp"]["number_input"])
@@ -83,7 +85,7 @@ with tab2:
                                                     variable=dict_params["Isc"]["number_input"])
                 
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Características de temperatura"))
+            st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
                 
             Alfa = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Alfa"]),
                                                     variable=dict_params["Alfa"]["number_input"])
@@ -93,7 +95,7 @@ with tab2:
                                                     variable=dict_params["Delta"]["number_input"])
             
         with st.container(border=True):
-            st.markdown("**:blue[{0}:]**".format("Características mecánicas"))
+            st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
                 
             cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
