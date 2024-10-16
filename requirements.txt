@@ -1,4 +1,4 @@
-altair==5.3.0
+altair==4.2.2
 attrs==23.2.0
 blinker==1.8.2
 branca==0.7.2
@@ -9,6 +9,7 @@ click==8.1.7
 colorama==0.4.6
 contourpy==1.2.1
 cycler==0.12.1
+entrypoints==0.4
 et-xmlfile==1.1.0
 folium==0.17.0
 fonttools==4.53.1
@@ -26,8 +27,9 @@ markdown-it-py==3.0.0
 MarkupSafe==2.1.5
 matplotlib==3.9.1
 mdurl==0.1.2
+NREL-PySAM==5.1.0
 numpy==1.26.4
-openpyxl==3.1.5
+openpyxl==3.1.2
 packaging==23.2
 pandas==2.2.2
 pillow==10.4.0
@@ -41,6 +43,8 @@ pyogrio==0.9.0
 pyparsing==3.1.2
 pyproj==3.6.1
 python-dateutil==2.9.0.post0
+python-decouple==3.8
+python-dotenv==1.0.1
 pytz==2024.1
 PyYAML==6.0.1
 referencing==0.35.1
@@ -51,8 +55,9 @@ scipy==1.14.0
 shapely==2.0.5
 six==1.16.0
 smmap==5.0.1
-streamlit==1.31.0
-streamlit-folium==0.18.0
+streamlit==1.37.0
+streamlit-aggrid==1.0.5
+streamlit_folium==0.22.0
 tenacity==8.5.0
 toml==0.10.2
 toolz==0.12.1
@@ -63,6 +68,6 @@ tzlocal==5.2
 urllib3==2.2.2
 validators==0.32.0
 watchdog==4.0.1
-xarray==2024.7.0
+xarray==2024.6.0
 xyzservices==2024.6.0
 zipp==3.19.2
