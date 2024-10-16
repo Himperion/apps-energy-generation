@@ -179,4 +179,5 @@ with tab2:
                             file_name=fun_app6.name_file_head(name="AERO_windTurbinePower.xlsx"),
                             mime="xlsx")
         else:
-            st.warning("Falta cargar archivo **Excel** (.xlsx)", icon="⚠️")
+            if archive_Vwind is None:
+                st.warning("Falta cargar archivo **Excel** (.xlsx)", icon="⚠️")

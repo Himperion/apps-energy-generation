@@ -59,6 +59,14 @@ def get_bytes_yaml(dictionary: dict):
 
     return buffer
 
+def get_data_PV(dir: str, sheet_label: str) -> pd.DataFrame:
+
+    df_data = pd.read_excel(dir, sheet_name=sheet_label)
+    data_filter_pv = get_filtering_options_pv(df_data)
+    df_data = get_filter_component_pv(df_data, **data_filter_pv)
+
+    return df_data
+
 #%% funtions streamlit
 
 def get_filter_component_pv(dataframe, min_p_max, max_p_max, min_v_oc, max_v_oc, min_i_sc, max_i_sc, list_celltype, list_manufacturer):
@@ -154,6 +162,18 @@ def print_data(dataframe: pd.DataFrame, columns_print: list):
             with col2:
                 st.markdown(dataframe.loc[0, columns_print[i]])
 
+    return
 
+def download_button_PV(selected_row: pd.DataFrame):
+
+    PV_data = get_dict_PV_data(selected_row=selected_row)
+    buffer_data = get_bytes_yaml(dictionary=PV_data)
+
+    st.download_button(
+        label="📑 Descargar **:blue[archivo de datos]** del panel fotovoltaico **YAML**",
+        data=buffer_data,
+        file_name=name_file_head(name="PV_data.yaml"),
+        mime="text/yaml"
+        )
 
     return

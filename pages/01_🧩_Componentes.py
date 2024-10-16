@@ -11,12 +11,18 @@ dir_components = "files//[DATA] - Components.xlsx"
 
 text_header = "Esta sección permite visualizar los componentes que pueden integrar su proyecto de generación eléctrica."
 
-list_sel_components = ['🪟 Módulos fotovoltaicos',
-                       '🖲️ Inversores ',
-                       '🔋 Baterías',
-                       '📶 Reguladores de carga',
-                       '🪁 Aerogeneradores',
-                       '⛽ Grupo electrógeno']
+dict_components = {
+    "PV": {"label": "🪟 Módulo fotovoltaico", "sheet_label": "PV", "name": "Módulo fotovoltaico"},
+    "INV": {"label": "🖲️ Inversor", "sheet_label": "INV", "name": "Inversor"},
+    "BAT": {"label": "🔋 Baterías", "sheet_label": "BAT", "name": "Baterías"},
+    "RC": {"label": "📶 Regulador de carga", "sheet_label": "RC", "name": "Regulador de carga"},
+    "AERO": {"label": "🪁 Aerogenerador", "sheet_label": "AERO", "name": "Aerogenerador"},
+    "GE": {"label": "⛽ Grupo electrógeno", "sheet_label": "GE", "name": "Grupo electrógeno"}
+}
+
+list_key_components = [key for key in dict_components]
+list_sel_components = [value["label"] for key, value in dict_components.items()]
+list_sheet_components = [value["sheet_label"] for key, value in dict_components.items()]
 
 #%% main
 
@@ -28,62 +34,42 @@ with tab1:
     st.markdown(text_header)
 
 with tab2: 
+    df_data, selected_row = None, None
+
     option_components = st.selectbox(label='Seleccionar componente', options=list_sel_components, index=None,
                                      placeholder='Seleccione una opción')
     
     if option_components is not None:
-        df_database, selected_row = None, None
+        dict_key = list_key_components[list_sel_components.index(option_components)]
+
+        # components
     
         if option_components == list_sel_components[0]:
-            df_database = pd.read_excel(dir_components, sheet_name="PV")
-            data_filter_pv = fun_app1.get_filtering_options_pv(df_database)
-            df_database = fun_app1.get_filter_component_pv(df_database, **data_filter_pv)
+            df_data = fun_app1.get_data_PV(dir_components, dict_components[dict_key]["sheet_label"])
 
-        if df_database is not None:
-            selected_row = fun_app1.dataframe_AgGrid(dataframe=df_database)
+    if df_data is not None:
+        selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)
+
+    if selected_row is not None:
+        selected_columns = selected_row.drop("datasheet", axis=1).columns.tolist()
+        selected_row.reset_index(drop=True, inplace=True)
+
+        with st.container(border=True):
+            st.markdown('**:blue[{0}] {1}**'.format(selected_row.loc[0, "manufacturer"],
+                                                    selected_row.loc[0, "name"]))
             
-        if selected_row is not None:
-            selected_columns = selected_row.drop("datasheet", axis=1).columns.tolist()
-            selected_row.reset_index(drop=True, inplace=True)
+            sub_tab1, sub_tab2 = st.tabs(["📋 Datos", "💾 Descargas"])
 
+            with sub_tab1:
+                fun_app1.print_data(selected_row, selected_columns)
 
-            with st.container(border=True):
-                st.markdown('**:blue[{0}] {1}**'.format(selected_row.loc[0, "manufacturer"],
-                                                        selected_row.loc[0, "name"]))
-                
-                sub_tab1, sub_tab2 = st.tabs(["📋 Datos", "💾 Descargas"])
+            with sub_tab2:
+                url_datasheet = selected_row.loc[0, "datasheet"]
+                label_button = dict_components[dict_key]["name"]
+                st.link_button(f"📑 Descargar **:blue[hoja de datos]** del {label_button} **PDF**", url_datasheet)
 
-                with sub_tab1:
-                    fun_app1.print_data(selected_row, selected_columns)
+                # components
 
-
-                with sub_tab2:
-                    url_datasheet = selected_row.loc[0, "datasheet"]
-                    st.link_button("📑 Descargar **:blue[hoja de datos]** del panel fotovoltaico **PDF**", url_datasheet)
-
-                    if option_components == list_sel_components[0]:
-                        PV_data = fun_app1.get_dict_PV_data(selected_row=selected_row)
-                        buffer_data = fun_app1.get_bytes_yaml(dictionary=PV_data)
-
-                        st.download_button(
-                            label="📑 Descargar **:blue[archivo de datos]** del panel fotovoltaico **YAML**",
-                            data=buffer_data,
-                            file_name=fun_app1.name_file_head(name="PV_data.yaml"),
-                            mime="text/yaml"
-                        )
+                if option_components == list_sel_components[0]:
+                    fun_app1.download_button_PV(selected_row)
                     
-
-                    
-
-                    
-            
-
-            st.text(selected_row)
-            st.text(type(selected_row))
-
-            st.text(selected_row.loc[0, "manufacturer"])
-           
-
-        
-
-

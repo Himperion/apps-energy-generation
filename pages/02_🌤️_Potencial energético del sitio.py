@@ -229,7 +229,7 @@ with tab3:
                 df_output = fun_app2.get_column_Toper(dataframe=df_input,
                                                       options_sel=columns_options_sel,
                                                       NOCT=NOCT,
-                                                      column_name=items_options_columns_df["Tamb"][0])
+                                                      column_name="Toper(°C)")
                 
                 sub_tab1, sub_tab2 = st.tabs(["📋 Parámetros", "💾 Descargas"])
 
