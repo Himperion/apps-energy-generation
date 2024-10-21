@@ -8,6 +8,7 @@ C'0:
     step: null
     value: 1.287
   unit: (l/h)
+  data_type: float
 C'100:
   description: Tasa de consumo a plena carga
   label: C'100
@@ -18,6 +19,7 @@ C'100:
     step: null
     value: 12.8704
   unit: (l/h)
+  data_type: float
 Ct:
   description: Capacidad del tanque
   label: Ct
@@ -28,6 +30,7 @@ Ct:
     step: null
     value: 31.0
   unit: (l)
+  data_type: float
 FP:
   description: Factor de potencia
   label: FP
@@ -38,6 +41,7 @@ FP:
     step: null
     value: 1.0
   unit: ''
+  data_type: float
 Pnom:
   description: Potencia nominal del motor
   label: Pnom
@@ -48,6 +52,7 @@ Pnom:
     step: null
     value: 43.0
   unit: (kW)
+  data_type: float
 Voc:
   description: "Tensi\xF3n de circuito abierto"
   label: Voc
@@ -58,6 +63,7 @@ Voc:
     step: null
     value: 231.0
   unit: (V)
+  data_type: float
 Vpc:
   description: "Tensi\xF3n a plena carga"
   label: Vpc
@@ -68,3 +74,19 @@ Vpc:
     step: null
     value: 220.0
   unit: (V)
+  data_type: float
+PE_fuel:
+  description: PE
+  label: PE_fuel
+  unit: (kWh/l)
+  data_type: float
+fuel_type:
+  description: Combustible
+  label: fuel_type
+  unit: ''
+  data_type: str
+phases:
+  description: "N\xFAmero de fases"
+  label: phases
+  unit: ''
+  data_type: int

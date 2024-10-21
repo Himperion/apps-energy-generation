@@ -8,7 +8,8 @@ D:
     step: null
     value: 1.75
   unit: (m)
-Pnom:
+  data_type: float
+P_nom:
   description: Pontencia nominal
   label: Pnom
   number_input:
@@ -18,7 +19,8 @@ Pnom:
     step: null
     value: 0.8
   unit: (kW)
-Vin:
+  data_type: float
+V_in:
   description: Velocidad de arranque
   label: Vin
   number_input:
@@ -28,7 +30,8 @@ Vin:
     step: null
     value: 3.5
   unit: (m/s)
-Vmax:
+  data_type: float
+V_max:
   description: "Velocidad m\xE1xima"
   label: Vmax
   number_input:
@@ -38,7 +41,8 @@ Vmax:
     step: null
     value: 60.0
   unit: (m/s)
-Vnom:
+  data_type: float
+V_nom:
   description: Velocidad nominal
   label: Vnom
   number_input:
@@ -48,6 +52,7 @@ Vnom:
     step: null
     value: 12.0
   unit: (m/s)
+  data_type: float
 rho:
   description: Densidad del aire
   label: rho
@@ -58,3 +63,4 @@ rho:
     step: null
     value: 1.225
   unit: "(Kg/m\xB3)"
+  data_type: float

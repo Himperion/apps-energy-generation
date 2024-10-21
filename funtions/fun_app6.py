@@ -53,16 +53,15 @@ def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
 
 def get_param_turbine_2_dict(params):
     D = params["D"]
-    rho = params["rho"]
     V_in = params["V_in"]
     V_nom = params["V_nom"]
     V_max = params["V_max"]
     P_nom = params["P_nom"]
 
-    return D, rho, V_in, V_nom, V_max, P_nom
+    return D, V_in, V_nom, V_max, P_nom
 
-def get_power_wind_turbine(params, V_wind):
-    D, rho, V_in, V_nom, V_max, P_nom = get_param_turbine_2_dict(params)
+def get_power_wind_turbine(params, rho, V_wind):
+    D, V_in, V_nom, V_max, P_nom = get_param_turbine_2_dict(params)
 
     A_barrido = np.pi*((0.5*D)**2)
     P_ideal = (0.5*rho*(V_wind**3)*A_barrido)/1000
@@ -82,7 +81,7 @@ def get_power_wind_turbine(params, V_wind):
 
     return P_gen, n, P_ideal, P_betz
 
-def get_dataframe_power_wind_turbine(params: dict, dataframe: pd.DataFrame, column: dict) -> pd.DataFrame:
+def get_dataframe_power_wind_turbine(params: dict, rho: float, dataframe: pd.DataFrame, column: dict) -> pd.DataFrame:
     column_label = column[next(iter(column))]
 
     dataframe["Pideal(kW)"] = ""
@@ -92,7 +91,7 @@ def get_dataframe_power_wind_turbine(params: dict, dataframe: pd.DataFrame, colu
 
     for index, row in dataframe.iterrows():
         Vwind = row[column_label]
-        P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, Vwind)
+        P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, rho, Vwind)
 
         dataframe.loc[index, "Pideal(kW)"] =P_ideal
         dataframe.loc[index, "Pbetz(kW)"] =P_betz
@@ -101,13 +100,13 @@ def get_dataframe_power_wind_turbine(params: dict, dataframe: pd.DataFrame, colu
         
     return dataframe
 
-def get_values_curve_turbine(params):
+def get_values_curve_turbine(params: dict, rho: float) -> pd.DataFrame:
     V_wind_list = np.linspace(0., params["V_max"], 200).tolist()
 
     list_P_gen, list_n, list_P_ideal, list_P_betz = [], [], [], []
 
     for i in range(0,len(V_wind_list),1):
-        P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, V_wind_list[i])
+        P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, rho, V_wind_list[i])
         
         list_P_gen.append(round(P_gen, 4))
         list_n.append(round(n, 4))
@@ -139,10 +138,11 @@ def get_widget_number_input(label: str, variable: dict):
     return st.number_input(label=label, **variable)
 
 def get_download_button(directory: str, name_file: str, format_file: str, description: str):
+
     with open(f"{directory}/{name_file}.{format_file}", "rb") as content_xlsx:
                 st.download_button(label=f"📄 Descargar plantilla **:red[{description}]**:",
                                    data=content_xlsx,
-                                   file_name=name_file,
+                                   file_name=f"{name_file}.{format_file}",
                                    mime=format_file)
                 
     return

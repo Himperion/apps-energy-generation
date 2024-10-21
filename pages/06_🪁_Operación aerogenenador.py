@@ -54,15 +54,15 @@ with tab2:
             st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del aerogenerador"))
             
             D = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["D"]),
-                                                    variable=dict_params["D"]["number_input"])
-            Vin = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["Vin"]),
-                                                    variable=dict_params["Vin"]["number_input"])
-            Vnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["Vnom"]),
-                                                    variable=dict_params["Vnom"]["number_input"])
-            Vmax = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["Vmax"]),
-                                                    variable=dict_params["Vmax"]["number_input"])
-            Pnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["Pnom"]),
-                                                    variable=dict_params["Pnom"]["number_input"])
+                                                 variable=dict_params["D"]["number_input"])
+            Vin = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["V_in"]),
+                                                   variable=dict_params["V_in"]["number_input"])
+            Vnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["V_nom"]),
+                                                    variable=dict_params["V_nom"]["number_input"])
+            Vmax = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["V_max"]),
+                                                    variable=dict_params["V_max"]["number_input"])
+            Pnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["P_nom"]),
+                                                    variable=dict_params["P_nom"]["number_input"])
             
     elif data_entry_options == select_data_entry_options[1]:
         with st.container(border=True):
@@ -86,7 +86,6 @@ with tab2:
         if data_entry_options == select_data_entry_options[0]:
             params_turbine = {
                 "D" : D, 
-                "rho" : rho, 
                 "V_in" : Vin, 
                 "V_nom" : Vnom, 
                 "V_max" : Vmax, 
@@ -111,10 +110,12 @@ with tab2:
 
             if check:
                 df_powerTurbine = fun_app6.get_dataframe_power_wind_turbine(params=params_turbine,
+                                                                            rho=rho,
                                                                             dataframe=df_turbine,
                                                                             column=columns_options_sel)
                 
-                df_values = fun_app6.get_values_curve_turbine(params=params_turbine)
+                df_values = fun_app6.get_values_curve_turbine(params=params_turbine,
+                                                              rho=rho)
 
                 sub_tab1, sub_tab2, sub_tab3, sub_tab4 = st.tabs(["📋 Resultados",
                                                                   "📈 Curva característica del aerogenerador",
@@ -126,7 +127,8 @@ with tab2:
                         st.dataframe(df_powerTurbine)
 
                 with sub_tab2:
-                    df_values = fun_app6.get_values_curve_turbine(params=params_turbine)
+                    df_values = fun_app6.get_values_curve_turbine(params=params_turbine,
+                                                                  rho=rho)
 
                     xval = df_values["V_wind"]
                     yval = df_values["P_gen"]

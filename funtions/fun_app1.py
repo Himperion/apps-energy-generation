@@ -6,11 +6,47 @@ from io import BytesIO
 
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode
 
+#%% global variables
+
+with open("files//[PV] - params.yaml", 'r') as archivo:
+    params_PV = yaml.safe_load(archivo)
+
+with open("files//[AERO] - params.yaml", 'r') as archivo:
+    params_AERO = yaml.safe_load(archivo)
+
+with open("files//[GE] - params.yaml", 'r') as archivo:
+    params_GE = yaml.safe_load(archivo)
+
+with open("files//[GE] - PE.yaml", 'r') as archivo:
+    dict_fuel = yaml.safe_load(archivo)
+
 #%% funtions general
 
 def name_file_head(name: str) -> str:
     now = dt.datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
+
+def get_label_column(params: dict, key: str) -> str:
+
+    if params[key]['unit'] == "":
+        label_column = str(params[key]['label'])
+    else:
+        label_column = f"{params[key]['label']} {params[key]['unit']}"
+
+    return label_column
+
+def selected_row_column(selected_row: pd.DataFrame, params: dict, key: str):
+
+    column_name = get_label_column(params, key)
+
+    if params[key]["data_type"] == "int":
+        output_value = int(selected_row.loc[0, column_name])
+    elif params[key]["data_type"] == "float":
+        output_value = float(selected_row.loc[0, column_name])
+    elif params[key]["data_type"] == "str":
+        output_value = str(selected_row.loc[0, column_name])
+    
+    return output_value
 
 def changeUnitsK(K, Base):
 
@@ -18,36 +54,47 @@ def changeUnitsK(K, Base):
     
     return K_out
 
-def get_filtering_options_pv(dataframe):
+def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
 
-    dict_data_filter_pv = {
-        'min_p_max': dataframe["p_max (W)"].min(),
-        'max_p_max': dataframe['p_max (W)'].max(),
-        'min_v_oc': dataframe['v_oc (V)'].min(),
-        'max_v_oc': dataframe['v_oc (V)'].max(),
-        'min_i_sc': dataframe['i_sc (A)'].min(),
-        'max_i_sc': dataframe['i_sc (A)'].max(),
-        'list_celltype': list(dataframe['celltype'].unique()),
-        'list_manufacturer': list(dataframe['manufacturer'].unique())
-    }
+    if key == "PV":
+        i_sc = selected_row_column(selected_row, params_PV, "Isc")
+        v_oc = selected_row_column(selected_row, params_PV, "Voc")
 
-    return dict_data_filter_pv
-
-def get_dict_PV_data(selected_row: pd.DataFrame) -> dict:
-
-    PV_data = {
-        "celltype": selected_row.loc[0, "celltype"],
-        "v_mp": selected_row.loc[0, "v_mp (V)"],
-        "i_mp": selected_row.loc[0, "i_mp (A)"],
-        "v_oc": selected_row.loc[0, "v_oc (V)"],
-        "i_sc": selected_row.loc[0, "i_sc (A)"],
-        "alpha_sc": changeUnitsK(selected_row.loc[0, "alpha_sc (%/°C)"], selected_row.loc[0, "i_sc (A)"]),
-        "beta_voc": changeUnitsK(selected_row.loc[0, "beta_voc (%/°C)"], selected_row.loc[0, "v_oc (V)"]),
-        "gamma_pmp": selected_row.loc[0, "gamma_pmp (%/°C)"],
-        "cells_in_series": selected_row.loc[0, "cells_in_series"]
+        dict_data = {
+            "celltype": selected_row_column(selected_row, params_PV, "celltype"),
+            "v_mp": selected_row_column(selected_row, params_PV, "Vmpp"),
+            "i_mp": selected_row_column(selected_row, params_PV, "Impp"),
+            "v_oc": v_oc,
+            "i_sc": i_sc,
+            "alpha_sc": changeUnitsK(selected_row_column(selected_row, params_PV, "alpha_sc"), i_sc),
+            "beta_voc": changeUnitsK(selected_row_column(selected_row, params_PV, "beta_voc"), v_oc),
+            "gamma_pmp": selected_row_column(selected_row, params_PV, "gamma_pmp"),
+            "cells_in_series": selected_row_column(selected_row, params_PV, "cells_in_series")
+            }
+    
+    elif key == "GE":
+        dict_data = {
+            "Pnom": selected_row_column(selected_row, params_GE, "Pnom"),
+            "Voc": selected_row_column(selected_row, params_GE, "Voc"),
+            "Vpc": selected_row_column(selected_row, params_GE, "Vpc"),
+            "Fases": selected_row_column(selected_row, params_GE, "phases"),
+            "FP": selected_row_column(selected_row, params_GE, "FP"),
+            "Combustible": selected_row_column(selected_row, params_GE, "fuel_type"),
+            "PE_fuel": dict_fuel[selected_row_column(selected_row, params_GE, "fuel_type")]["PE"],
+            "C100": selected_row_column(selected_row, params_GE, "C'100"),
+            "C0": selected_row_column(selected_row, params_GE, "C'0")
+            }
+        
+    elif key == "AERO":
+        dict_data = {
+            "D" : selected_row_column(selected_row, params_AERO, "D"),
+            "V_in" : selected_row_column(selected_row, params_AERO, "V_in"),
+            "V_nom" : selected_row_column(selected_row, params_AERO, "V_nom"),
+            "V_max" : selected_row_column(selected_row, params_AERO, "V_max"),
+            "P_nom" : selected_row_column(selected_row, params_AERO, "P_nom"),
         }
 
-    return PV_data
+    return dict_data
 
 def get_bytes_yaml(dictionary: dict):
 
@@ -59,79 +106,13 @@ def get_bytes_yaml(dictionary: dict):
 
     return buffer
 
-def get_data_PV(dir: str, sheet_label: str) -> pd.DataFrame:
+def get_data_component(dir: str, sheet_label: str) -> pd.DataFrame:
 
     df_data = pd.read_excel(dir, sheet_name=sheet_label)
-    data_filter_pv = get_filtering_options_pv(df_data)
-    df_data = get_filter_component_pv(df_data, **data_filter_pv)
 
     return df_data
 
 #%% funtions streamlit
-
-def get_filter_component_pv(dataframe, min_p_max, max_p_max, min_v_oc, max_v_oc, min_i_sc, max_i_sc, list_celltype, list_manufacturer):
-
-    with st.expander('✂️ Opciones de filtrado'):
-        with st.container(border=True):
-            col1_1, col1_2 = st.columns([0.4, 0.6])
-
-            checkbox_1 = col1_1.checkbox(label='Potencia máxima (Wp):', value=False)
-            slider_1 = col1_2.slider('Seleccionar el rango:', min_p_max, max_p_max, (min_p_max, max_p_max),
-                                     disabled=not checkbox_1, key='delta_Wp')
-            
-            if checkbox_1:
-                condition1 = dataframe['p_max (W)'] >= slider_1[0]
-                condition2 = dataframe['p_max (W)'] <= slider_1[1]
-
-                dataframe = dataframe[condition1 & condition2]
-
-        with st.container(border=True):
-            col2_1, col2_2 = st.columns([0.4, 0.6])
-
-            checkbox_2 = col2_1.checkbox(label='Tensión de circuito-abierto (V):', value=False) 
-            slider_2 = col2_2.slider('Seleccionar el rango:', min_v_oc, max_v_oc, (min_v_oc, max_v_oc),
-                                     disabled=not checkbox_2, key='delta_Voc')
-            
-            if checkbox_2:
-                condition1 = dataframe['v_oc (V)'] >= slider_2[0]
-                condition2 = dataframe['v_oc (V)'] <= slider_2[1]
-
-                dataframe = dataframe[condition1 & condition2]
-
-        with st.container(border=True):
-            col3_1, col3_2 = st.columns([0.4, 0.6])
-
-            checkbox_3 = col3_1.checkbox(label='Corriente de corto-circuito (A):', value=False)
-            slider_3 = col3_2.slider('Seleccionar el rango:', min_i_sc, max_i_sc, (min_i_sc, max_i_sc),
-                                     disabled=not checkbox_3, key='delta_Isc')
-            
-            if checkbox_3:
-                condition1 = dataframe['Isc (A)'] >= slider_3[0]
-                condition2 = dataframe['Isc (A)'] <= slider_3[1]
-
-                dataframe = dataframe[condition1 & condition2]
-
-        with st.container(border=True):
-            col4_1, col4_2 = st.columns([0.4, 0.6])
-
-            checkbox_4 = col4_1.checkbox(label='celltype:', value=False)
-            selectbox_4 = col4_2.selectbox(label='Seleccione una opción', options=list_celltype, index=0,
-                                           disabled=not checkbox_4)
-            
-            if checkbox_4:
-                dataframe = dataframe[dataframe['celltype'] == selectbox_4]
-
-        with st.container(border=True):
-            col5_1, col5_2 = st.columns([0.4, 0.6])
-
-            checkbox_5 = col5_1.checkbox(label='manufacturer:', value=False)
-            selectbox_5 = col5_2.selectbox(label='Seleccione una opción', options=list_manufacturer, index=0,
-                                           disabled=not checkbox_5)
-            
-            if checkbox_5:
-                dataframe = dataframe[dataframe['manufacturer'] == selectbox_5]
-       
-    return dataframe
 
 def dataframe_AgGrid(dataframe: pd.DataFrame) -> pd.DataFrame:
 
@@ -164,15 +145,16 @@ def print_data(dataframe: pd.DataFrame, columns_print: list):
 
     return
 
-def download_button_PV(selected_row: pd.DataFrame):
+def download_button_component(selected_row: pd.DataFrame, key: str, key_label: str):
 
-    PV_data = get_dict_PV_data(selected_row=selected_row)
+    PV_data = get_dict_data(selected_row=selected_row, key=key)
     buffer_data = get_bytes_yaml(dictionary=PV_data)
+    name = f"{selected_row.loc[0, 'manufacturer']}-{selected_row.loc[0, 'name']}"
 
     st.download_button(
-        label="📑 Descargar **:blue[archivo de datos]** del panel fotovoltaico **YAML**",
+        label=f"📑 Descargar **:blue[archivo de datos]** del {key_label} **YAML**",
         data=buffer_data,
-        file_name=name_file_head(name="PV_data.yaml"),
+        file_name=name_file_head(name=f"{key}_{name}.yaml"),
         mime="text/yaml"
         )
 

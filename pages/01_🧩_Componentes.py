@@ -21,19 +21,22 @@ dict_components = {
 }
 
 list_key_components = [key for key in dict_components]
-list_sel_components = [value["label"] for key, value in dict_components.items()]
+list_sel_components = [value["label"] for value in dict_components.values()]
 list_sheet_components = [value["sheet_label"] for key, value in dict_components.items()]
 
 #%% main
 
 st.markdown("# 🧩 Componentes")
 
-tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"]) 
+tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos", "📂 Listado de componentes"]) 
 
 with tab1: 
     st.markdown(text_header)
 
 with tab2: 
+    st.markdown("tab2")
+
+with tab3: 
     df_data, selected_row = None, None
 
     option_components = st.selectbox(label='Seleccionar componente', options=list_sel_components, index=None,
@@ -42,11 +45,9 @@ with tab2:
     if option_components is not None:
         dict_key = list_key_components[list_sel_components.index(option_components)]
 
-        # components
-    
-        if option_components == list_sel_components[0]:
-            df_data = fun_app1.get_data_PV(dir_components, dict_components[dict_key]["sheet_label"])
-
+        df_data = fun_app1.get_data_component(dir=dir_components,
+                                              sheet_label=dict_components[dict_key]["sheet_label"])
+        
     if df_data is not None:
         selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)
 
@@ -70,6 +71,6 @@ with tab2:
 
                 # components
 
-                if option_components == list_sel_components[0]:
-                    fun_app1.download_button_PV(selected_row)
+                
+                fun_app1.download_button_component(selected_row, dict_key, label_button)
                     

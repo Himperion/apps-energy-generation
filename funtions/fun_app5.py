@@ -249,7 +249,7 @@ def get_widget_number_input(label: str, variable: dict):
     return st.number_input(label=label, **variable)
 
 def get_download_button(directory: str, name_file: str, format_file: str, description: str):
-
+    
     with open(f"{directory}/{name_file}.{format_file}", "rb") as content_xlsx:
                 st.download_button(label=f"📄 Descargar plantilla **:red[{description}]**:",
                                    data=content_xlsx,

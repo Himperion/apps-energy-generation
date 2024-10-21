@@ -22,15 +22,14 @@ def to_excel(df: pd.DataFrame):
 with open("files//[GE] - params.yaml", 'r') as archivo:
     dict_params = yaml.safe_load(archivo)
 
+with open("files//[GE] - PE.yaml", 'r') as archivo:
+    dict_fuel = yaml.safe_load(archivo)
+
 dict_phases = {
     "Monofásico": {"Num": 1, "label": "1️⃣ Monofásico"},
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-dict_fuel = {
-    "Diesel": {"PE": 9.7},
-    "Gasolina": {"PE": 8.9}
-}
 
 select_data_entry_options = ["🛠️ Datos del grupo electrógeno",
                              "💾 Cargar archivo de datos del grupo electrógeno YAML"]

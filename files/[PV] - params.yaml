@@ -1,6 +1,6 @@
-Alfa:
+alpha_sc:
   description: Alfa Coeficiente de temperatura de la Isc
-  label: Alfa
+  label: alpha_sc
   number_input:
     format: '%.4f'
     max_value: 1.0
@@ -8,9 +8,10 @@ Alfa:
     step: null
     value: 0.05
   unit: "(%/\xB0C)"
-Beta:
+  data_type: float
+beta_voc:
   description: Coeficiente de temperatura de la Voc
-  label: Beta
+  label: beta_voc
   number_input:
     format: '%.4f'
     max_value: 0.0
@@ -18,13 +19,15 @@ Beta:
     step: null
     value: -0.27
   unit: "(%/\xB0C)"
+  data_type: float
 C:
   description: Coeficiente de temperatura
   label: C
   unit: "(\xB0C)"
-Delta:
+  data_type: float
+gamma_pmp:
   description: Coeficiente de temperatura de la Pmax
-  label: Delta
+  label: gamma_pmp
   number_input:
     format: '%.4f'
     max_value: 0.0
@@ -32,6 +35,7 @@ Delta:
     step: null
     value: -0.35
   unit: "(%/\xB0C)"
+  data_type: float
 Geff:
   description: Irradiancia efectiva
   label: Gef
@@ -42,6 +46,7 @@ Geff:
     step: null
     value: 1000
   unit: (W/m^2)
+  data_type: float
 Impp:
   description: "Corriente del punto de m\xE1xima potencia"
   label: Impp
@@ -52,6 +57,7 @@ Impp:
     step: null
     value: 11.04
   unit: (A)
+  data_type: float
 Iph:
   description: Corriente fotoinducida
   label: Iph
@@ -62,6 +68,7 @@ Iph:
     step: null
     value: 12.051545
   unit: (A)
+  data_type: float
 Isat:
   description: "Corriente de saturaci\xF3n del diodo"
   label: Isat
@@ -72,6 +79,7 @@ Isat:
     step: null
     value: 4.701633e-11
   unit: (A)
+  data_type: float
 Isc:
   description: Corriente de cortocircuito
   label: Isc
@@ -82,6 +90,7 @@ Isc:
     step: null
     value: 11.67
   unit: (A)
+  data_type: float
 NOCT:
   description: "Temperatura de operaci\xF3n nominal de la celda"
   label: NOCT
@@ -92,9 +101,10 @@ NOCT:
     step: null
     value: 42
   unit: "(\xB0C)"
-Ns:
+  data_type: float
+cells_in_series:
   description: "N\xFAmero de celdas en serie"
-  label: Ns
+  label: cells_in_series
   number_input:
     format: null
     max_value: 200
@@ -102,6 +112,7 @@ Ns:
     step: null
     value: 156
   unit: ''
+  data_type: int
 PVp:
   description: Ramas en paralelo
   label: PVp
@@ -112,6 +123,7 @@ PVp:
     step: null
     value: 1
   unit: ''
+  data_type: int
 PVs:
   description: "M\xF3dulos conectados en serie"
   label: PVs
@@ -122,10 +134,12 @@ PVs:
     step: null
     value: 1
   unit: ''
+  data_type: int
 Pmpp:
   description: "Punto de m\xE1xima potencia"
   label: Pmpp
   unit: (kW)
+  data_type: float
 Rp:
   description: Resistencia en paralelo
   label: Rp
@@ -136,6 +150,7 @@ Rp:
     step: null
     value: 93.409074
   unit: (Ohm)
+  data_type: float
 Rs:
   description: Resistencia serie
   label: Rs
@@ -146,6 +161,7 @@ Rs:
     step: null
     value: 0.217007
   unit: (Ohm)
+  data_type: float
 Toper:
   description: "Temperatura de operaci\xF3n del m\xF3dulo"
   label: Toper
@@ -156,6 +172,7 @@ Toper:
     step: null
     value: 25
   unit: "(\xB0C)"
+  data_type: float
 Vmpp:
   description: "Voltaje de punto de m\xE1xima potencia"
   label: Vmpp
@@ -166,6 +183,7 @@ Vmpp:
     step: null
     value: 44.4
   unit: (V)
+  data_type: float
 Voc:
   description: Voltaje de circuito abierto
   label: Voc
@@ -176,14 +194,17 @@ Voc:
     step: null
     value: 53.1
   unit: (V)
+  data_type: float
 Vt:
   description: "Voltaje t\xE9rmico"
   label: Vt
   unit: (V)
+  data_type: float
 n:
   description: Factor de idealidad del diodo
   label: n
   unit: ''
+  data_type: float
 nNsVt:
   description: "Producto del factor de idealida, el n\xFAmero de celdas en serie y\
     \ el voltaje t\xE9rmico en condiciones STC"
@@ -195,6 +216,7 @@ nNsVt:
     step: null
     value: 2.025063
   unit: ''
+  data_type: float
 Ajuste_Isc:
   description: "Ajuste del coeficiente de temperatura para la corriente de cortocircuito"
   label: Ajuste_Isc
@@ -205,3 +227,14 @@ Ajuste_Isc:
     step: null
     value: 9.081115
   unit: '(%)'
+  data_type: float
+Pmax:
+  description: "Potencia m\xE1xima"
+  label: Pmax
+  unit: '(kW)'
+  data_type: float
+celltype:
+  description: "Tecnolog\xEDa de la celda"
+  label: celltype
+  unit: ''
+  data_type: str
