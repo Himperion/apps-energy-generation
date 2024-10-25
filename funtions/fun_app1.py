@@ -26,6 +26,14 @@ def name_file_head(name: str) -> str:
     now = dt.datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
+def from_value_label_get_key(dict_in: dict, value_label: str) -> str:
+
+    for key, value in dict_in.items():
+        if value["label"] == value_label:
+            return key
+
+    return
+
 def get_label_column(params: dict, key: str) -> str:
 
     if params[key]['unit'] == "":
@@ -112,6 +120,18 @@ def get_data_component(dir: str, sheet_label: str) -> pd.DataFrame:
 
     return df_data
 
+def get_label_params(dict_param: dict) -> str:
+
+    return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
+
+def celltype_options(celltype: dict):
+
+    options = []
+    for key, value in celltype.items():
+        options.append(f"{key} ({value['label']})")
+
+    return options
+
 #%% funtions streamlit
 
 def dataframe_AgGrid(dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -159,3 +179,7 @@ def download_button_component(selected_row: pd.DataFrame, key: str, key_label: s
         )
 
     return
+
+def get_widget_number_input(label: str, variable: dict):
+
+    return st.number_input(label=label, **variable)

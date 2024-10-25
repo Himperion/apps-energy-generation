@@ -82,7 +82,7 @@ with tab2:
                                                         variable=dict_params["Impp"]["number_input"])
                 
                 Isc = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Isc"]),
-                                                    variable=dict_params["Isc"]["number_input"])
+                                                       variable=dict_params["Isc"]["number_input"])
                 
         with st.container(border=True):
             st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
