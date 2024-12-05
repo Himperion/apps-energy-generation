@@ -1,0 +1,78 @@
+Pac_max:
+  data_type: float
+  description: "Potencia AC m\xE1xima"
+  label: Pac_max
+  number_input:
+    format: '%.2f'
+    max_value: 1000.0
+    min_value: 0.01
+    step: null
+    value: 2.5
+  unit: (kW)
+Vac_max:
+  data_type: float
+  description: "Voltaje AC m\xE1ximo"
+  label: Vac_max
+  number_input:
+    format: '%.2f'
+    max_value: 1000.0
+    min_value: 0.0
+    step: null
+    value: 264.0
+  unit: (V)
+Vac_min:
+  data_type: float
+  description: "Voltaje AC m\xEDnimo"
+  label: Vac_max
+  number_input:
+    format: '%.2f'
+    max_value: 1000.0
+    min_value: 0.0
+    step: null
+    value: 264.0
+  unit: (V)
+Vac_nom:
+  data_type: float
+  description: Voltaje AC nominal
+  label: Vac_nom
+  number_input:
+    format: '%.2f'
+    max_value: 1000.0
+    min_value: 1.0
+    step: null
+    value: 240.0
+  unit: (V)
+Vbb_nom:
+  data_type: float
+  description: "Voltaje nominal del banco de bater\xEDas"
+  label: Vbb_nom
+  number_input:
+    format: '%.2f'
+    max_value: 1000.0
+    min_value: 0.0
+    step: null
+    value: 12.0
+  unit: (V)
+efficiency_max:
+  data_type: float
+  description: "Eficiencia m\xE1xima"
+  label: efficiency_max
+  number_input:
+    format: '%.2f'
+    max_value: 100.0
+    min_value: 0.0
+    step: null
+    value: 98.2
+  unit: (%)
+grid_type:
+  data_type: str
+  description: "Conexi\xF3n a red"
+  label: grid_type
+  number_input: {}
+  unit: ''
+phases:
+  data_type: str
+  description: "N\xFAmero de fases"
+  label: phases
+  number_input: {}
+  unit: ''

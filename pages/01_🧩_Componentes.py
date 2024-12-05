@@ -11,6 +11,9 @@ from funtions import fun_app1
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
 
+with open("files//[INV] - params.yaml", 'r') as archivo:
+    params_INV = yaml.safe_load(archivo)
+
 with open("files//[AERO] - params.yaml", 'r') as archivo:
     params_AERO = yaml.safe_load(archivo)
 
@@ -23,11 +26,13 @@ with open("files//[PV] - celltype.yaml", 'r') as archivo:
 with open("files//[GE] - PE.yaml", 'r') as archivo:
     typefuel_GE = yaml.safe_load(archivo)
 
+with open("files//[COMP] - dict_components.yaml", 'r') as archivo:
+    dict_components = yaml.safe_load(archivo)
+
 dict_phases = {
     "Monofásico": {"Num": 1, "label": "1️⃣ Monofásico"},
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
-
 
 options_celltype = fun_app1.celltype_options(celltype_PV)
 
@@ -35,20 +40,17 @@ dir_components = "files//[DATA] - Components.xlsx"
 
 text_header = "Esta sección permite visualizar los componentes que pueden integrar su proyecto de generación eléctrica."
 
-dict_components = {
-    "PV": {"label": "🪟 Módulo fotovoltaico", "sheet_label": "PV", "name": "Módulo fotovoltaico"},
-    "INV": {"label": "🖲️ Inversor", "sheet_label": "INV", "name": "Inversor"},
-    "BAT": {"label": "🔋 Baterías", "sheet_label": "BAT", "name": "Baterías"},
-    "RC": {"label": "📶 Regulador de carga", "sheet_label": "RC", "name": "Regulador de carga"},
-    "AERO": {"label": "🪁 Aerogenerador", "sheet_label": "AERO", "name": "Aerogenerador"},
-    "GE": {"label": "⛽ Grupo electrógeno", "sheet_label": "GE", "name": "Grupo electrógeno"}
-}
-
 list_key_components = [key for key in dict_components]
 list_sel_components = [value["label"] for value in dict_components.values()]
 list_sheet_components = [value["sheet_label"] for key, value in dict_components.items()]
 
 #%% main
+
+if 'component_dict' not in st.session_state:
+    st.session_state['component_dict'] = None
+
+if 'component_description' not in st.session_state:
+    st.session_state['component_description'] = None
 
 st.markdown("# 🧩 Componentes")
 
@@ -58,38 +60,40 @@ with tab1:
     st.markdown(text_header)
 
 with tab2:
-    submitted_general, submitted_PV, submitted_AERO, submitted_GE = False, False, False, False
+    submitted_general, submitted_PV, submitted_AERO, submitted_GE, submitted_GE = False, False, False, False, False
 
     components_tab2 = st.selectbox(label='Seleccionar componente', options=list_sel_components, index=None,
                                    placeholder='Seleccione una opción', key="components_tab2")
-
+    
     if components_tab2 is not None:    
         dict_key = list_key_components[list_sel_components.index(components_tab2)]   
-
+        title = f"{dict_components[dict_key]['emoji']} Parámetros del **:blue[{dict_components[dict_key]['name']}:]**"
+       
         if dict_key == "PV":
             with st.form("PV"):
+                st.markdown(title)
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
                     col1, col2 = st.columns(2)
                     with col1:
                         Vmpp = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Vmpp"]),
-                                                                variable=params_PV["Vmpp"]["number_input"])
+                                                                disabled=False, variable=params_PV["Vmpp"]["number_input"])
                         Voc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Voc"]),
-                                                               variable=params_PV["Voc"]["number_input"])
+                                                               disabled=False, variable=params_PV["Voc"]["number_input"])
                     with col2:
                         Impp = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Impp"]),
-                                                                variable=params_PV["Impp"]["number_input"])
+                                                                disabled=False, variable=params_PV["Impp"]["number_input"])
                         Isc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Isc"]),
-                                                               variable=params_PV["Isc"]["number_input"])
+                                                               disabled=False, variable=params_PV["Isc"]["number_input"])
                 with st.container(border=True):
                     st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
                 
                     alpha_sc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["alpha_sc"]),
-                                                                variable=params_PV["alpha_sc"]["number_input"])
+                                                                disabled=False, variable=params_PV["alpha_sc"]["number_input"])
                     beta_voc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["beta_voc"]),
-                                                                variable=params_PV["beta_voc"]["number_input"])
+                                                                disabled=False, variable=params_PV["beta_voc"]["number_input"])
                     gamma_pmp = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["gamma_pmp"]),
-                                                                 variable=params_PV["gamma_pmp"]["number_input"])
+                                                                 disabled=False, variable=params_PV["gamma_pmp"]["number_input"])
                     
                 with st.container(border=True):
                     st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
@@ -97,107 +101,171 @@ with tab2:
                     cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
                     cells_in_series = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["cells_in_series"]),
-                                                                       variable=params_PV["cells_in_series"]["number_input"])
-
+                                                                       disabled=False, variable=params_PV["cells_in_series"]["number_input"])
 
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
-                    submitted_general, submitted_PV = True, True
+                    st.session_state['component_dict'] = {
+                        "celltype": fun_app1.for_options_get_celltype(cell_type),
+                        "v_mp": Vmpp,
+                        "i_mp": Impp,
+                        "v_oc": Voc,
+                        "i_sc": Isc,
+                        "alpha_sc": fun_app1.changeUnitsK(alpha_sc, Isc),
+                        "beta_voc": fun_app1.changeUnitsK(beta_voc, Voc),
+                        "gamma_pmp": gamma_pmp,
+                        "cells_in_series": cells_in_series
+                        }
+                    
+                    st.session_state['component_description'] = ("PV", "Panel fotovoltaico")
 
         elif dict_key == "AERO":
-            with st.form("PV"):
-                st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del aerogenerador"))
+            with st.form("AERO"):
+                st.markdown(title)
             
                 D = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["D"]),
-                                                     variable=params_AERO["D"]["number_input"])
+                                                     disabled=False, variable=params_AERO["D"]["number_input"])
                 Vin = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["V_in"]),
-                                                       variable=params_AERO["V_in"]["number_input"])
+                                                       disabled=False, variable=params_AERO["V_in"]["number_input"])
                 Vnom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["V_nom"]),
-                                                        variable=params_AERO["V_nom"]["number_input"])
+                                                        disabled=False, variable=params_AERO["V_nom"]["number_input"])
                 Vmax = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["V_max"]),
-                                                        variable=params_AERO["V_max"]["number_input"])
+                                                        disabled=False, variable=params_AERO["V_max"]["number_input"])
                 Pnom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["P_nom"]),
-                                                        variable=params_AERO["P_nom"]["number_input"])
+                                                        disabled=False, variable=params_AERO["P_nom"]["number_input"])
                 
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
-                    submitted_general, submitted_AERO = True, True
+                    st.session_state['component_dict'] = {
+                        "D" : D, 
+                        "V_in" : Vin, 
+                        "V_nom" : Vnom, 
+                        "V_max" : Vmax, 
+                        "P_nom" : Pnom
+                        }
+                    
+                    st.session_state['component_description'] = ("AERO", "Aerogenerador")
 
+        elif dict_key == "INV":
+            disabled_Vbb = False
+
+            with st.container(border=True):
+                st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
+
+                grid_type = st.selectbox(label="Sistema de conexión a red",
+                                         options=["Off-Grid", "On-Grid"],
+                                         index=0, placeholder="Selecciona una opción")
+                
+                phases = st.selectbox(label="Sistema de voltaje",
+                                      options=["Monofásico", "Trifásico"],
+                                      index=0, placeholder="Selecciona una opción")
+
+                if grid_type == "On-Grid":
+                    disabled_Vbb = True
+                
+            with st.form("PV"):
+                st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
+
+                Pac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV["Pac_max"]),
+                                                            disabled=False, variable=params_INV["Pac_max"]["number_input"])
+                
+                Vac_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV["Vac_nom"]),
+                                                            disabled=False, variable=params_INV["Vac_nom"]["number_input"])
+                
+                Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV["Vac_max"]),
+                                                            disabled=False, variable=params_INV["Vac_max"]["number_input"])
+                
+                Vac_min = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV["Vac_min"]),
+                                                            disabled=False, variable=params_INV["Vac_min"]["number_input"])
+                
+                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV["Vbb_nom"]),
+                                                            disabled=disabled_Vbb, variable=params_INV["Vbb_nom"]["number_input"])
+                
+                efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV["efficiency_max"]),
+                                                                  disabled=disabled_Vbb, variable=params_INV["efficiency_max"]["number_input"])
+                submitted = st.form_submit_button("Aceptar")
+
+                if submitted:
+                    submitted_general, submitted_INV = True, True
+
+                    st.session_state['component_dict'] = {
+                        'Pac_nom': Pac_max,
+                        'Vac_max': Vac_max,
+                        'Vac_min': Vac_min,
+                        'Vac_nom': Vac_nom,
+                        'Vbb_nom': Vbb_nom,
+                        'efficiency_max': efficiency_max,
+                        'grid_type': grid_type,
+                        'phases': phases
+                    }
+
+                    st.session_state['component_description'] = ("GE", "Grupo electrógeno")
+                
         elif dict_key == "GE":
-            
             with st.form("GE"):
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
                     Pnom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_GE["Pnom"]),
-                                                            variable=params_GE["Pnom"]["number_input"])
+                                                            disabled=False, variable=params_GE["Pnom"]["number_input"])
                 
                     col1, col2 = st.columns(2)
                     with col1:
                         Voc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_GE["Voc"]),
-                                                            variable=params_GE["Voc"]["number_input"])
+                                                               disabled=False, variable=params_GE["Voc"]["number_input"])
                         Fases = st.selectbox(label="**Fases:** sistema de corriente alterna",
                                             options=[value["label"] for value in dict_phases.values()],
                                             index=0, placeholder="Selecciona una opción")
                     with col2:
                         Vpc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_GE["Vpc"]),
-                                                            variable=params_GE["Vpc"]["number_input"])
+                                                               disabled=False, variable=params_GE["Vpc"]["number_input"])
                         FP = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_GE["FP"]),
-                                                            variable=params_GE["FP"]["number_input"])
+                                                              disabled=False, variable=params_GE["FP"]["number_input"])
             
                 with st.container(border=True):
                     st.markdown("🛢️ **:blue[{0}:]**".format("Datos de combustible"))
 
                     Combustible = st.selectbox(label="**Tipo de combustible:**",
-                                            options=[key for key in typefuel_GE],
-                                            index=0, placeholder="Selecciona una opción")
+                                               options=[key for key in typefuel_GE],
+                                               index=0, placeholder="Selecciona una opción")
 
                     col1, col2 = st.columns(2)
                     with col1:
                         C100 = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_GE["C'100"]),
-                                                                variable=params_GE["C'100"]["number_input"])
+                                                                disabled=False, variable=params_GE["C'100"]["number_input"])
                     with col2:
                         C0 = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_GE["C'0"]),
-                                                            variable=params_GE["C'0"]["number_input"])
+                                                              disabled=False, variable=params_GE["C'0"]["number_input"])
                         
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
                     submitted_general, submitted_GE = True, True
-                
-                """
-                
-                """
 
-        if submitted_general:
-            if submitted_PV:
-                st.text("PV")
-            elif submitted_AERO:
-                st.text("AERO")
-            elif submitted_GE:
-                GE_data = {
-                    "Pnom": Pnom,
-                    "Voc": Voc,
-                    "Vpc": Vpc,
-                    "Fases": fun_app1.from_value_label_get_key(dict_phases, Fases),
-                    "FP": FP,
-                    "Combustible": Combustible,
-                    "PE_fuel": typefuel_GE[Combustible]["PE"],
-                    "C100": C100,
-                    "C0": C0
-                    }
+                    st.session_state['component_dict'] = {
+                        "Pnom": Pnom,
+                        "Voc": Voc,
+                        "Vpc": Vpc,
+                        "Fases": fun_app1.from_value_label_get_key(dict_phases, "label", Fases),
+                        "FP": FP,
+                        "Combustible": Combustible,
+                        "PE_fuel": typefuel_GE[Combustible]["PE"],
+                        "C100": C100,
+                        "C0": C0
+                        }
+                    
+                    st.session_state['component_description'] = ("GE", "Grupo electrógeno")
+
+    if st.session_state['component_dict'] is not None and st.session_state['component_description'] is not None:
+
+        fun_app1.get_component_download_button(component_dict=st.session_state['component_dict'],
+                                               component_description=st.session_state['component_description'])
+                    
+                    
+                    
                 
-                buffer_data = fun_app1.get_bytes_yaml(dictionary=GE_data)
-                
-                with st.container(border=True):
-                    st.download_button(
-                        label="📑 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
-                        data=buffer_data,
-                        file_name=fun_app1.name_file_head(name="GE_data.yaml"),
-                        mime="text/yaml"
-                        )
 
 with tab3: 
     df_data, selected_row = None, None
@@ -234,6 +302,5 @@ with tab3:
 
                 # components
 
-                
                 fun_app1.download_button_component(selected_row, dict_key, label_button)
                     

@@ -11,6 +11,9 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSiz
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
 
+with open("files//[INV] - params.yaml", 'r') as archivo:
+    params_INV = yaml.safe_load(archivo)
+
 with open("files//[AERO] - params.yaml", 'r') as archivo:
     params_AERO = yaml.safe_load(archivo)
 
@@ -26,10 +29,10 @@ def name_file_head(name: str) -> str:
     now = dt.datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
-def from_value_label_get_key(dict_in: dict, value_label: str) -> str:
+def from_value_label_get_key(dict_in: dict, key_label: str, value_label: str) -> str:
 
     for key, value in dict_in.items():
-        if value["label"] == value_label:
+        if value[key_label] == value_label:
             return key
 
     return
@@ -46,13 +49,17 @@ def get_label_column(params: dict, key: str) -> str:
 def selected_row_column(selected_row: pd.DataFrame, params: dict, key: str):
 
     column_name = get_label_column(params, key)
+    value = selected_row.loc[0, column_name]
 
-    if params[key]["data_type"] == "int":
-        output_value = int(selected_row.loc[0, column_name])
-    elif params[key]["data_type"] == "float":
-        output_value = float(selected_row.loc[0, column_name])
-    elif params[key]["data_type"] == "str":
-        output_value = str(selected_row.loc[0, column_name])
+    if value is None:
+        output_value = None
+    else:
+        if params[key]["data_type"] == "int":
+            output_value = int(value)
+        elif params[key]["data_type"] == "float":
+            output_value = float(value)
+        elif params[key]["data_type"] == "str":
+            output_value = str(value)
     
     return output_value
 
@@ -61,6 +68,12 @@ def changeUnitsK(K, Base):
     K_out = (Base*K)/100
     
     return K_out
+
+def for_options_get_celltype(option):
+
+    key = option.split("(")[0][:-1]
+
+    return key
 
 def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
 
@@ -79,6 +92,29 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "gamma_pmp": selected_row_column(selected_row, params_PV, "gamma_pmp"),
             "cells_in_series": selected_row_column(selected_row, params_PV, "cells_in_series")
             }
+        
+    elif key == "INV":
+        dict_data = {
+            "Pac_max": selected_row_column(selected_row, params_INV, "Pac_max"),
+            "Vac_nom": selected_row_column(selected_row, params_INV, "Vac_nom"),
+            "Vac_max": selected_row_column(selected_row, params_INV, "Vac_max"),
+            "Vac_min": selected_row_column(selected_row, params_INV, "Vac_min"),
+            "Vbb_nom": selected_row_column(selected_row, params_INV, "Vbb_nom"),
+            "efficiency_max": selected_row_column(selected_row, params_INV, "efficiency_max"),
+            "grid_type": selected_row_column(selected_row, params_INV, "grid_type"),
+            "phases": selected_row_column(selected_row, params_INV, "phases"),
+        }
+
+    elif key == "BAT":
+        dict_data = {
+            "battery_type": selected_row_column(selected_row, params_INV, "battery_type"),
+            "C_bat": selected_row_column(selected_row, params_INV, "C_bat"),
+            "Vbat_nom": selected_row_column(selected_row, params_INV, "Vbat_nom"),
+            "Vbat_max": selected_row_column(selected_row, params_INV, "Vbat_max"),
+            "Vbat_min": selected_row_column(selected_row, params_INV, "Vbat_min"),
+            "Ibat_max": selected_row_column(selected_row, params_INV, "Ibat_max"),
+            "efficiency": selected_row_column(selected_row, params_INV, "efficiency"),
+        }
     
     elif key == "GE":
         dict_data = {
@@ -180,6 +216,20 @@ def download_button_component(selected_row: pd.DataFrame, key: str, key_label: s
 
     return
 
-def get_widget_number_input(label: str, variable: dict):
+def get_widget_number_input(label: str, disabled: bool, variable: dict):
 
-    return st.number_input(label=label, **variable)
+    return st.number_input(label=label, disabled=disabled, **variable)
+
+def get_component_download_button(component_dict: dict, component_description: tuple):
+
+    buffer_data = get_bytes_yaml(dictionary=component_dict)
+
+    with st.container(border=True):
+        st.download_button(
+            label=f"📑 Descargar **:blue[archivo de datos]** del {component_description[1]} **YAML**",
+            data=buffer_data,
+            file_name=name_file_head(name=f"{component_description[0]}_data.yaml"),
+            mime="text/yaml"
+            )
+
+    return

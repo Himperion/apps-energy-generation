@@ -89,4 +89,4 @@ phases:
   description: "N\xFAmero de fases"
   label: phases
   unit: ''
-  data_type: int
+  data_type: str

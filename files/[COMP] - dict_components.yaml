@@ -1,0 +1,30 @@
+AERO:
+  emoji: "\U0001FA81"
+  label: "\U0001FA81 Aerogenerador"
+  name: Aerogenerador
+  sheet_label: AERO
+BAT:
+  emoji: "\U0001F50B"
+  label: "\U0001F50B Bater\xEDas"
+  name: "Bater\xEDas"
+  sheet_label: BAT
+GE:
+  emoji: "\u26FD"
+  label: "\u26FD Grupo electr\xF3geno"
+  name: "Grupo electr\xF3geno"
+  sheet_label: GE
+INV:
+  emoji: "\U0001F5B2\uFE0F"
+  label: "\U0001F5B2\uFE0F Inversor"
+  name: Inversor
+  sheet_label: INV
+PV:
+  emoji: "\U0001FA9F"
+  label: "\U0001FA9F M\xF3dulo fotovoltaico"
+  name: "M\xF3dulo fotovoltaico"
+  sheet_label: PV
+RC:
+  emoji: "\U0001F4F6"
+  label: "\U0001F4F6 Regulador de carga"
+  name: Regulador de carga
+  sheet_label: RC

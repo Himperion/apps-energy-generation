@@ -58,7 +58,7 @@ with tab1:
     st.markdown(fun_app4.get_label_params(dict_param=dict_params["Iph"]))
     st.markdown(fun_app4.get_label_params(dict_param=dict_params["n"]))
     st.markdown(fun_app4.get_label_params(dict_param=dict_params["Vt"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Ns"]))
+    st.markdown(fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]))
     st.markdown(fun_app4.get_label_params(dict_param=dict_params["Isat"]))
     st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rs"]))
     st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rp"]))
@@ -87,20 +87,20 @@ with tab2:
         with st.container(border=True):
             st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
                 
-            Alfa = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Alfa"]),
-                                                    variable=dict_params["Alfa"]["number_input"])
-            Beta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Beta"]),
-                                                    variable=dict_params["Beta"]["number_input"])
-            Delta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Delta"]),
-                                                    variable=dict_params["Delta"]["number_input"])
+            Alfa = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["alpha_sc"]),
+                                                    variable=dict_params["alpha_sc"]["number_input"])
+            Beta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["beta_voc"]),
+                                                    variable=dict_params["beta_voc"]["number_input"])
+            Delta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["gamma_pmp"]),
+                                                     variable=dict_params["gamma_pmp"]["number_input"])
             
         with st.container(border=True):
             st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
                 
             cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
-            Ns = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Ns"]),
-                                                variable=dict_params["Ns"]["number_input"])
+            Ns = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]),
+                                                  variable=dict_params["cells_in_series"]["number_input"])
             
     elif data_entry_options == select_data_entry_options[1]:
         with st.container(border=True):

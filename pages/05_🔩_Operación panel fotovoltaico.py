@@ -86,8 +86,8 @@ with tab2:
         with st.container(border=True):
             st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del módulo en condiciones STC"))
             
-            Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Alfa"]),
-                                                    variable=dict_params["Alfa"]["number_input"])
+            Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["alpha_sc"]),
+                                                    variable=dict_params["alpha_sc"]["number_input"])
             Iph = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Iph"]),
                                                    variable=dict_params["Iph"]["number_input"])
             Isat = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Isat"]),
@@ -120,11 +120,11 @@ with tab2:
         with st.container(border=True):
             st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
             
-            Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Alfa"]),
+            Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["alpha_sc"]),
                                                     variable=dict_params["Alfa"]["number_input"])
-            Beta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Beta"]),
+            Beta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["beta_voc"]),
                                                     variable=dict_params["Beta"]["number_input"])
-            Delta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Delta"]),
+            Delta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["gamma_pmp"]),
                                                      variable=dict_params["Delta"]["number_input"])
         
         with st.container(border=True):
