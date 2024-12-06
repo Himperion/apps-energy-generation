@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import pandas as pd
 import yaml
 
 from funtions import fun_app8
@@ -11,6 +12,47 @@ with open("files//[COMP] - dict_components.yaml", 'r') as archivo:
 
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
+
+optionsColumnsUploadedDATA = {
+    "Dates": ("dates (Y-M-D hh:mm:ss)"),
+    "Geff" : ("Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)"),
+    "Toper" : ("Toper(°C)"),
+    "Load" : ("Load(kW)")
+}
+
+optionsKeysUploadedPV = [
+    "alpha_sc",
+    "beta_voc",
+    "cells_in_series",
+    "celltype",
+    "gamma_pmp",
+    "i_mp",
+    "i_sc",
+    "v_mp",
+    "v_oc"
+]
+
+optionsKeysUploadedINV = [
+    "Pac_max",
+    "Vac_max",
+    "Vac_min",
+    "Vac_nom",
+    "Vbb_nom",
+    "efficiency_max",
+    "grid_type",
+    "phases"
+]
+
+#%% session state
+
+if 'check_DATA' not in st.session_state:
+    st.session_state['check_DATA'] = False
+
+if 'check_PV' not in st.session_state:
+    st.session_state['check_PV'] = False
+
+if 'check_INV' not in st.session_state:
+    st.session_state['check_INV'] = False
 
 #%% main
 
@@ -29,12 +71,23 @@ to_yaml = {
 
 with tab2:
     with st.form("On-Grid"):
+
+        validateEntries = {
+                'check_DATA': False,
+                'check_PV': False,
+                'check_INV': False
+            }
+
+        with st.container(border=True):
+            st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial solar del sitio:]**")
+
+            uploadedYamlDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
+
         with st.container(border=True):
             st.markdown(f"{dict_components['PV']['emoji']} **:blue[{dict_components['PV']['name']}:]**")
 
             uploadedYamlPV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlPV')
 
-            
             st.markdown("🧑‍🔧 **Conexión de los módulos**")
             col1, col2 = st.columns(2)
 
@@ -48,11 +101,47 @@ with tab2:
         with st.container(border=True):
             st.markdown(f"{dict_components['INV']['emoji']} **:blue[{dict_components['INV']['name']}:]**")
 
-            uploadedYamlINV = st.file_uploader(label="Cargar archivo YAML", type=["yaml", "yml"], key='uploadedYamlINV')
+            uploadedYamlINV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV')
+
+            st.markdown("⚡ **PCC (Punto de conexión común**")
+
+            v_PCC = st.number_input(label="Tensión del punto de conexión común", value=127.0, placeholder="Ingrese un valor",
+                                    format="%0.1f", step=None)
 
         submitted = st.form_submit_button("Aceptar")
 
         if submitted:
-            st.text("Ajaaaaaaaaaaaaaaaaaaaa")
+
+            if uploadedYamlDATA is not None:
+                try:
+                    df_data = pd.read_excel(uploadedYamlDATA)
+                    df_data, validateEntries['check_DATA'], columnsOptionsData = fun_app8.check_dataframe_input(df_data, optionsColumnsUploadedDATA)
+                except:
+                    st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+            else:
+                st.error("Cargar **Datos de carga, temperatura de operación y potencial solar del sitio**", icon="🚨")
+
+            if uploadedYamlPV is not None:
+                try:
+                    PV_data = yaml.safe_load(uploadedYamlPV)
+                    validateEntries['check_PV'] = fun_app8.check_dict_input(PV_data, optionsKeysUploadedPV)
+                except:
+                    st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+
+            else:
+                st.error("Cargar **Datos del módulo fotovoltaico**", icon="🚨")
+
+            if uploadedYamlINV is not None:
+                try:
+                    INV_data = yaml.safe_load(uploadedYamlINV)
+                    validateEntries['check_INV'] = fun_app8.check_dict_input(INV_data, optionsKeysUploadedINV)
+                except:
+                    st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+
+            else:
+                st.error("Cargar **Datos del módulo fotovoltaico**", icon="🚨")
+
+            if validateEntries['check_DATA'] and validateEntries['check_PV'] and validateEntries['check_INV']:
+                st.text('Echeeeeeeeeeeeeeeeee')
 
         
