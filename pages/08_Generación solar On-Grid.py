@@ -13,6 +13,9 @@ with open("files//[COMP] - dict_components.yaml", 'r') as archivo:
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
 
+with open("files//[PV] - dict_replace.yaml", 'r') as archivo:
+    rename_PV = yaml.safe_load(archivo)
+
 optionsColumnsUploadedDATA = {
     "Dates": ("dates (Y-M-D hh:mm:ss)"),
     "Geff" : ("Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)"),
@@ -42,6 +45,9 @@ optionsKeysUploadedINV = [
     "grid_type",
     "phases"
 ]
+
+showOutput = [f"{params_PV[elm]['label']}{params_PV[elm]['unit']}: {params_PV[elm]['description']}" for elm in ["Voc", "Isc", "Impp", "Vmpp", "Pmpp"]]
+
 
 #%% session state
 
@@ -106,7 +112,7 @@ with tab2:
             st.markdown("⚡ **PCC (Punto de conexión común**")
 
             v_PCC = st.number_input(label="Tensión del punto de conexión común", value=127.0, placeholder="Ingrese un valor",
-                                    format="%0.1f", step=None)
+                                    format="%0.1f", step=None, min_value=0.0, max_value=1000.0)
 
         submitted = st.form_submit_button("Aceptar")
 
@@ -142,6 +148,22 @@ with tab2:
                 st.error("Cargar **Datos del módulo fotovoltaico**", icon="🚨")
 
             if validateEntries['check_DATA'] and validateEntries['check_PV'] and validateEntries['check_INV']:
-                st.text('Echeeeeeeeeeeeeeeeee')
+                
+                dictDataOnGrid = {
+                    'df_data': df_data,
+                    'PV_data': PV_data,
+                    'INV_data': INV_data,
+                    'PVs': PVs,
+                    'PVp': PVp,
+                    'v_PCC': v_PCC,
+                    'columnsOptionsData': columnsOptionsData,
+                    'params_PV': params_PV,
+                    'rename_PV': rename_PV,
+                    'show_output': showOutput
+                }
+
+                fun_app8.solarGenerationOnGrid(**dictDataOnGrid)
+
+                
 
         

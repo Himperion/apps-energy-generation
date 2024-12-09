@@ -57,9 +57,7 @@ template = {
     "description": "Irradiancia efectiva y Temperatura de operación del módulo"
 }
 
-keys_show_output = ["Iph", "Isat", "Rs", "Rp", "nNsVt", "Voc", "Isc", "Impp", "Vmpp", "Pmpp"]
-dict_show_output = fun_app5.get_options_params(dict_params=dict_params, options_keys=keys_show_output)
-list_show_output = [key for key in dict_show_output]
+keys_show_output, dict_show_output, list_show_output = fun_app5.get_show_output(dict_params)
 
 #%% main
 
@@ -165,7 +163,7 @@ with tab2:
                                                            variable=dict_params["Geff"]["number_input"])
             with col2:
                 Toper = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Toper"]),
-                                                            variable=dict_params["Toper"]["number_input"])
+                                                         variable=dict_params["Toper"]["number_input"])
                 
         elif option_sel == options_sel_oper[1]:
             label_Gef_Toper = "Cargar archivo {0} y {1}".format("**Irradiancia efectiva** (m/s)", "**Temperatura de operación del módulo** (°C).")

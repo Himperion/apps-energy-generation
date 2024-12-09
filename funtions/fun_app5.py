@@ -43,6 +43,14 @@ def get_options_params(dict_params: dict, options_keys: list) -> list:
         
     return dict_options_params
 
+def get_show_output(dict_params):
+
+    keysShowOutput = ["Iph", "Isat", "Rs", "Rp", "nNsVt", "Voc", "Isc", "Impp", "Vmpp", "Pmpp"]
+    dictShowOutput = get_options_params(dict_params=dict_params, options_keys=keysShowOutput)
+    listShowOutput = [key for key in dictShowOutput]
+
+    return keysShowOutput, dictShowOutput, listShowOutput
+
 def get_PV_params(celltype, v_mp, i_mp, v_oc, i_sc, alpha_sc, beta_voc, gamma_pmp, cells_in_series):
 
     I_L_ref, I_o_ref, R_s, R_sh_ref, a_ref, Adjust = pvlib.ivtools.sdm.fit_cec_sam(celltype, v_mp, i_mp, v_oc, i_sc, alpha_sc, beta_voc, gamma_pmp, cells_in_series)
@@ -122,10 +130,14 @@ def get_singlediode(conditions: pd.DataFrame, PV_params: dict, PVs: int, PVp: in
 
     for index, row in conditions.iterrows():
         if row["Geff"] != 0:
-            PV_params["effective_irradiance"] = row["Geff"]
-            PV_params["temp_cell"] = row["Toper"]
 
-            photocurrent, saturation_current, resistance_series, resistance_shunt, nNsVth = pvlib.pvsystem.calcparams_cec(**PV_params)
+            dictAux = {
+                "effective_irradiance": row["Geff"],
+                "temp_cell": row["Toper"]
+            }
+            
+
+            photocurrent, saturation_current, resistance_series, resistance_shunt, nNsVth = pvlib.pvsystem.calcparams_cec(**PV_params, **dictAux)
 
             PV_params_eff = {
                 "photocurrent": photocurrent*PVp,

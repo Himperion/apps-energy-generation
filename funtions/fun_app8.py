@@ -2,7 +2,10 @@
 import streamlit as st
 import pandas as pd
 
+from funtions import fun_app5
+
 #%%
+
 
 
 
@@ -11,6 +14,25 @@ import pandas as pd
 def get_label_params(dict_param: dict) -> str:
 
     return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
+
+def solarGenerationOnGrid(df_data: pd.DataFrame, PV_data: dict, INV_data: dict, PVs: int, PVp: int, v_PCC: float, columnsOptionsData: list, params_PV: dict, rename_PV: dict, show_output: list):
+
+    conditions = fun_app5.get_dataframe_conditions(df_data, columnsOptionsData)
+    PV_params = fun_app5.get_PV_params(**PV_data)
+
+    dict_replace = fun_app5.get_dict_replace(dict_rename=rename_PV, dict_params=params_PV)
+    df_pv = fun_app5.get_singlediode(conditions, PV_params, PVs, PVp)
+
+    df_pv = fun_app5.get_final_dataframe(df_pv=df_pv,
+                                         df_input=df_data,
+                                         dict_replace=dict_replace,
+                                         dict_conditions=columnsOptionsData,
+                                         list_output=show_output)
+    
+    st.dataframe(df_pv)
+    
+    
+    return
 
 
 #%% funtions streamlit
