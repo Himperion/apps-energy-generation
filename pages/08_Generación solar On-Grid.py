@@ -60,11 +60,14 @@ if 'check_PV' not in st.session_state:
 if 'check_INV' not in st.session_state:
     st.session_state['check_INV'] = False
 
+if 'dictDataOnGrid' not in st.session_state:
+    st.session_state['dictDataOnGrid'] = None
+
 #%% main
 
 st.markdown("# Generación Solar Off-Grid")
 
-tab1, tab2, tap3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "📝 Análisis"])
+tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "📝 Análisis"])
 
 to_yaml = {
     "PV": {"label": "🪟 Módulo fotovoltaico", "sheet_label": "PV", "name": "Módulo fotovoltaico", "emoji": "🪟"},
@@ -87,7 +90,7 @@ with tab2:
         with st.container(border=True):
             st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial solar del sitio:]**")
 
-            uploadedYamlDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
+            uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
 
         with st.container(border=True):
             st.markdown(f"{dict_components['PV']['emoji']} **:blue[{dict_components['PV']['name']}:]**")
@@ -111,16 +114,15 @@ with tab2:
 
             st.markdown("⚡ **PCC (Punto de conexión común**")
 
-            v_PCC = st.number_input(label="Tensión del punto de conexión común", value=127.0, placeholder="Ingrese un valor",
+            V_PCC = st.number_input(label="Tensión del punto de conexión común", value=127.0, placeholder="Ingrese un valor",
                                     format="%0.1f", step=None, min_value=0.0, max_value=1000.0)
 
         submitted = st.form_submit_button("Aceptar")
 
         if submitted:
-
-            if uploadedYamlDATA is not None:
+            if uploadedXlsxDATA is not None:
                 try:
-                    df_data = pd.read_excel(uploadedYamlDATA)
+                    df_data = pd.read_excel(uploadedXlsxDATA)
                     df_data, validateEntries['check_DATA'], columnsOptionsData = fun_app8.check_dataframe_input(df_data, optionsColumnsUploadedDATA)
                 except:
                     st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
@@ -145,25 +147,69 @@ with tab2:
                     st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
 
             else:
-                st.error("Cargar **Datos del módulo fotovoltaico**", icon="🚨")
+                st.error("Cargar **Datos del Inversor**", icon="🚨")
 
             if validateEntries['check_DATA'] and validateEntries['check_PV'] and validateEntries['check_INV']:
                 
-                dictDataOnGrid = {
+                st.session_state['dictDataOnGrid'] = {
                     'df_data': df_data,
                     'PV_data': PV_data,
                     'INV_data': INV_data,
                     'PVs': PVs,
                     'PVp': PVp,
-                    'v_PCC': v_PCC,
+                    'V_PCC': V_PCC,
                     'columnsOptionsData': columnsOptionsData,
                     'params_PV': params_PV,
                     'rename_PV': rename_PV,
                     'show_output': showOutput
                 }
 
-                fun_app8.solarGenerationOnGrid(**dictDataOnGrid)
+            else:
 
-                
+                st.text(validateEntries['check_DATA'])
+                st.text(validateEntries['check_PV'])
+                st.text(validateEntries['check_INV'])
+
+
+    if st.session_state['dictDataOnGrid'] is not None:
+        #
+        df_out = fun_app8.solarGenerationOnGrid(**st.session_state['dictDataOnGrid'])
+        bytesFile = fun_app8.to_excel(df_out)
+
+        df_download = st.download_button(
+            label="📄 Descargar **:blue[Dataset] XLSX**",
+            data=bytesFile,
+            file_name=fun_app8.name_file_head(name="dataset_OffGrid.xlsx"),
+            mime='xlsx')
+        
+with tab3:
+    
+    st.session_state['check_DATA'] = False
+    st.session_state['check_PV'] = False
+    st.session_state['check_INV'] = False
+    st.session_state['dictDataOnGrid'] = None
+
+
+    with st.form("analysisOnGrid"):
+        uploaderXlsx = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploaderXlsx')  
+
+        submitted = st.form_submit_button("Aceptar")
+
+        if submitted:
+            if uploaderXlsx is not None:
+                try:
+                    df_data = pd.read_excel(uploaderXlsx)
+                    timeInfo = fun_app8.getTimeData(df_data)
+
+                    for key, value in timeInfo.items():
+                        st.text(f"{key}: {value}")
+
+                    st.dataframe(df_data)
+                    
+                except:
+                    st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+            else:
+                st.error("Cargar **Dataset generación Off-Grid**", icon="🚨")
+    
 
         
