@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
+import numpy as np
 import yaml
 
 from funtions import fun_app8
@@ -22,6 +23,19 @@ optionsColumnsUploadedDATA = {
     "Toper" : ("Toper(°C)"),
     "Load" : ("Load(kW)")
 }
+
+dictMonths = {1: "enero",
+              2: "febrero",
+              3: "marzo",
+              4: "abril",
+              5: "mayo",
+              6: "junio",
+              7: "julio",
+              8: "agosto",
+              9: "septiembre",
+              10: "octubre",
+              11: "noviembre",
+              12: "diciembre"}
 
 optionsKeysUploadedPV = [
     "alpha_sc",
@@ -150,11 +164,11 @@ with tab2:
                 st.error("Cargar **Datos del Inversor**", icon="🚨")
 
             if validateEntries['check_DATA'] and validateEntries['check_PV'] and validateEntries['check_INV']:
-                
+
                 st.session_state['dictDataOnGrid'] = {
                     'df_data': df_data,
                     'PV_data': PV_data,
-                    'INV_data': INV_data,
+                    'INV_data': fun_app8.getParametersINV_data(INV_data),
                     'PVs': PVs,
                     'PVp': PVp,
                     'V_PCC': V_PCC,
@@ -173,8 +187,14 @@ with tab2:
 
     if st.session_state['dictDataOnGrid'] is not None:
         #
+        COMP_data = fun_app8.processComponentData(PV_data=st.session_state['dictDataOnGrid']['PV_data'],
+                                                  INV_data=st.session_state['dictDataOnGrid']['INV_data'],
+                                                  PVs=st.session_state['dictDataOnGrid']['PVs'],
+                                                  PVp=st.session_state['dictDataOnGrid']['PVp'],
+                                                  V_PCC=st.session_state['dictDataOnGrid']['V_PCC'])
+
         df_out = fun_app8.solarGenerationOnGrid(**st.session_state['dictDataOnGrid'])
-        bytesFile = fun_app8.to_excel(df_out)
+        bytesFile = fun_app8.toExcel(df=df_out, dict_params=COMP_data)
 
         df_download = st.download_button(
             label="📄 Descargar **:blue[Dataset] XLSX**",
@@ -189,7 +209,6 @@ with tab3:
     st.session_state['check_INV'] = False
     st.session_state['dictDataOnGrid'] = None
 
-
     with st.form("analysisOnGrid"):
         uploaderXlsx = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploaderXlsx')  
 
@@ -198,14 +217,35 @@ with tab3:
         if submitted:
             if uploaderXlsx is not None:
                 try:
-                    df_data = pd.read_excel(uploaderXlsx)
+                    df_data = pd.read_excel(uploaderXlsx, sheet_name="Dataframe")
+                    COMP_data = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
                     timeInfo = fun_app8.getTimeData(df_data)
 
-                    for key, value in timeInfo.items():
-                        st.text(f"{key}: {value}")
 
-                    st.dataframe(df_data)
-                    
+
+                    for i in range(0,len(timeInfo["years"])):
+                        st.text(timeInfo["months"][i])
+
+                        if len(timeInfo["months"][i]) == 12:
+                            # Analisis anual
+                            st.text("Analisis anual")
+                        else:
+                            # Analisis mensual
+
+                            for j in range(0,len(timeInfo["months"][i]),1):
+
+                                st.text(f"{timeInfo['years'][i]} {dictMonths[timeInfo['months'][i][j]].capitalize()}")
+
+                                df_month = df_data[(df_data["dates (Y-M-D hh:mm:ss)"].dt.year == timeInfo["years"][i]) & (df_data["dates (Y-M-D hh:mm:ss)"].dt.month == timeInfo["months"][i][j])]
+
+                                dict_reportParams = fun_app8.getReportParams(df_month=df_month, deltaMinutes=timeInfo["deltaMinutes"], timeDeltaType="month")
+
+                                for key in dict_reportParams:
+                                    st.text(f"{dict_reportParams[key]['label']}: {key}{dict_reportParams[key]['unit']}= {dict_reportParams[key]['value']}")
+
+                                    
+                                st.text("-----------------------------------------------------------------------------")
+  
                 except:
                     st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
             else:

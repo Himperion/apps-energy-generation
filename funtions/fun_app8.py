@@ -14,18 +14,16 @@ dict_phases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-dict_months = {1: "enero",
-               2: "febrero",
-               3: "marzo",
-               4: "abril",
-               5: "mayo",
-               6: "junio",
-               7: "julio",
-               8: "agosto",
-               9: "septiembre",
-               10: "octubre",
-               11: "noviembre",
-               12: "diciembre"}
+dict_reportParams = {
+        "E_load" : {"label": "Energía de la carga"},
+        "E_gen" : {"label": "Energía generada"},
+        "E_gen_percent" : {"label": "Energía generada"},
+        "E_imp" : {"label": "Energía de importación"},
+        "E_exp" : {"label": "Energía de exportación"},
+        "E_auto" : {"label": "Energía de autoconsumo"},
+        "E_ext1" : {"label": "Excedentes tipo 1"},
+        "E_ext2" : {"label": "Excedentes tipo 2"}
+    }
 
 #%% funtions general
 
@@ -33,16 +31,42 @@ def name_file_head(name: str) -> str:
     now = datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
-def to_excel(df: pd.DataFrame):
+def toExcel(df: pd.DataFrame, dict_params: dict) -> bytes:
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Sheet1")
+        df.to_excel(writer, index=False, sheet_name="Dataframe")
+        if dict_params is not None:
+            df_params = pd.DataFrame(dict_params, index=[0])
+            df_params.to_excel(writer, index=False, sheet_name="Params")
 
     return output.getvalue()
 
 def get_label_params(dict_param: dict) -> str:
 
     return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
+
+def getParametersINV_data(INV_data: dict) -> dict:
+
+    INV_data['Iac_nom'] = round((INV_data['Pac_max']*1000)/(np.sqrt(dict_phases[INV_data['phases']]['Num'])*INV_data['Vac_nom']), 4)
+    INV_data['Rinv'] = round((INV_data['Vac_max'] - INV_data['Vac_nom'])/INV_data['Iac_nom'], 4)
+
+    return INV_data
+
+def processComponentData(PV_data: dict, INV_data: dict, PVs, PVp, V_PCC):
+
+    COMP_data = {}
+
+    for key, value in PV_data.items():
+        COMP_data[f"[PV_data] {key}"] = value
+
+    for key, value in INV_data.items():
+        COMP_data[f"[INV_data] {key}"] = value
+
+    COMP_data["PVs"] = PVs
+    COMP_data["PVp"] = PVp
+    COMP_data["V_PCC"] = V_PCC
+
+    return COMP_data
 
 def getTimeData(df_data: pd.DataFrame) -> dict:
 
@@ -59,26 +83,18 @@ def getTimeData(df_data: pd.DataFrame) -> dict:
         timeInfo["deltaDays"] = (numberRows*timeInfo["deltaMinutes"])/1440
         timeInfo["years"] = df_data['dates (Y-M-D hh:mm:ss)'].dt.year.unique().tolist()
 
-        listAuxMonth, listAuxDayYear = [], []
+        listAuxMonth = []
         for year in timeInfo["years"]:
             df_year = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.year == year]
 
             list_month = df_year["dates (Y-M-D hh:mm:ss)"].dt.month.unique().tolist()
             listAuxMonth.append(list_month)
 
-            listAuxDay = []
-            for i in range(0,len(list_month),1):
-                df_month = df_year[df_year["dates (Y-M-D hh:mm:ss)"].dt.month == list_month[i]]
-                listAuxDay.append(df_month["dates (Y-M-D hh:mm:ss)"].dt.day.unique().tolist())
-
-            listAuxDayYear.append(listAuxDay)
-
         timeInfo["months"] = listAuxMonth
-        timeInfo["days"] = listAuxDayYear
 
     return timeInfo
 
-def solarGenerationOnGrid(df_data: pd.DataFrame, PV_data: dict, INV_data: dict, PVs: int, PVp: int, V_PCC: float, columnsOptionsData: list, params_PV: dict, rename_PV: dict, show_output: list):
+def solarGenerationOnGrid(df_data: pd.DataFrame, PV_data: dict, INV_data: dict, PVs: int, PVp: int, V_PCC: float, columnsOptionsData: list, params_PV: dict, rename_PV: dict, show_output: list) -> pd.DataFrame:
     
     conditions = fun_app5.get_dataframe_conditions(df_data, columnsOptionsData)
     PV_params = fun_app5.get_PV_params(**PV_data)
@@ -106,7 +122,38 @@ def solarGenerationOnGrid(df_data: pd.DataFrame, PV_data: dict, INV_data: dict, 
     
     return df_pv
 
-def getFullReport(df_pv: pd.DataFrame, timeInfo: dict):
+def getReportParams(df_month: pd.DataFrame, deltaMinutes: float, timeDeltaType: str) -> dict:
+
+    dictOut = dict_reportParams
+
+    for key in dictOut:
+        if key != "E_gen_percent":
+            if timeDeltaType == "month":
+                dictOut[key]["unit"] = "(kWh/mes)"
+        else:
+            dictOut[key]["unit"] = "(%)"
+
+    dictOut["E_load"]["value"] = df_month["Load(kW)"].sum()*(deltaMinutes/60)
+    dictOut["E_gen"]["value"] = df_month["Pgen_AC(kW)"].sum()*(deltaMinutes/60)
+    dictOut["E_gen_percent"]["value"] = (dictOut["E_load"]["value"]/dictOut["E_gen"]["value"])*100
+    dictOut["E_imp"]["value"] = df_month.loc[df_month["Pdem(kW)"] > 0, "Pdem(kW)"].sum()*(deltaMinutes/60)
+    dictOut["E_exp"]["value"] = df_month.loc[df_month["Pdem(kW)"] < 0, "Pdem(kW)"].sum()*(deltaMinutes/60)*(-1)
+    dictOut["E_auto"]["value"] = dictOut["E_gen"]["value"] - dictOut["E_exp"]["value"]
+
+    if dictOut["E_exp"]["value"] < dictOut["E_imp"]["value"]:
+        dictOut["E_ext1"]["value"] = dictOut["E_exp"]["value"]
+    else:
+        dictOut["E_ext1"]["value"] = dictOut["E_exp"]["value"]
+
+    if dictOut["E_exp"]["value"] > dictOut["E_imp"]["value"]:
+        dictOut["E_ext2"]["value"] = dictOut["E_exp"]["value"] - dictOut["E_imp"]["value"]
+    else:
+        dictOut["E_ext2"]["value"] = 0
+
+    return dictOut
+
+def getFullReport(df_pv: pd.DataFrame, timeInfo: dict, dict_months: dict):
+
 
     for i in range(0,len(timeInfo["years"]),1):
         for j in range(0,len(timeInfo["months"][i]),1):
