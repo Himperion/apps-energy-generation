@@ -1,0 +1,72 @@
+DOD:
+  data_type: float
+  description: Profundidad de descarga
+  label: DOD
+  number_input:
+    format: '%.1f'
+    max_value: 100.0
+    min_value: 0.1
+    step: null
+    value: 20.0
+  unit: (%)
+I_max:
+  data_type: float
+  description: "Corriente m\xE1xima de descarga"
+  label: I_max
+  number_input:
+    format: '%.1f'
+    max_value: 1000.0
+    min_value: 0.1
+    step: null
+    value: 17.5
+  unit: (A)
+V_max:
+  data_type: float
+  description: "Voltaje m\xE1ximo"
+  label: V_max
+  number_input:
+    format: '%.1f'
+    max_value: 1000.0
+    min_value: 0.1
+    step: null
+    value: 13.0
+  unit: (V)
+V_min:
+  data_type: float
+  description: "Voltaje m\xEDnimo"
+  label: V_min
+  number_input:
+    format: '%.1f'
+    max_value: 1000.0
+    min_value: 0.1
+    step: null
+    value: 11.5
+  unit: (V)
+bat_type:
+  data_type: str
+  description: "Tipo de bater\xEDa"
+  label: bat_type
+  number_input: {}
+  unit: ''
+capacity:
+  data_type: float
+  description: "Capacidad de la bater\xEDa"
+  label: C
+  number_input:
+    format: '%.1f'
+    max_value: 1000.0
+    min_value: 0.1
+    step: null
+    value: 87.7
+  unit: (Ah)
+efficiency:
+  data_type: float
+  description: Eficiencia
+  label: efficiency
+  number_input:
+    format: '%.1f'
+    max_value: 100.0
+    min_value: 0.1
+    step: null
+    value: 80.0
+  unit: (%)

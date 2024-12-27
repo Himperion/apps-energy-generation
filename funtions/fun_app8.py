@@ -110,11 +110,11 @@ def solarGenerationOnGrid(df_data: pd.DataFrame, PV_data: dict, INV_data: dict, 
     
     numberPhases = dict_phases[INV_data['phases']]['Num']
     
-    df_pv.rename(columns={'Impp(A)': 'I_PV(A)', 'Vmpp(V)': 'V_PV(V)', 'Pmpp(kW)': 'Pgen_PV(kW)'}, inplace=True)
-    df_pv['Pgen_AC(kW)'] = df_pv['Pgen_PV(kW)']*INV_data['efficiency_max']/100
-    df_pv['Pdem(kW)'] = df_pv['Load(kW)'] - df_pv['Pgen_AC(kW)']
+    df_pv.rename(columns={'Impp(A)': 'I_PV(A)', 'Vmpp(V)': 'V_PV(V)', 'Pmpp(kW)': 'Pgen_PV_DC(kW)'}, inplace=True)
+    df_pv['Pgen_PV_AC(kW)'] = df_pv['Pgen_PV_DC(kW)']*INV_data['efficiency_max']/100
+    df_pv['Pdem(kW)'] = df_pv['Load(kW)'] - df_pv['Pgen_PV_AC(kW)']
     df_pv['V_INV(V)'] = V_PCC
-    df_pv['I_INV(A)'] = (df_pv['Pgen_AC(kW)']*1000)/(np.sqrt(numberPhases)*V_PCC)
+    df_pv['I_INV(A)'] = (df_pv['Pgen_PV_AC(kW)']*1000)/(np.sqrt(numberPhases)*V_PCC)
     df_pv['V_LOAD(V)'] = V_PCC
     df_pv['I_LOAD(A)'] = (df_pv['Load(kW)']*1000)/(np.sqrt(numberPhases)*V_PCC)
     df_pv['V_DEM(V)'] = V_PCC
@@ -134,7 +134,7 @@ def getReportParams(df_month: pd.DataFrame, deltaMinutes: float, timeDeltaType: 
             dictOut[key]["unit"] = "(%)"
 
     dictOut["E_load"]["value"] = df_month["Load(kW)"].sum()*(deltaMinutes/60)
-    dictOut["E_gen"]["value"] = df_month["Pgen_AC(kW)"].sum()*(deltaMinutes/60)
+    dictOut["E_gen"]["value"] = df_month["Pgen_PV_AC(kW)"].sum()*(deltaMinutes/60)
     dictOut["E_gen_percent"]["value"] = (dictOut["E_load"]["value"]/dictOut["E_gen"]["value"])*100
     dictOut["E_imp"]["value"] = df_month.loc[df_month["Pdem(kW)"] > 0, "Pdem(kW)"].sum()*(deltaMinutes/60)
     dictOut["E_exp"]["value"] = df_month.loc[df_month["Pdem(kW)"] < 0, "Pdem(kW)"].sum()*(deltaMinutes/60)*(-1)

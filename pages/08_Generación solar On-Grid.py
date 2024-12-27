@@ -60,6 +60,8 @@ optionsKeysUploadedINV = [
     "phases"
 ]
 
+listGenerationOptions = ["Generación solar", "Generación eólica"]
+
 showOutput = [f"{params_PV[elm]['label']}{params_PV[elm]['unit']}: {params_PV[elm]['description']}" for elm in ["Voc", "Isc", "Impp", "Vmpp", "Pmpp"]]
 
 
@@ -71,8 +73,14 @@ if 'check_DATA' not in st.session_state:
 if 'check_PV' not in st.session_state:
     st.session_state['check_PV'] = False
 
-if 'check_INV' not in st.session_state:
-    st.session_state['check_INV'] = False
+if 'check_INV_PV' not in st.session_state:
+    st.session_state['check_INV_PV'] = False
+
+if 'check_AERO' not in st.session_state:
+    st.session_state['check_AERO'] = False
+
+if 'check_INV_AERO' not in st.session_state:
+    st.session_state['check_INV_AERO'] = False
 
 if 'dictDataOnGrid' not in st.session_state:
     st.session_state['dictDataOnGrid'] = None
@@ -93,39 +101,61 @@ to_yaml = {
 }
 
 with tab2:
-    with st.form("On-Grid"):
+
+    generationOptions = st.multiselect(label="Opciones de generación eléctrica", options=listGenerationOptions, default=listGenerationOptions[0])
+
+    with st.container(border=True):
+        st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial energetico del sitio:]**")
+
+        uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
+
+    with st.form("On-Grid", border=False):
 
         validateEntries = {
                 'check_DATA': False,
                 'check_PV': False,
-                'check_INV': False
+                'check_INV_PV': False,
+                'check_AERO': False,
+                'check_INV_AERO': False,
             }
-
-        with st.container(border=True):
-            st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial solar del sitio:]**")
-
-            uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
-
-        with st.container(border=True):
-            st.markdown(f"{dict_components['PV']['emoji']} **:blue[{dict_components['PV']['name']}:]**")
-
-            uploadedYamlPV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlPV')
-
-            st.markdown("🧑‍🔧 **Conexión de los módulos**")
-            col1, col2 = st.columns(2)
-
-            with col1:
-                PVs = fun_app8.get_widget_number_input(label=fun_app8.get_label_params(dict_param=params_PV["PVs"]),
-                                                    disabled=False, variable=params_PV["PVs"]["number_input"])
-            with col2:
-                PVp = fun_app8.get_widget_number_input(label=fun_app8.get_label_params(dict_param=params_PV["PVp"]),
-                                                    disabled=False, variable=params_PV["PVp"]["number_input"])
         
+        if listGenerationOptions[0] in generationOptions:
+            with st.container(border=True):
+
+                with st.container(border=True):
+                    st.markdown(f"{dict_components['PV']['emoji']} **:blue[{dict_components['PV']['name']}:]**")
+
+                    uploadedYamlPV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlPV')
+
+                    st.markdown("🧑‍🔧 Conexión de los módulos")
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        PVs = fun_app8.get_widget_number_input(label=fun_app8.get_label_params(dict_param=params_PV["PVs"]),
+                                                            disabled=False, variable=params_PV["PVs"]["number_input"])
+                    with col2:
+                        PVp = fun_app8.get_widget_number_input(label=fun_app8.get_label_params(dict_param=params_PV["PVp"]),
+                                                            disabled=False, variable=params_PV["PVp"]["number_input"])
+                
+                with st.container(border=True):
+                    st.markdown(f"{dict_components['INV_PV']['emoji']} **:blue[{dict_components['INV_PV']['name']}:]**")
+
+                    uploadedYamlINV_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_PV')
+
+        if listGenerationOptions[1] in generationOptions:
+            with st.container(border=True):
+
+                with st.container(border=True):
+                    st.markdown(f"{dict_components['AERO']['emoji']} **:green[{dict_components['AERO']['name']}:]**")
+
+                    uploadedYamlAERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlAERO')
+
+                with st.container(border=True):
+                    st.markdown(f"{dict_components['INV_AERO']['emoji']} **:green[{dict_components['INV_AERO']['name']}:]**")
+
+                    uploadedYamlINV_AERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_AERO')
+
         with st.container(border=True):
-            st.markdown(f"{dict_components['INV']['emoji']} **:blue[{dict_components['INV']['name']}:]**")
-
-            uploadedYamlINV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV')
-
             st.markdown("⚡ **PCC (Punto de conexión común**")
 
             V_PCC = st.number_input(label="Tensión del punto de conexión común", value=127.0, placeholder="Ingrese un valor",
@@ -153,22 +183,22 @@ with tab2:
             else:
                 st.error("Cargar **Datos del módulo fotovoltaico**", icon="🚨")
 
-            if uploadedYamlINV is not None:
+            if uploadedYamlINV_PV is not None:
                 try:
-                    INV_data = yaml.safe_load(uploadedYamlINV)
-                    validateEntries['check_INV'] = fun_app8.check_dict_input(INV_data, optionsKeysUploadedINV)
+                    INVPV_data = yaml.safe_load(uploadedYamlINV_PV)
+                    validateEntries['check_INVPV'] = fun_app8.check_dict_input(INVPV_data, optionsKeysUploadedINV)
                 except:
                     st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
 
             else:
                 st.error("Cargar **Datos del Inversor**", icon="🚨")
 
-            if validateEntries['check_DATA'] and validateEntries['check_PV'] and validateEntries['check_INV']:
+            if validateEntries['check_DATA'] and validateEntries['check_PV'] and validateEntries['check_INVPV']:
 
                 st.session_state['dictDataOnGrid'] = {
                     'df_data': df_data,
                     'PV_data': PV_data,
-                    'INV_data': fun_app8.getParametersINV_data(INV_data),
+                    'INVPV_data': fun_app8.getParametersINV_data(INVPV_data),
                     'PVs': PVs,
                     'PVp': PVp,
                     'V_PCC': V_PCC,
@@ -182,13 +212,13 @@ with tab2:
 
                 st.text(validateEntries['check_DATA'])
                 st.text(validateEntries['check_PV'])
-                st.text(validateEntries['check_INV'])
+                st.text(validateEntries['check_INVPV'])
 
 
     if st.session_state['dictDataOnGrid'] is not None:
         #
         COMP_data = fun_app8.processComponentData(PV_data=st.session_state['dictDataOnGrid']['PV_data'],
-                                                  INV_data=st.session_state['dictDataOnGrid']['INV_data'],
+                                                  INVPV_data=st.session_state['dictDataOnGrid']['INV_data'],
                                                   PVs=st.session_state['dictDataOnGrid']['PVs'],
                                                   PVp=st.session_state['dictDataOnGrid']['PVp'],
                                                   V_PCC=st.session_state['dictDataOnGrid']['V_PCC'])
