@@ -26,9 +26,6 @@ with open("files//[PV] - params.yaml", 'r') as archivo:
 
 
 
-
-
-
 with open("files//[GE] - PE.yaml", 'r') as archivo:
     dict_fuel = yaml.safe_load(archivo)
 
@@ -107,7 +104,17 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "Pac_max": selected_row_column(selected_row, params_INV_PV, "Pac_max"),
             "Vac_nom": selected_row_column(selected_row, params_INV_PV, "Vac_nom"),
             "Vac_max": selected_row_column(selected_row, params_INV_PV, "Vac_max"),
-            "Vac_min": selected_row_column(selected_row, params_INV_PV, "Vac_min"),
+            "Vbb_nom": selected_row_column(selected_row, params_INV_PV, "Vbb_nom"),
+            "efficiency_max": selected_row_column(selected_row, params_INV_PV, "efficiency_max"),
+            "grid_type": selected_row_column(selected_row, params_INV_PV, "grid_type"),
+            "phases": selected_row_column(selected_row, params_INV_PV, "phases"),
+        }
+
+    elif key == "INV_AERO":
+        dict_data = {
+            "Pac_max": selected_row_column(selected_row, params_INV_PV, "Pac_max"),
+            "Vac_nom": selected_row_column(selected_row, params_INV_PV, "Vac_nom"),
+            "Vac_max": selected_row_column(selected_row, params_INV_PV, "Vac_max"),
             "Vbb_nom": selected_row_column(selected_row, params_INV_PV, "Vbb_nom"),
             "efficiency_max": selected_row_column(selected_row, params_INV_PV, "efficiency_max"),
             "grid_type": selected_row_column(selected_row, params_INV_PV, "grid_type"),

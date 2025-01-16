@@ -90,7 +90,7 @@ def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
 
             if len(list_columns_options) > 1:
                 for i in range(1,len(list_columns_options),1):
-                    columns_options_drop.append(options[i])
+                    columns_options_drop.append(list_columns_options[i])
 
         else:
             columns_options_sel[key] = None
@@ -136,7 +136,6 @@ def get_singlediode(conditions: pd.DataFrame, PV_params: dict, PVs: int, PVp: in
                 "temp_cell": row["Toper"]
             }
             
-
             photocurrent, saturation_current, resistance_series, resistance_shunt, nNsVth = pvlib.pvsystem.calcparams_cec(**PV_params, **dictAux)
 
             PV_params_eff = {

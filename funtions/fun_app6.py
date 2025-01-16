@@ -37,7 +37,7 @@ def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
 
             if len(list_columns_options) > 1:
                 for i in range(1,len(list_columns_options),1):
-                    columns_options_drop.append(options[i])
+                    columns_options_drop.append(list_columns_options[i])
 
         else:
             columns_options_sel[key] = None
@@ -83,22 +83,23 @@ def get_power_wind_turbine(params, rho, V_wind):
 
 def get_dataframe_power_wind_turbine(params: dict, rho: float, dataframe: pd.DataFrame, column: dict) -> pd.DataFrame:
     column_label = column[next(iter(column))]
+    df_out = dataframe.copy(deep=True)
 
-    dataframe["Pideal(kW)"] = ""
-    dataframe["Pbetz(kW)"] = ""
-    dataframe["Pgen(kW)"] = ""
-    dataframe["efficiency(%)"] = ""
+    df_out["Pideal(kW)"] = ""
+    df_out["Pbetz(kW)"] = ""
+    df_out["Pgen(kW)"] = ""
+    df_out["efficiency(%)"] = ""
 
-    for index, row in dataframe.iterrows():
+    for index, row in df_out.iterrows():
         Vwind = row[column_label]
         P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, rho, Vwind)
 
-        dataframe.loc[index, "Pideal(kW)"] =P_ideal
-        dataframe.loc[index, "Pbetz(kW)"] =P_betz
-        dataframe.loc[index, "Pgen(kW)"] = P_gen
-        dataframe.loc[index, "efficiency(%)"] = n
+        df_out.loc[index, "Pideal(kW)"] = P_ideal
+        df_out.loc[index, "Pbetz(kW)"] = P_betz
+        df_out.loc[index, "Pgen(kW)"] = P_gen
+        df_out.loc[index, "efficiency(%)"] = n
         
-    return dataframe
+    return df_out
 
 def get_values_curve_turbine(params: dict, rho: float) -> pd.DataFrame:
     V_wind_list = np.linspace(0., params["V_max"], 200).tolist()

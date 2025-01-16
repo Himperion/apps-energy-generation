@@ -60,7 +60,11 @@ st.markdown("# 🧩 Componentes")
 
 tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos", "📂 Listado de componentes"]) 
 
-with tab1: 
+with tab1:
+
+    st.session_state['component_dict'] = None
+    st.session_state['component_description'] = None
+
     st.markdown(text_header)
 
 with tab2:
@@ -218,11 +222,8 @@ with tab2:
                 Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vac_max"]),
                                                             disabled=False, variable=params_INV_PV["Vac_max"]["number_input"])
                 
-                Vac_min = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vac_min"]),
-                                                            disabled=False, variable=params_INV_PV["Vac_min"]["number_input"])
-                
                 Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vbb_nom"]),
-                                                            disabled=disabled_Vbb, variable=params_INV_PV["Vbb_nom"]["number_input"])
+                                                           disabled=disabled_Vbb, variable=params_INV_PV["Vbb_nom"]["number_input"])
                 
                 efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["efficiency_max"]),
                                                                   disabled=disabled_Vbb, variable=params_INV_PV["efficiency_max"]["number_input"])
@@ -232,9 +233,8 @@ with tab2:
                     submitted_general, submitted_INV = True, True
 
                     st.session_state['component_dict'] = {
-                        'Pac_nom': Pac_max,
+                        'Pac_max': Pac_max,
                         'Vac_max': Vac_max,
-                        'Vac_min': Vac_min,
                         'Vac_nom': Vac_nom,
                         'Vbb_nom': Vbb_nom,
                         'efficiency_max': efficiency_max,
@@ -242,7 +242,7 @@ with tab2:
                         'phases': phases
                     }
 
-                    st.session_state['component_description'] = ("GE", "Grupo electrógeno")
+                    st.session_state['component_description'] = (dict_key, dict_components[dict_key]['name'])
                 
         elif dict_key == "GE":
             with st.form("GE"):
