@@ -119,19 +119,19 @@ with tab2:
             st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
             
             Alfa = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["alpha_sc"]),
-                                                    variable=dict_params["Alfa"]["number_input"])
+                                                    variable=dict_params["alpha_sc"]["number_input"])
             Beta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["beta_voc"]),
-                                                    variable=dict_params["Beta"]["number_input"])
+                                                    variable=dict_params["beta_voc"]["number_input"])
             Delta = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["gamma_pmp"]),
-                                                     variable=dict_params["Delta"]["number_input"])
+                                                     variable=dict_params["gamma_pmp"]["number_input"])
         
         with st.container(border=True):
             st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
             
             cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
-            Ns = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["Ns"]),
-                                                  variable=dict_params["Ns"]["number_input"])
+            Ns = fun_app5.get_widget_number_input(label=fun_app5.get_label_params(dict_param=dict_params["cells_in_series"]),
+                                                  variable=dict_params["cells_in_series"]["number_input"])
             
     elif data_entry_options == select_data_entry_options[2] or data_entry_options == select_data_entry_options[3]:
         with st.container(border=True):

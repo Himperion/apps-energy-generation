@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import io, calendar
+import io, calendar, yaml
 from datetime import datetime
 
 from funtions import fun_app5, fun_app6
@@ -315,12 +315,6 @@ def toExcelAnalysis(df_data: pd.DataFrame, df_daily: pd.DataFrame, df_monthly: p
 
     return output.getvalue()
 
-#%% funtions streamlit
-
-def get_widget_number_input(label: str, disabled: bool, variable: dict):
-
-    return st.number_input(label=label, disabled=disabled, **variable)
-
 def check_dict_input(dictionary: dict, options) -> bool:
 
     return all([key in options for key in dictionary])
@@ -378,3 +372,72 @@ def checkDataframesOnGrid(df_data, generationOptions, itemsOptionsColumnsDf, lis
 
     return check_DATA, check_PV, check_AERO, columnsOptionsData
 
+def getConditionValidateEntries(validateEntries):
+
+    bool_PV = validateEntries["check_PV"] and validateEntries["check_INV_PV"]
+    bool_AERO = validateEntries["check_AERO"] and validateEntries["check_INV_AERO"]
+
+    return validateEntries['check_DATA'] and (bool_PV or bool_AERO)
+
+def getImputProcessComponentData(dictImput):
+
+    dictOutput = {
+        "PV_data": dictImput["PV_data"],
+        "INVPV_data": dictImput["INVPV_data"],
+        "AERO_data": dictImput["AERO_data"],
+        "INVAERO_data": dictImput["INVAERO_data"],
+        "rho": dictImput["rho"],
+        "PVs": dictImput["PVs"],
+        "PVp": dictImput["PVp"],
+        "V_PCC": dictImput["V_PCC"],
+        "numberPhases": dictImput["numberPhases"]
+    }
+
+    return dictOutput
+
+#%% funtions streamlit
+
+def get_widget_number_input(label: str, disabled: bool, variable: dict):
+
+    return st.number_input(label=label, disabled=disabled, **variable)
+
+
+def getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf, listGenerationOptions):
+
+    check_OUT, df_data, columnsOptionsData = False, None, None
+
+    try:
+        df_data = pd.read_excel(uploadedXlsxDATA)
+        check_DATA, check_PV, check_AERO, columnsOptionsData = checkDataframesOnGrid(df_data, generationOptions, itemsOptionsColumnsDf, listGenerationOptions)
+        check_OUT = check_DATA and (check_PV or check_AERO)
+
+        if not check_OUT:
+            st.error("Error al cargar archivo (pueden faltar variables para su ejecución) **EXCEL** (.xlsx)", icon="🚨")
+    except:
+        st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+
+    return check_OUT, df_data, columnsOptionsData
+
+def getDataCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, optionsKeysUploadedCOMP, optionsKeysUploadedINVCOMP):
+
+    check_COMP, check_INV_COMP, COMP_data, INVCOMP_data = False, False, False, False
+
+    if uploadedYamlCOMP is None:
+        st.error("Cargar **Datos del Módulo fotovoltaico**", icon="🚨")
+    if uploadedYamlINV_COMP is None:
+        st.error("Cargar **Datos del Inversor fotovoltaico**", icon="🚨")
+
+    if uploadedYamlCOMP is not None and uploadedYamlINV_COMP is not None:
+        try:
+            COMP_data = yaml.safe_load(uploadedYamlCOMP)
+            check_COMP = check_dict_input(COMP_data, optionsKeysUploadedCOMP)
+        except:
+            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+
+        try:
+            INVCOMP_data = yaml.safe_load(uploadedYamlINV_COMP)
+            check_INV_COMP = check_dict_input(INVCOMP_data, optionsKeysUploadedINVCOMP)
+        except:
+            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+
+    return check_COMP, check_INV_COMP, COMP_data, INVCOMP_data

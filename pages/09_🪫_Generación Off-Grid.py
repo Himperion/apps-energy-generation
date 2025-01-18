@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import pandas as pd
 import yaml
 
 from funtions import fun_app9
@@ -22,6 +23,20 @@ with open("files//[BAT] - params.yaml", 'r') as archivo:
     params_BAT = yaml.safe_load(archivo)
 
 listGenerationOptions = ["Generación solar", "Generación eólica"]
+
+itemsOptionsColumnsDf = {
+    "DATA": {
+        "Dates": ("dates (Y-M-D hh:mm:ss)"),
+        "Load" : ("Load(kW)")
+    },
+    "PV" : {
+        "Geff" : ["Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)"],
+        "Toper" : ["Toper(°C)"]
+    },
+    "AERO" : {
+        "Vwind" : ["Vwind(m/s)", "Vwind 10msnm(m/s)", "Vwind 50msnm(m/s)"]
+    }
+}
 
 #%% session state
 
@@ -123,6 +138,11 @@ with tab2:
         submitted = st.form_submit_button("Aceptar")
 
         if submitted:
+            if uploadedXlsxDATA is not None:
+                validateEntries['check_DATA'], df_data, columnsOptionsData = fun_app9.getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf, listGenerationOptions)
+
+                
+
             if listGenerationOptions[0] in generationOptions:
                 st.text("Generación SolarOffGrid")
 
@@ -135,6 +155,8 @@ with tab2:
                 Ns_PV
                 Np_PV
                 """
+
+            st.text(validateEntries['check_DATA'])
 
 
         

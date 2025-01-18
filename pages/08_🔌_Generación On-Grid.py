@@ -194,66 +194,23 @@ with tab2:
 
         if submitted:
             if uploadedXlsxDATA is not None:
-                try:
-                    df_data = pd.read_excel(uploadedXlsxDATA)
-
-                    check_DATA, check_PV, check_AERO, columnsOptionsData = fun_app8.checkDataframesOnGrid(df_data, generationOptions, itemsOptionsColumnsDf, listGenerationOptions)
-
-                    validateEntries['check_DATA'] = check_DATA and (check_PV or check_AERO)
-
-                except:
-                    st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+                validateEntries['check_DATA'], df_data, columnsOptionsData = fun_app8.getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf, listGenerationOptions)
             else:
                 st.error("Cargar **Datos de carga, temperatura de operación y potencial solar del sitio**", icon="🚨")
 
             if len(generationOptions) != 0:
-
                 PV_data, INVPV_data, AERO_data, INVAERO_data = None, None, None, None
 
                 if listGenerationOptions[0] in generationOptions:   # Generación PV
-                    if uploadedYamlPV is not None:
-                        try:
-                            PV_data = yaml.safe_load(uploadedYamlPV)
-                            validateEntries['check_PV'] = fun_app8.check_dict_input(PV_data, optionsKeysUploadedPV)
-                        except:
-                            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
-                    else:
-                        st.error("Cargar **Datos del módulo fotovoltaico**", icon="🚨")
-
-                    if uploadedYamlINV_PV is not None:
-                        try:
-                            INVPV_data = yaml.safe_load(uploadedYamlINV_PV)
-                            validateEntries['check_INV_PV'] = fun_app8.check_dict_input(INVPV_data, optionsKeysUploadedINVPV)
-                        except:
-                            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
-
-                    else:
-                        st.error("Cargar **Datos del Inversor**", icon="🚨")
-
+                    validateEntries['check_PV'], validateEntries['check_INV_PV'], PV_data, INVPV_data = fun_app8.getDataCompValidation(uploadedYamlPV, uploadedYamlINV_PV, optionsKeysUploadedPV, optionsKeysUploadedINVPV)
+                    
                 if listGenerationOptions[1] in generationOptions:   # Generación AERO
-                    if uploadedYamlAERO is not None:
-                        try:
-                            AERO_data = yaml.safe_load(uploadedYamlAERO)
-                            validateEntries['check_AERO'] = fun_app8.check_dict_input(AERO_data, optionsKeysUploadedAERO)
-                            
-                        except:
-                            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+                    validateEntries['check_AERO'], validateEntries['check_INV_AERO'], AERO_data, INVAERO_data = fun_app8.getDataCompValidation(uploadedYamlAERO, uploadedYamlINV_AERO, optionsKeysUploadedAERO, optionsKeysUploadedINVAERO)
 
-                    if uploadedYamlINV_AERO is not None:
-                        try:
-                            INVAERO_data = yaml.safe_load(uploadedYamlINV_AERO)
-                            validateEntries['check_INV_AERO'] = fun_app8.check_dict_input(INVAERO_data, optionsKeysUploadedINVAERO)
-                            
-                        except:
-                            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
             else:
                 st.error("Ingresar **Opciones de generación eléctrica**", icon="🚨")
 
-            bool_PV = validateEntries["check_PV"] and validateEntries["check_INV_PV"]
-            bool_AERO = validateEntries["check_AERO"] and validateEntries["check_INV_AERO"]
-
-            if validateEntries['check_DATA'] and (bool_PV or bool_AERO):
-
+            if fun_app8.getConditionValidateEntries(validateEntries):
                 numberPhases = fun_app8.getNumberPhases(INVPV_data, INVAERO_data)
 
                 if numberPhases is not None:
@@ -278,23 +235,13 @@ with tab2:
                     st.error("Incompatibilidad de conexión entre inversores", icon="🚨")
 
     if st.session_state['dictDataOnGrid'] is not None:
-        #
-        COMP_data = fun_app8.processComponentData(PV_data=st.session_state['dictDataOnGrid']['PV_data'],
-                                                  INVPV_data=st.session_state['dictDataOnGrid']['INVPV_data'],
-                                                  AERO_data=st.session_state['dictDataOnGrid']['AERO_data'],
-                                                  INVAERO_data=st.session_state['dictDataOnGrid']['INVAERO_data'],
-                                                  rho=st.session_state['dictDataOnGrid']['rho'],
-                                                  PVs=st.session_state['dictDataOnGrid']['PVs'],
-                                                  PVp=st.session_state['dictDataOnGrid']['PVp'],
-                                                  V_PCC=st.session_state['dictDataOnGrid']['V_PCC'],
-                                                  numberPhases=st.session_state['dictDataOnGrid']['numberPhases'])
-        
+        dictProcessComponentData = fun_app8.getImputProcessComponentData(st.session_state['dictDataOnGrid'])
+        COMP_data = fun_app8.processComponentData(**dictProcessComponentData)
         df_out = fun_app8.generationOnGrid(**st.session_state['dictDataOnGrid'])
 
         st.dataframe(df_out)
         bytesFile = fun_app8.toExcelResults(df=df_out, dict_params=COMP_data)
 
-        
         df_download = st.download_button(
             label="📄 Descargar **:blue[Dataset] XLSX**",
             data=bytesFile,
