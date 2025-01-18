@@ -149,7 +149,6 @@ with tab2:
                     df_input = pd.read_excel(archive_Load)
                     df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
 
-                    st.text(columnsOptionsSel)
                     if check:
                         df_GE = fun_app7.getGeneratorOperation(df_GE, dict_pu, GE_data, columnsOptionsSel)
                         
