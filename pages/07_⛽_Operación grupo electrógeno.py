@@ -30,12 +30,22 @@ dict_phases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-
 select_data_entry_options = ["🛠️ Datos del grupo electrógeno",
                              "💾 Cargar archivo de datos del grupo electrógeno YAML"]
 
 options_sel_input = ["📗 Obtener curvas característica del grupo electrógeno",
-                     "📚 Ingresar datos de potencia demandada"]
+                     "📚 Ingresar datos de potencia demandada por la carga"]
+
+template = {
+    "directory": "files",
+    "name_file": "[Plantilla] - Potecia de carga",
+    "format_file": "xlsx",
+    "description": "Potencia demandada por la carga"
+}
+
+items_options_columns_df = {
+    "Load" : ["Load(kW)"]
+}
 
 #%% main
 
@@ -94,8 +104,14 @@ with tab2:
 
         option_sel = st.radio(label="Opciones para el ingreso de condiciones",
                               options=options_sel_input,
-                              captions=["Ingreso de una única condición de irradiancia y temperatura de operación.",
-                                        "Ingreso de múltiples condiciones de irradiancia y temperatura de operación."])
+                              captions=["Generación automática de vector de carga para la caracterización del componente",
+                                        "Ingreso de múltiples condiciones de carga para obtener la operación del componente "])
+        
+        if option_sel == options_sel_input[1]:
+            label_Load = "Cargar archivo de carga del grupo electrógeno"
+            archive_Load = st.file_uploader(label=label_Load, type={"xlsx"})
+
+            fun_app7.get_download_button(**template)
         
     app_submitted = st.button("Aceptar")
 
@@ -127,50 +143,84 @@ with tab2:
             if option_sel == options_sel_input[0]:
                 df_GE = fun_app7.get_df_option_characteristic_curve(dict_pu=dict_pu, dict_param=GE_data)
 
+            elif option_sel == options_sel_input[1] and archive_Load is not None:
+                check = False
+                try:
+                    df_input = pd.read_excel(archive_Load)
+                    df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
+
+                    st.text(columnsOptionsSel)
+                    if check:
+                        df_GE = fun_app7.getGeneratorOperation(df_GE, dict_pu, GE_data, columnsOptionsSel)
+                        
+                    else:
+                        st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
+
+                except:
+                    st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
+
         if df_GE is not None:
-            df_GE = fun_app7.get_columns_df_GE(dataframe=df_GE, dict_pu=dict_pu, dict_param=GE_data)
+                
+            if option_sel == options_sel_input[1]:
 
-            
-            sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados",
-                                                    "📊 Graficas",
-                                                    "💾 Descargas"])
-            
-            with sub_tab1:
-                with st.container(border=True):
-                    st.dataframe(df_GE)
+                sub_tab1, sub_tab2 = st.tabs(["📋 Resultados",
+                                              "💾 Descargas"])
+                
+                with sub_tab1:
+                    with st.container(border=True):
+                        st.dataframe(df_GE)
 
-            with sub_tab2:
-                with st.container(border=True):
-                    if option_sel == options_sel_input[0]:
-                        re_tab1, re_tab2 = st.tabs(["📈 Curva de consumo y eficiencia del GE",
-                                                    "📉 Curva de carga del generador"])
-
-                        with re_tab1:
-                            fun_app7.get_graph_consumption_efficiency(dataframe=df_GE)
-                        with re_tab2:
-                            fun_app7.get_graph_load_characteristic(dataframe=df_GE)
-
-            with sub_tab3:
-                buffer_data = fun_app7.get_bytes_yaml(dictionary=GE_data)
-                excel = to_excel(df_GE)
-
-                with st.container(border=True):
+                with sub_tab2:
+                    excel = to_excel(df_GE)
 
                     st.download_button(
-                        label="📑 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
-                        data=buffer_data,
-                        file_name=fun_app7.name_file_head(name="GE_data.yaml"),
-                        mime="text/yaml"
-                        )
-                    
-                    st.download_button(
-                        label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
-                        data=excel,
-                        file_name=fun_app7.name_file_head(name="GE_characteristicCurve.xlsx"),
-                        mime="xlsx")
+                            label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
+                            data=excel,
+                            file_name=fun_app7.name_file_head(name="GE_operationAnalysis.xlsx"),
+                            mime="xlsx")
 
 
-                    
+            elif option_sel == options_sel_input[0]:
+                df_GE = fun_app7.get_columns_df_GE(dataframe=df_GE, dict_pu=dict_pu, dict_param=GE_data,
+                                                columnsOptionsSel={"Load": "Load(kW)"})
+
+                sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados",
+                                                        "📊 Graficas",
+                                                        "💾 Descargas"])
+                
+                with sub_tab1:
+                    with st.container(border=True):
+                        st.dataframe(df_GE)
+
+                with sub_tab2:
+                    with st.container(border=True):
+                        if option_sel == options_sel_input[0]:
+                            re_tab1, re_tab2 = st.tabs(["📈 Curva de consumo y eficiencia del GE",
+                                                        "📉 Curva de carga del generador"])
+
+                            with re_tab1:
+                                fun_app7.get_graph_consumption_efficiency(dataframe=df_GE)
+                            with re_tab2:
+                                fun_app7.get_graph_load_characteristic(dataframe=df_GE)
+
+                with sub_tab3:
+                    buffer_data = fun_app7.get_bytes_yaml(dictionary=GE_data)
+                    excel = to_excel(df_GE)
+
+                    with st.container(border=True):
+
+                        st.download_button(
+                            label="📑 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
+                            data=buffer_data,
+                            file_name=fun_app7.name_file_head(name="GE_data.yaml"),
+                            mime="text/yaml"
+                            )
+                        
+                        st.download_button(
+                            label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
+                            data=excel,
+                            file_name=fun_app7.name_file_head(name="GE_characteristicCurve.xlsx"),
+                            mime="xlsx")                
 
             
 

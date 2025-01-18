@@ -92,15 +92,9 @@ optionsKeysUploadedAERO = [
 
 optionsKeysUploadedINVAERO = optionsKeysUploadedINVPV
 
-
-
-
-
-
 listGenerationOptions = ["Generación solar", "Generación eólica"]
 
 showOutputPV = [f"{params_PV[elm]['label']}{params_PV[elm]['unit']}: {params_PV[elm]['description']}" for elm in ["Voc", "Isc", "Impp", "Vmpp", "Pmpp"]]
-
 
 #%% session state
 
@@ -156,7 +150,7 @@ with tab2:
         
         if listGenerationOptions[0] in generationOptions:
             with st.container(border=True):
-
+                st.markdown("☀️ **:blue[Generación de energía solar]**")
                 with st.container(border=True):
                     st.markdown(f"{dict_components['PV']['emoji']} **:blue[{dict_components['PV']['name']}:]**")
 
@@ -179,7 +173,7 @@ with tab2:
 
         if listGenerationOptions[1] in generationOptions:
             with st.container(border=True):
-
+                st.markdown("🌀 **:green[Generación de energía eólica]**")
                 with st.container(border=True):
                     st.markdown(f"{dict_components['AERO']['emoji']} **:green[{dict_components['AERO']['name']}:]**")
 
@@ -322,30 +316,30 @@ with tab3:
 
         if submitted:
             if uploaderXlsx is not None:
-                #try:
-                df_data = pd.read_excel(uploaderXlsx, sheet_name="Data")
-                #COMP_data = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
-                timeInfo = fun_app8.getTimeData(df_data)
+                try:
+                    df_data = pd.read_excel(uploaderXlsx, sheet_name="Data")
+                    #COMP_data = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
+                    timeInfo = fun_app8.getTimeData(df_data)
 
 
-                #PV_data, INVPV_data, AERO_data, INVAERO_data, PVs, PVp, V_PCC = fun_app8.getDictParams(COMP_data)
+                    #PV_data, INVPV_data, AERO_data, INVAERO_data, PVs, PVp, V_PCC = fun_app8.getDictParams(COMP_data)
 
-                df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
+                    df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
 
-                df_dailyResult = fun_app8.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "day")
-                df_monthlyResult = fun_app8.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "month")
-                df_annualResult = fun_app8.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "year")
+                    df_dailyResult = fun_app8.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "day")
+                    df_monthlyResult = fun_app8.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "month")
+                    df_annualResult = fun_app8.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "year")
 
-                bytesFile = fun_app8.toExcelAnalysis(df_data, df_dailyResult, df_monthlyResult, df_annualResult)
+                    bytesFile = fun_app8.toExcelAnalysis(df_data, df_dailyResult, df_monthlyResult, df_annualResult)
 
-                df_download = st.download_button(
-                    label="📄 Descargar **:blue[Análisis] XLSX**",
-                    data=bytesFile,
-                    file_name=fun_app8.name_file_head(name="Analysis_OnGrid.xlsx"),
-                    mime='xlsx')
+                    df_download = st.download_button(
+                        label="📄 Descargar **:blue[Análisis] XLSX**",
+                        data=bytesFile,
+                        file_name=fun_app8.name_file_head(name="Analysis_OnGrid.xlsx"),
+                        mime='xlsx')
 
-                #except:
-                #    st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+                except:
+                    st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
             else:
                 st.error("Cargar **Dataset generación Off-Grid**", icon="🚨")
      

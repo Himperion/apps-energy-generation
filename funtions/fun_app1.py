@@ -83,6 +83,8 @@ def for_options_get_celltype(option):
 
 def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
 
+    dict_data = None
+
     if key == "PV":
         i_sc = selected_row_column(selected_row, params_PV, "Isc")
         v_oc = selected_row_column(selected_row, params_PV, "Voc")
@@ -128,7 +130,7 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "V_max": selected_row_column(selected_row, params_BAT, "V_max"),
             "V_min": selected_row_column(selected_row, params_BAT, "V_min"),
             "bat_type": selected_row_column(selected_row, params_BAT, "bat_type"),
-            "C": selected_row_column(selected_row, params_BAT, "C"),
+            "C": selected_row_column(selected_row, params_BAT, "capacity"),
             "efficiency": selected_row_column(selected_row, params_BAT, "efficiency"),
         }
     
@@ -153,6 +155,8 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "V_max" : selected_row_column(selected_row, params_AERO, "V_max"),
             "P_nom" : selected_row_column(selected_row, params_AERO, "P_nom"),
         }
+
+    # Quitar comonente RC, solo es necesario en valor de la eficiencia.
 
     return dict_data
 
@@ -219,16 +223,18 @@ def print_data(dataframe: pd.DataFrame, columns_print: list):
 
 def download_button_component(selected_row: pd.DataFrame, key: str, key_label: str):
 
-    PV_data = get_dict_data(selected_row=selected_row, key=key)
-    buffer_data = get_bytes_yaml(dictionary=PV_data)
-    name = f"{selected_row.loc[0, 'manufacturer']}-{selected_row.loc[0, 'name']}"
+    COMP_data = get_dict_data(selected_row=selected_row, key=key)
 
-    st.download_button(
-        label=f"📑 Descargar **:blue[archivo de datos]** del {key_label} **YAML**",
-        data=buffer_data,
-        file_name=name_file_head(name=f"{key}_{name}.yaml"),
-        mime="text/yaml"
-        )
+    if COMP_data is not None:
+        buffer_data = get_bytes_yaml(dictionary=COMP_data)
+        name = f"{selected_row.loc[0, 'manufacturer']}-{selected_row.loc[0, 'name']}"
+
+        st.download_button(
+            label=f"📑 Descargar **:blue[archivo de datos]** del {key_label} **YAML**",
+            data=buffer_data,
+            file_name=name_file_head(name=f"{key}_{name}.yaml"),
+            mime="text/yaml"
+            )
 
     return
 

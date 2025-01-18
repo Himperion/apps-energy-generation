@@ -20,6 +20,28 @@ I_max:
     step: null
     value: 17.5
   unit: (A)
+Np:
+  data_type: int
+  description: "N\xFAmero de ramas conectadas en paralelo"
+  label: Ns
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 1
+  unit: ''
+Ns:
+  data_type: int
+  description: "N\xFAmero de bater\xEDas conectadas en serie"
+  label: Ns
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 1
+  unit: ''
 V_max:
   data_type: float
   description: "Voltaje m\xE1ximo"

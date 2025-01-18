@@ -182,3 +182,20 @@ def curve_x_y(x, y, points, lines, title, xlabel, ylabel):
         st.pyplot(fig)
 
     return
+
+def curve_x_yyy(x, y1, y2, y3, title, xlabel, ylabel, label_Y):
+
+    fig, ax = plt.subplots()
+    ax.plot(x, y1, 'r-', label=label_Y[0])
+    ax.plot(x, y2, 'b-', label=label_Y[1])
+    ax.plot(x, y3, 'g-', label=label_Y[2])
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(True)
+    ax.legend()
+
+    with st.container(border=True):
+        st.pyplot(fig)
+
+    return

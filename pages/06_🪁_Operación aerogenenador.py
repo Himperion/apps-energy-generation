@@ -127,9 +127,6 @@ with tab2:
                         st.dataframe(df_powerTurbine)
 
                 with sub_tab2:
-                    df_values = fun_app6.get_values_curve_turbine(params=params_turbine,
-                                                                  rho=rho)
-
                     xval = df_values["V_wind"]
                     yval = df_values["P_gen"]
 
@@ -151,16 +148,28 @@ with tab2:
                     fun_app6.curve_x_y(xval, yval, points, lines, title, xlabel, ylabel)
 
                 with sub_tab3:
-                    xval = df_turbine[columns_options_sel["Vwind"]]
-                    yval = df_turbine["Pgen(kW)"]
+                    xval = df_values["V_wind"]
+                    yval = df_values["n_turbine"]
 
                     points, lines = {}, []
 
-                    title = "Curva aerogenerador (Paero-Vwind)"
+                    title = "Curva de eficiencia"
                     xlabel = "Velocidad de viento (m/s)"
-                    ylabel = "Potencia del aerogenerador (kW)"
+                    ylabel = "Eficiencia (%)"
 
                     fun_app6.curve_x_y(xval, yval, points, lines, title, xlabel, ylabel)
+
+                    y1 = df_values["P_ideal"]
+                    y2 = df_values["P_betz"]
+                    y3 = df_values["P_gen"]
+
+                    label_Y = ["P_ideal(kW)", "P_betz(kW)", "P_gen(kW)"]
+
+                    title = "Curva de eficiencia"
+                    xlabel = "Velocidad de viento (m/s)"
+                    ylabel = "Eficiencia (%)"
+
+                    fun_app6.curve_x_yyy(xval, y1, y2, y3, title, xlabel, ylabel, label_Y)
 
                 with sub_tab4:
                     buffer_data = fun_app6.get_bytes_yaml(dictionary=params_turbine)
