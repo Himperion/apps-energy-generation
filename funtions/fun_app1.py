@@ -23,9 +23,6 @@ with open("files//[INV_PV] - params.yaml", 'r') as archivo:
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
 
-
-
-
 with open("files//[GE] - PE.yaml", 'r') as archivo:
     dict_fuel = yaml.safe_load(archivo)
 
@@ -127,8 +124,10 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
         dict_data = {
             "DOD": selected_row_column(selected_row, params_BAT, "DOD"),
             "I_max": selected_row_column(selected_row, params_BAT, "I_max"),
+            "I_min": selected_row_column(selected_row, params_BAT, "I_min"),
             "V_max": selected_row_column(selected_row, params_BAT, "V_max"),
             "V_min": selected_row_column(selected_row, params_BAT, "V_min"),
+            "V_nom": selected_row_column(selected_row, params_BAT, "V_nom"),
             "bat_type": selected_row_column(selected_row, params_BAT, "bat_type"),
             "C": selected_row_column(selected_row, params_BAT, "capacity"),
             "efficiency": selected_row_column(selected_row, params_BAT, "efficiency"),
@@ -139,7 +138,7 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "Pnom": selected_row_column(selected_row, params_GE, "Pnom"),
             "Voc": selected_row_column(selected_row, params_GE, "Voc"),
             "Vpc": selected_row_column(selected_row, params_GE, "Vpc"),
-            "Fases": selected_row_column(selected_row, params_GE, "phases"),
+            "phases": selected_row_column(selected_row, params_GE, "phases"),
             "FP": selected_row_column(selected_row, params_GE, "FP"),
             "Combustible": selected_row_column(selected_row, params_GE, "fuel_type"),
             "PE_fuel": dict_fuel[selected_row_column(selected_row, params_GE, "fuel_type")]["PE"],

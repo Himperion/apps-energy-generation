@@ -1,0 +1,99 @@
+Np:
+  data_type: int
+  description: "N\xFAmero de ramas conectadas en paralelo"
+  label: Ns
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 1
+  unit: ''
+Ns:
+  data_type: int
+  description: "N\xFAmero de bater\xEDas conectadas en serie"
+  label: Ns
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 1
+  unit: ''
+SOC_0:
+  data_type: float
+  description: "Estado de carga inicial del banco de bater\xEDas"
+  label: SOC_0
+  number_input:
+    format: '%.1f'
+    max_value: 1.0
+    min_value: 0.01
+    step: null
+    value: 0.8
+  unit: ''
+SOC_ETP1:
+  data_type: float
+  description: "Estado de carga de ETP1 del banco de bater\xEDas"
+  label: SOC_ETP1
+  number_input:
+    format: '%.1f'
+    max_value: 1.0
+    min_value: 0.01
+    step: null
+    value: 0.6
+  unit: ''
+SOC_ETP2:
+  data_type: float
+  description: "Estado de carga de ETP2 del banco de bater\xEDas"
+  label: SOC_ETP2
+  number_input:
+    format: '%.1f'
+    max_value: 1.0
+    min_value: 0.01
+    step: null
+    value: 0.9
+  unit: ''
+SOC_conx:
+  data_type: float
+  description: "Estado de carga de conexi\xF3n del banco de bater\xEDas"
+  label: SOC_conx
+  number_input:
+    format: '%.1f'
+    max_value: 1.0
+    min_value: 0.01
+    step: null
+    value: 0.8
+  unit: ''
+SOC_max:
+  data_type: float
+  description: "Estado de carga m\xE1ximo del banco de bater\xEDas"
+  label: SOC_max
+  number_input:
+    format: '%.1f'
+    max_value: 1.0
+    min_value: 0.01
+    step: null
+    value: 1.0
+  unit: ''
+SOC_min:
+  data_type: float
+  description: "Estado de carga m\xEDnimo del banco de bater\xEDas"
+  label: SOC_min
+  number_input:
+    format: '%.1f'
+    max_value: 1.0
+    min_value: 0.01
+    step: null
+    value: 0.6
+  unit: ''
+rc_efficiency:
+  data_type: int
+  description: Eficiencia del regulador cargador
+  label: efficiency
+  number_input:
+    format: null
+    max_value: 100
+    min_value: 1
+    step: null
+    value: 98
+  unit: (%)

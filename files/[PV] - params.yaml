@@ -2,11 +2,11 @@ alpha_sc:
   description: Alfa Coeficiente de temperatura de la Isc
   label: alpha_sc
   number_input:
-    format: '%.4f'
+    format: '%.5f'
     max_value: 1.0
     min_value: 0.0
     step: null
-    value: 0.05
+    value: 0.0603
   unit: "(%/\xB0C)"
   data_type: float
 beta_voc:
@@ -17,7 +17,7 @@ beta_voc:
     max_value: 0.0
     min_value: -0.9999
     step: null
-    value: -0.27
+    value: -0.3
   unit: "(%/\xB0C)"
   data_type: float
 C:
@@ -33,7 +33,7 @@ gamma_pmp:
     max_value: 0.0
     min_value: -0.9999
     step: null
-    value: -0.35
+    value: -0.38
   unit: "(%/\xB0C)"
   data_type: float
 Geff:
@@ -55,7 +55,7 @@ Impp:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 11.04
+    value: 9.5
   unit: (A)
   data_type: float
 Iph:
@@ -66,7 +66,7 @@ Iph:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 12.051545
+    value: 10.055046
   unit: (A)
   data_type: float
 Isat:
@@ -77,7 +77,7 @@ Isat:
     max_value: 1.0
     min_value: 0.0
     step: null
-    value: 4.701633e-11
+    value: 7.959190966615867e-11
   unit: (A)
   data_type: float
 Isc:
@@ -88,7 +88,7 @@ Isc:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 11.67
+    value: 10.05
   unit: (A)
   data_type: float
 NOCT:
@@ -99,7 +99,7 @@ NOCT:
     max_value: 90
     min_value: 1
     step: null
-    value: 42
+    value: 45
   unit: "(\xB0C)"
   data_type: float
 cells_in_series:
@@ -110,7 +110,7 @@ cells_in_series:
     max_value: 200
     min_value: 1
     step: null
-    value: 156
+    value: 72
   unit: ''
   data_type: int
 PVp:
@@ -148,7 +148,7 @@ Rp:
     max_value: 800.0
     min_value: 0.0
     step: null
-    value: 93.409074
+    value: 611.244798
   unit: (Ohm)
   data_type: float
 Rs:
@@ -159,7 +159,7 @@ Rs:
     max_value: 1.0
     min_value: 0.0
     step: null
-    value: 0.217007
+    value: 0.306896
   unit: (Ohm)
   data_type: float
 Toper:
@@ -181,7 +181,7 @@ Vmpp:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 44.4
+    value: 40.03
   unit: (V)
   data_type: float
 Voc:
@@ -192,7 +192,7 @@ Voc:
     max_value: 200.0
     min_value: 0.0
     step: null
-    value: 53.1
+    value: 48.71
   unit: (V)
   data_type: float
 Vt:
@@ -214,7 +214,7 @@ nNsVt:
     max_value: 10.0
     min_value: 0.0
     step: null
-    value: 2.025063
+    value: 1.90614262
   unit: ''
   data_type: float
 Ajuste_Isc:
@@ -225,7 +225,7 @@ Ajuste_Isc:
     max_value: 100.0
     min_value: 0.0
     step: null
-    value: 9.081115
+    value: 6.693083
   unit: '(%)'
   data_type: float
 Pmax:

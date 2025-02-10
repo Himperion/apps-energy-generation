@@ -196,7 +196,7 @@ with tab2:
             if uploadedXlsxDATA is not None:
                 validateEntries['check_DATA'], df_data, columnsOptionsData = fun_app8.getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf, listGenerationOptions)
             else:
-                st.error("Cargar **Datos de carga, temperatura de operación y potencial solar del sitio**", icon="🚨")
+                st.error("Cargar **Datos de carga, temperatura de operación y potencial energético del sitio**", icon="🚨")
 
             if len(generationOptions) != 0:
                 PV_data, INVPV_data, AERO_data, INVAERO_data = None, None, None, None

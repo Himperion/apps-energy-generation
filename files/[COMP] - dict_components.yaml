@@ -29,7 +29,7 @@ PV:
   name: "M\xF3dulo fotovoltaico"
   sheet_label: PV
 RC:
-  emoji: "\U0001F4F6"
-  label: "\U0001F4F6 Regulador de carga"
+  emoji: "\U0001FAAB"
+  label: "\U0001FAAB Regulador de carga"
   name: Regulador de carga
   sheet_label: RC

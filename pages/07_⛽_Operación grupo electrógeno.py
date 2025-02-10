@@ -71,9 +71,9 @@ with tab2:
             with col1:
                 Voc = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["Voc"]),
                                                        variable=dict_params["Voc"]["number_input"])
-                Fases = st.selectbox(label="**Fases:** sistema de corriente alterna",
-                                     options=[value["label"] for value in dict_phases.values()],
-                                     index=0, placeholder="Selecciona una opción")
+                phases = st.selectbox(label="**Fases:** sistema de corriente alterna",
+                                      options=[value["label"] for value in dict_phases.values()],
+                                      index=0, placeholder="Selecciona una opción")
             with col2:
                 Vpc = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["Vpc"]),
                                                        variable=dict_params["Vpc"]["number_input"])
@@ -123,7 +123,7 @@ with tab2:
                 "Pnom": Pnom,
                 "Voc": Voc,
                 "Vpc": Vpc,
-                "Fases": fun_app7.from_value_label_get_key(dict_phases, Fases),
+                "phases": fun_app7.from_value_label_get_key(dict_phases, phases),
                 "FP": FP,
                 "Combustible": Combustible,
                 "PE_fuel": dict_fuel[Combustible]["PE"],
@@ -220,11 +220,3 @@ with tab2:
                             data=excel,
                             file_name=fun_app7.name_file_head(name="GE_characteristicCurve.xlsx"),
                             mime="xlsx")                
-
-            
-
-                
-            
-                
-
-

@@ -401,7 +401,6 @@ def get_widget_number_input(label: str, disabled: bool, variable: dict):
 
     return st.number_input(label=label, disabled=disabled, **variable)
 
-
 def getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf, listGenerationOptions):
 
     check_OUT, df_data, columnsOptionsData = False, None, None
@@ -418,26 +417,27 @@ def getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf
 
     return check_OUT, df_data, columnsOptionsData
 
-def getDataCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, optionsKeysUploadedCOMP, optionsKeysUploadedINVCOMP):
+def getCompValidation(uploadedYaml, optionsKeys):
 
-    check_COMP, check_INV_COMP, COMP_data, INVCOMP_data = False, False, False, False
+    check, data = False, False
+
+    if uploadedYaml is not None:
+        try:
+            data = yaml.safe_load(uploadedYaml)
+            check = check_dict_input(data, optionsKeys)
+        except:
+            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+
+    return check, data
+
+def getDataCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, optionsKeysUploadedCOMP, optionsKeysUploadedINVCOMP):
 
     if uploadedYamlCOMP is None:
         st.error("Cargar **Datos del Módulo fotovoltaico**", icon="🚨")
     if uploadedYamlINV_COMP is None:
         st.error("Cargar **Datos del Inversor fotovoltaico**", icon="🚨")
 
-    if uploadedYamlCOMP is not None and uploadedYamlINV_COMP is not None:
-        try:
-            COMP_data = yaml.safe_load(uploadedYamlCOMP)
-            check_COMP = check_dict_input(COMP_data, optionsKeysUploadedCOMP)
-        except:
-            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
-
-        try:
-            INVCOMP_data = yaml.safe_load(uploadedYamlINV_COMP)
-            check_INV_COMP = check_dict_input(INVCOMP_data, optionsKeysUploadedINVCOMP)
-        except:
-            st.error("Error al cargar archivo **YAML** (.yaml)", icon="🚨")
+    check_COMP, COMP_data = getCompValidation(uploadedYamlCOMP, optionsKeysUploadedCOMP)
+    check_INV_COMP, INVCOMP_data = getCompValidation(uploadedYamlINV_COMP, optionsKeysUploadedINVCOMP)
 
     return check_COMP, check_INV_COMP, COMP_data, INVCOMP_data

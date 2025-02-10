@@ -14,11 +14,22 @@ I_max:
   description: "Corriente m\xE1xima de descarga"
   label: I_max
   number_input:
-    format: '%.1f'
+    format: '%.2f'
     max_value: 1000.0
     min_value: 0.1
     step: null
-    value: 17.5
+    value: 40.4
+  unit: (A)
+I_min:
+  data_type: float
+  description: "Corriente m\xE1xima de descarga"
+  label: I_min
+  number_input:
+    format: '%.2f'
+    max_value: 1000.0
+    min_value: 0.1
+    step: null
+    value: 4.04
   unit: (A)
 Np:
   data_type: int
@@ -64,6 +75,17 @@ V_min:
     step: null
     value: 11.5
   unit: (V)
+V_nom:
+  data_type: float
+  description: Voltaje nominal
+  label: V_nom
+  number_input:
+    format: '%.1f'
+    max_value: 1000.0
+    min_value: 0.1
+    step: null
+    value: 12.0
+  unit: (V)
 bat_type:
   data_type: str
   description: "Tipo de bater\xEDa"
@@ -79,9 +101,9 @@ capacity:
     max_value: 1000.0
     min_value: 0.1
     step: null
-    value: 87.7
+    value: 202.0
   unit: (Ah)
-efficiency:
+bat_efficiency:
   data_type: float
   description: Eficiencia
   label: efficiency
