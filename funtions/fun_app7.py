@@ -25,7 +25,7 @@ def from_value_label_get_key(dict_in: dict, value_label: str) -> str:
 
 def get_param_gp(dict_param: dict, dict_phases: dict):
 
-    numPhases = dict_phases[dict_param["Fases"]]["Num"]
+    numPhases = dict_phases[dict_param["phases"]]["Num"]
     
     In = round((dict_param["Pnom"]*1000)/(np.sqrt(numPhases)*dict_param["Vpc"]*dict_param["FP"]), 6)
     Ra = round((dict_param["Voc"] - dict_param["Vpc"]) / In, 6)

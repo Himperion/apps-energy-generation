@@ -157,8 +157,8 @@ with tab2:
                     I_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["I_max"]),
                                                              disabled=False, variable=params_BAT["I_max"]["number_input"])
                 
-                efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["efficiency"]),
-                                                              disabled=False, variable=params_BAT["efficiency"]["number_input"])
+                efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["bat_efficiency"]),
+                                                              disabled=False, variable=params_BAT["bat_efficiency"]["number_input"])
                 DOD = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["DOD"]),
                                                        disabled=False, variable=params_BAT["DOD"]["number_input"])
 
@@ -370,8 +370,8 @@ with tab2:
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
-                    efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["efficiency"]),
-                                                                  disabled=False, variable=params_RC["efficiency"]["number_input"])
+                    efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["rc_efficiency"]),
+                                                                  disabled=False, variable=params_RC["rc_efficiency"]["number_input"])
                     
                 with st.container(border=True):
                     st.markdown("🔋 **:blue[{0}:]**".format("Gestión del banco de baterías"))
