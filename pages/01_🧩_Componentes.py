@@ -42,6 +42,7 @@ dict_phases = {
 
 options_celltype = fun_app1.celltype_options(celltype_PV)
 options_batteryType = ["GEL", "Lithium Ion", "AGM"]
+options_VdcBB = [12, 24, 36, 48]
 
 dir_components = "files//[DATA] - Components.xlsx"
 
@@ -370,8 +371,11 @@ with tab2:
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
-                    efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["rc_efficiency"]),
-                                                                  disabled=False, variable=params_RC["rc_efficiency"]["number_input"])
+                    Vdc_bb = st.multiselect(label="Tensión nominal del banco de baterías (V)", options=options_VdcBB,
+                                            key="Vdc_bb", default=[options_VdcBB[0]])
+
+                    rc_efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["rc_efficiency"]),
+                                                                     disabled=False, variable=params_RC["rc_efficiency"]["number_input"])
                     
                 with st.container(border=True):
                     st.markdown("🔋 **:blue[{0}:]**".format("Gestión del banco de baterías"))
@@ -385,7 +389,7 @@ with tab2:
                                                                    disabled=False, variable=params_RC["SOC_min"]["number_input"])
                     with col2:
                         SOC_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_max"]),
-                                                              disabled=False, variable=params_RC["SOC_max"]["number_input"])
+                                                                   disabled=False, variable=params_RC["SOC_max"]["number_input"])
                         
                     col1, col2 = st.columns(2)
                     with col1:
@@ -403,18 +407,26 @@ with tab2:
                     if submitted:
                         submitted_general, submitted_RC = True, True
 
-                        st.session_state['component_dict'] = {
-                            "rc_efficiency": efficiency,
-                            "SOC_0": SOC_0,
-                            "SOC_min": SOC_min,
-                            "SOC_max": SOC_max,
-                            "SOC_ETP1": SOC_ETP1,
-                            "SOC_ETP2": SOC_ETP2,
-                            "SOC_conx": SOC_conx
-                        }
+                        if SOC_min < SOC_max:
+                            if SOC_ETP1 < SOC_ETP2:
+                                st.session_state['component_dict'] = {
+                                    "Vdc_bb": Vdc_bb,
+                                    "rc_efficiency": rc_efficiency,
+                                    "SOC_0": SOC_0,
+                                    "SOC_min": SOC_min,
+                                    "SOC_max": SOC_max,
+                                    "SOC_ETP1": SOC_ETP1,
+                                    "SOC_ETP2": SOC_ETP2,
+                                    "SOC_conx": SOC_conx
+                                    }
 
-                        st.session_state['component_description'] = ("RC", "Regulador de carga")
+                                st.session_state['component_description'] = ("RC", "Regulador de carga")
                     
+                            else:
+                                st.error("Error: **El SOC_ETP2 debe ser mayor que el SOC_ETP1**", icon="🚨")
+                        else:
+                            st.error("Error: **El SOCmax debe ser mayor que el SOCmin**", icon="🚨")
+  
     if st.session_state['component_dict'] is not None and st.session_state['component_description'] is not None:
 
         fun_app1.get_component_download_button(component_dict=st.session_state['component_dict'],

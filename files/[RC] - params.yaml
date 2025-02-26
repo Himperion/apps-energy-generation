@@ -97,3 +97,9 @@ rc_efficiency:
     step: null
     value: 98
   unit: (%)
+Vdc_bb:
+  data_type: ''
+  description: "Tensi\xF3n nominal del banco de bater\xEDas (V)"
+  label: Vdc_bb
+  number_input: {}
+  unit: (V)

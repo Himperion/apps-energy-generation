@@ -37,20 +37,9 @@ itemsOptionsColumnsDf = {
     }
 }
 
-optKeysGE = [
-    "C0",
-    "C100",
-    "Combustible",
-    "FP",
-    "PE_fuel",
-    "Pnom",
-    "Voc",
-    "Vpc",
-    "phases"
-]
-
 selectDataEntryOptions = ["📝 Ingresar datos del proyecto",
-                          "💾 Cargar archivo de datos del proyecto XLSX"]
+                          "💾 Cargar archivo de proyecto XLSX",
+                          "💾 Cargar archivo de componentes YAML"]
 
 #%% session state
 
@@ -66,6 +55,15 @@ tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "�
 with tab1:
     st.session_state['dictDataOffGrid'] = None
 
+    col1, col2, col3 = st.columns( [0.05, 0.9, 0.05])
+
+    with col1:
+        st.write("")
+    with col2:
+        st.image("images//app9_img1.png")
+    with col3:
+        st.write("")
+
 with tab2:
     generationOptions = None
 
@@ -74,19 +72,7 @@ with tab2:
                                         index=None, placeholder="Selecciona una opción")
         
         if projectDataEntry == selectDataEntryOptions[0]:
-            PVs, PVp, Ns_PV, Np_PV, Ns_AERO, Np_AERO, rho = None, None, None, None, None, None, None
-            validateEntries = {
-                    "check_DATA": False,
-                    "check_PV": False,
-                    "check_INVPV": False,
-                    "check_BATPV": False,
-                    "check_RCPV": False,
-                    "check_AERO": False,
-                    "check_INVAERO": False,
-                    "check_BATAERO": False,
-                    "check_RCAERO": False,
-                    "check_GE": False
-                }
+            PVs, PVp, Ns_BAT, Np_BAT, rho = None, None, None, None, None
             
             generationOptions = st.multiselect(label="Opciones de generación eléctrica", options=listGenerationOptions, default=listGenerationOptions[0])
 
@@ -103,7 +89,6 @@ with tab2:
         with st.form("Off-Grid", border=False):
 
             if projectDataEntry == selectDataEntryOptions[0]:
-
                 if listGenerationOptions[0] in generationOptions:
                     with st.container(border=True):
                         st.markdown("☀️ **:blue[Generación de energía solar]**")
@@ -121,69 +106,67 @@ with tab2:
                                 PVp = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_PV["PVp"]),
                                                                        disabled=False, key="PVp", variable=params_PV["PVp"]["number_input"])
                     
-                    with st.container(border=True):
-                        st.markdown(f"{dict_components['INV_PV']['emoji']} **:blue[{dict_components['INV_PV']['name']}:]**")
-                        uploadedYamlINV_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_PV')
+                        with st.container(border=True):
+                            st.markdown(f"{dict_components['INV_PV']['emoji']} **:blue[{dict_components['INV_PV']['name']}:]**")
+                            uploadedYamlINV_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_PV')
 
-                    with st.container(border=True):
-                        st.markdown("🔋 **:blue[Banco de baterías:]**")
-                        uploadedYamlBAT_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlBAT_PV')
-
-                        st.markdown("🧑‍🔧 Conexión del banco de baterías")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            Ns_PV = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_BAT["Ns"]),
-                                                                 disabled=False, key="Ns_PV", variable=params_BAT["Ns"]["number_input"])
-                        with col2:
-                            Np_PV = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_BAT["Np"]),
-                                                                 disabled=False, key="Np_PV", variable=params_BAT["Np"]["number_input"])
-
-                    with st.container(border=True):
-                        st.markdown("🪫 **:blue[Regulador de carga:]**")
-                        uploadedYamlRC_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlRC_PV')
-
+                        with st.container(border=True):
+                            st.markdown("🪫 **:blue[Regulador de carga:]**")
+                            uploadedYamlRC_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlRC_PV')
+                        
                 if listGenerationOptions[1] in generationOptions:
                     with st.container(border=True):
                         st.markdown("🌀 **:green[Generación de energía eólica]**")
                         with st.container(border=True):
                             st.markdown(f"{dict_components['AERO']['emoji']} **:green[{dict_components['AERO']['name']}:]**")
-
-                        uploadedYamlAERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlAERO')
+                            uploadedYamlAERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlAERO')
 
                         with st.container(border=True):
                             st.markdown(f"{dict_components['INV_AERO']['emoji']} **:green[{dict_components['INV_AERO']['name']}:]**")
                             uploadedYamlINV_AERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_AERO')
 
                         with st.container(border=True):
-                            st.markdown("🔋 **:green[Banco de baterías:]**")
-                            uploadedYamlBAT_AERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlBAT_AERO')
-
-                            st.markdown("🧑‍🔧 Conexión del banco de baterías")
-                            col1, col2 = st.columns(2)
-                            with col1:
-                                Ns_AERO = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_BAT["Ns"]),
-                                                                           disabled=False, key="Ns_AERO", variable=params_BAT["Ns"]["number_input"])
-                            with col2:
-                                Np_AERO = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_BAT["Np"]),
-                                                                           disabled=False, key="Np_AERO", variable=params_BAT["Np"]["number_input"])
-                        
-                        with st.container(border=True):
                             st.markdown("🪫 **:green[Regulador de carga:]**")
                             uploadedYamlRC_AERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlRC_AERO')
+
+                if (listGenerationOptions[0] in generationOptions) or (listGenerationOptions[1] in generationOptions):
+                    with st.container(border=True):
+                        st.markdown("🔋 **:blue[Banco de baterías:]**")
+                        uploadedYamlBAT = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key="uploadedYamlBAT")
+
+                        st.markdown("🧑‍🔧 Conexión del banco de baterías")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            Ns_BAT = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_BAT["Ns"]),
+                                                                      disabled=False, key="Ns_BAT", variable=params_BAT["Ns"]["number_input"])
+                        with col2:
+                            Np_BAT = fun_app9.get_widget_number_input(label=fun_app9.get_label_params(dict_param=params_BAT["Np"]),
+                                                                      disabled=False, key="Np_BAT", variable=params_BAT["Np"]["number_input"])
 
                 if listGenerationOptions[2] in generationOptions:
                     with st.container(border=True):
                         st.markdown("⛽ **:red[Respaldo grupo electrógeno]**")
                         uploadedYamlGE = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlGE')
 
-            if projectDataEntry == selectDataEntryOptions[1]:
+            elif projectDataEntry == selectDataEntryOptions[1]:
                 with st.container(border=True):
-                    st.markdown("💾 **Cargar archivo de datos del proyecto**")
+                    st.markdown("💾 **:blue[Cargar archivo de proyecto Off-Grid]**")
                     uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
+
+            elif projectDataEntry == selectDataEntryOptions[2]:
+                with st.container(border=True):
+                    st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial energetico del sitio:]**")
+                    uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key="uploadedXlsxDATA")
+
+                with st.container(border=True):
+                    st.markdown("💾 **:blue[Cargar archivo de componentes Off-Grid]**")
+                    uploadedYamlCOMPONENTS = st.file_uploader(label="Subir archivo de componentes YAML", type=["yaml", "yml"])
         
             submitted = st.form_submit_button("Aceptar")
 
             if submitted:
+                checkProject, validateEntries = False, fun_app9.initializeDictValidateEntries()
+                
                 if projectDataEntry == selectDataEntryOptions[0]:
                     if uploadedXlsxDATA is not None:
                         validateEntries['check_DATA'], df_data, columnsOptionsData = fun_app9.getDataValidation(uploadedXlsxDATA, generationOptions, itemsOptionsColumnsDf, listGenerationOptions)
@@ -191,62 +174,104 @@ with tab2:
                         st.error("Cargar **Datos de carga, temperatura de operación y potencial energetico del sitio**", icon="🚨")
 
                     if len(generationOptions) != 0:
-                        PV_data, INVPV_data, BATPV_data, RCPV_data = None, None, None, None
-                        AERO_data, INVAERO_data, BATAERO_data, RCAERO_data = None, None, None, None
-                        GE_data = None
+                        PV_data, INVPV_data, RCPV_data,  = None, None, None
+                        AERO_data, INVAERO_data, RCAERO_data = None, None, None
+                        BAT_data, GE_data = None, None
 
-                        if listGenerationOptions[0] in generationOptions:   # Generación PV
-                            validateEntries, PV_data, INVPV_data, BATPV_data, RCPV_data = fun_app9.getDataOffGridValidation(uploadedYamlPV, uploadedYamlINV_PV, uploadedYamlBAT_PV, uploadedYamlRC_PV, validateEntries, "PV")
+                        validateEntries, BAT_data = fun_app9.getDataGEorBATValidation(uploadedYamlBAT, validateEntries, "BAT")
+                        componentInTheProject = fun_app9.getDictComponentInTheProject(generationOptions, listGenerationOptions)
 
-                        if listGenerationOptions[1] in generationOptions:   # Generación AERO
-                            validateEntries, AERO_data, INVAERO_data, BATAERO_data, RCAERO_data = fun_app9.getDataOffGridValidation(uploadedYamlAERO, uploadedYamlINV_AERO, uploadedYamlBAT_AERO, uploadedYamlRC_AERO, validateEntries, "AERO")
+                        if componentInTheProject["generationPV"]:       # Generación PV
+                            validateEntries, PV_data, INVPV_data, RCPV_data = fun_app9.getDataOffGridValidation(uploadedYamlPV, uploadedYamlINV_PV, uploadedYamlRC_PV, validateEntries, "PV")
 
-                        if listGenerationOptions[2] in generationOptions:   # Generación GE
-                            if uploadedYamlGE is not None:
-                                validateEntries["check_GE"], GE_data = fun_app9.getCompValidation(uploadedYamlGE, optKeysGE)
+                        if componentInTheProject["generationAERO"]:     # Generación AERO
+                            validateEntries, AERO_data, INVAERO_data, RCAERO_data = fun_app9.getDataOffGridValidation(uploadedYamlAERO, uploadedYamlINV_AERO, uploadedYamlRC_AERO, validateEntries, "AERO")
+
+                        if componentInTheProject["generationGE"]:       # Generación GE
+                            validateEntries, GE_data = fun_app9.getDataGEorBATValidation(uploadedYamlGE, validateEntries, "GE")
+
+                        validateComponents = fun_app9.getDictValidateComponent(validateEntries)
+                        checkProject = fun_app9.getCheckValidateGeneration(**componentInTheProject, **validateComponents)
+
+                        if checkProject:
+                            numberPhases = fun_app9.getNumberPhasesOffGrid(INVPV_data, INVAERO_data, GE_data)
+                            compatibilityBAT = fun_app9.getCompatibilityBAT(RCPV_data, RCAERO_data, BAT_data, Ns_BAT, componentInTheProject["generationPV"], componentInTheProject["generationAERO"])
+
+                            if numberPhases is not None:
+                                if compatibilityBAT:
+                                    st.session_state['dictDataOffGrid'] = {
+                                        "df_data": df_data,
+                                        "PV_data": PV_data,
+                                        "INVPV_data": INVPV_data,
+                                        "RCPV_data": RCPV_data,
+                                        "AERO_data": AERO_data,
+                                        "INVAERO_data": INVAERO_data,
+                                        "RCAERO_data": RCAERO_data,
+                                        "BAT_data": BAT_data,
+                                        "GE_data": GE_data,
+                                        "rho": rho,
+                                        "PVs": PVs,
+                                        "PVp": PVp,
+                                        "Ns_BAT": Ns_BAT,
+                                        "Np_BAT": Np_BAT,
+                                        "columnsOptionsData": columnsOptionsData,
+                                        "numberPhases": numberPhases,
+                                        "validateEntries": validateEntries,
+                                        "componentInTheProject": componentInTheProject
+                                        }
+                                    
+                                else:
+                                    st.error("**Incompatibilidad entre el banco de baterías y el regulador de carga**", icon="🚨")
                             else:
-                                st.error("Cargar **Datos del Grupo electrógeno**", icon="🚨")
+                                st.error("**No coincide el número de fases de los distintos componentes**", icon="🚨")
                     else:
-                        st.error("Ingresar **Opciones de generación eléctrica**", icon="🚨")
+                        st.error("Ingresar **Opciones de generación eléctrica**", icon="🚨")     
+                                
+                elif projectDataEntry == selectDataEntryOptions[1]:
+                    df_data = pd.read_excel(uploadedXlsxPROJECT, sheet_name="Data")
+                    TOTAL_data = pd.read_excel(uploadedXlsxPROJECT, sheet_name="Params").to_dict(orient="records")[0]
+                    TOTAL_data = fun_app9.getFixFormatDictParams(TOTAL_data)
 
-                    if fun_app9.getConditionValidateEntriesOffGrid(validateEntries):
-                        numberPhases = fun_app9.getNumberPhasesOffGrid(INVPV_data, INVAERO_data, GE_data)
+                    st.session_state["dictDataOffGrid"] = TOTAL_data
+                    st.session_state["dictDataOffGrid"]["df_data"] = df_data
 
-                        if numberPhases is not None:
-                            st.session_state['dictDataOffGrid'] = {
-                                'df_data': df_data,
-                                'PV_data': PV_data,
-                                'INVPV_data': INVPV_data,
-                                'BATPV_data': BATPV_data,
-                                'RCPV_data': RCPV_data,
-                                'AERO_data': AERO_data,
-                                'INVAERO_data': INVAERO_data,
-                                'BATAERO_data': BATAERO_data,
-                                'RCAERO_data': RCAERO_data,
-                                'rho': rho,
-                                'PVs': PVs,
-                                'PVp': PVp,
-                                'Ns_PV': Ns_PV,
-                                'Np_PV': Np_PV,
-                                'Ns_AERO': Ns_AERO,
-                                'Np_AERO': Np_AERO,
-                                'columnsOptionsData': columnsOptionsData,
-                                'numberPhases': numberPhases,
-                                'validateEntries': validateEntries
-                            }
+                elif projectDataEntry == selectDataEntryOptions[2]:
+                    df_data, dictDataOffGrid = None, None
 
-                if projectDataEntry == selectDataEntryOptions[1]:
-                    st.text("Echeeeeeeeeeeeeeeeee")
+                    if uploadedXlsxDATA is not None:
+                        df_data = pd.read_excel(uploadedXlsxDATA)
+                    else:
+                        st.warning("Cargar archivo **XLSX** (.xlsx)", icon="⚠️")
 
+                    if uploadedYamlCOMPONENTS is not None:
+                        dictDataOffGrid = yaml.safe_load(uploadedYamlCOMPONENTS)
+                    else:
+                        st.warning("Cargar archivo  de componentes OffGrid **YAML** (.yaml)", icon="⚠️")
+
+                    
+        
     if st.session_state['dictDataOffGrid'] is not None:
 
-        #fun_app9.processComponentData(st.session_state['dictDataOffGrid'])
+        for key, value in dict(st.session_state['dictDataOffGrid']).items():
+            st.text(f"{key}: {value}")
 
+        bytesFileExcel1 = fun_app9.getBytesFileExcelProjectOffGrid(dictDataOffGrid=st.session_state["dictDataOffGrid"])
+        bytesFileExcel2 = fun_app9.getBytesFileYamlComponentsOffGrid(dictDataOffGrid=st.session_state["dictDataOffGrid"])
 
-        uniqueColumnsOptionsData = fun_app9.getUniqueDictColumnsOptionsData(columnsOptionsData=st.session_state["dictDataOffGrid"]["columnsOptionsData"])
-            
-
+        df_downloadXLSX = st.download_button(
+            label="📄 Descargar **:blue[Archivo de proyecto Off-Grid] XLSX**",
+            data=bytesFileExcel1,
+            file_name=fun_app9.name_file_head(name="project_OffGrid.xlsx"),
+            mime="xlsx")
+        
+        dict_downloadYAML = st.download_button(
+            label="📄 Descargar **:blue[Archivo de componentes del proyecto Off-Grid] YAML**",
+            data=bytesFileExcel2,
+            file_name=fun_app9.name_file_head(name="components_OffGrid.yaml"),
+            mime="text/yaml")
+        
         #fun_app9.generationOffGrid(**st.session_state['dictDataOffGrid'])
+        
 
         
 

@@ -174,11 +174,11 @@ def get_singlediode(conditions: pd.DataFrame, PV_params: dict, PVs: int, PVp: in
         dict_list["Rs"].append(PV_params_eff["resistance_series"])
         dict_list["Rp"].append(PV_params_eff["resistance_shunt"])
         dict_list["nNsVt"].append(PV_params_eff["nNsVth"])
-        dict_list["Isc"].append(round(float(singleDiode["i_sc"]), 4))
-        dict_list["Voc"].append(round(float(singleDiode["v_oc"]), 4))
-        dict_list["Impp"].append(round(float(singleDiode["i_mp"]), 4))
-        dict_list["Vmpp"].append(round(float(singleDiode["v_mp"]), 4))
-        dict_list["Pmpp"].append(round(float(singleDiode["p_mp"]), 4))
+        dict_list["Isc"].append(round(float(singleDiode["i_sc"]), 6))
+        dict_list["Voc"].append(round(float(singleDiode["v_oc"]), 6))
+        dict_list["Impp"].append(round(float(singleDiode["i_mp"]), 6))
+        dict_list["Vmpp"].append(round(float(singleDiode["v_mp"]), 6))
+        dict_list["Pmpp"].append(round(float(singleDiode["p_mp"]), 6))
 
     df_values = pd.DataFrame({"Iph": dict_list["Iph"],
                               "Isat": dict_list["Isat"],

@@ -2,9 +2,10 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import yaml
+import yaml, io, warnings
+from datetime import datetime
 
-from funtions import fun_app5, fun_app6
+from funtions import fun_app5, fun_app6, fun_app7
 
 optKeysPV = [
     "alpha_sc",
@@ -37,7 +38,30 @@ optKeysINVCOMP = [
     "phases"
 ]
 
-optKeysBATCOMP = [
+optKeysRCCOMP = [
+    "SOC_0",
+    "SOC_ETP1",
+    "SOC_ETP2",
+    "SOC_conx",
+    "SOC_max",
+    "SOC_min",
+    "Vdc_bb",
+    "rc_efficiency"
+]
+
+optKeysGE = [
+    "C0",
+    "C100",
+    "Combustible",
+    "FP",
+    "PE_fuel",
+    "Pnom",
+    "Voc",
+    "Vpc",
+    "phases"
+]
+
+optKeysBAT = [
     "C",
     "DOD",
     "I_min",
@@ -49,25 +73,31 @@ optKeysBATCOMP = [
     "bat_efficiency"
 ]
 
-optKeysRCCOMP = [
-    "SOC_0",
-    "SOC_ETP1",
-    "SOC_ETP2",
-    "SOC_conx",
-    "SOC_max",
-    "SOC_min",
-    "rc_efficiency"
-]
-
 dict_phases = {
     "Monofásico": {"Num": 1, "label": "1️⃣ Monofásico"},
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
+#%% equations
+
+
 #%% funtions general
 
-def getGlobalVariablesPV():
+def name_file_head(name: str) -> str:
+    now = datetime.now()
+    return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
+def get_bytes_yaml(dictionary: dict):
+
+    yaml_data = yaml.dump(dictionary, allow_unicode=True)
+
+    buffer = io.BytesIO()
+    buffer.write(yaml_data.encode('utf-8'))
+    buffer.seek(0)
+
+    return buffer
+
+def getGlobalVariablesPV():
     params_PV, rename_PV, showOutputPV = None, None, None
 
     with open("files//[PV] - params.yaml", 'r') as archivo:
@@ -77,10 +107,108 @@ def getGlobalVariablesPV():
         rename_PV = yaml.safe_load(archivo)
 
     if params_PV is not None:
-
         showOutputPV = [f"{params_PV[elm]['label']}{params_PV[elm]['unit']}: {params_PV[elm]['description']}" for elm in ["Voc", "Isc", "Impp", "Vmpp", "Pmpp"]]
 
     return params_PV, rename_PV, showOutputPV
+
+def toExcelResults(df: pd.DataFrame, dictionary: dict | None, df_sheetName: str, dict_sheetName: str | None) -> bytes:
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name=df_sheetName)
+        if dictionary is not None:
+            df_params = pd.DataFrame(dictionary, index=[0])
+            df_params.to_excel(writer, index=False, sheet_name=dict_sheetName)
+
+    return output.getvalue()
+
+def fixDictColumnsOptionsData(columnsOptionsData: dict) -> dict:
+
+    listUniqueKeys, dictOut= [], {}
+
+    for key in columnsOptionsData:
+        newKey = key.split("-")[0]
+        if not newKey in listUniqueKeys:
+            listUniqueKeys.append(newKey)
+
+    for i in range(0,len(listUniqueKeys),1):
+        dictAux = {}
+        for key, value in columnsOptionsData.items():
+            if key.split("-")[0] == listUniqueKeys[i]:
+                dictAux[key.split("-")[1]] = value
+
+        dictOut[listUniqueKeys[i]] = dictAux
+
+    return dictOut
+
+def consolidationOfKeyIntoList(DICT_data: dict):
+
+    dictAux, listUniqueKeys, listUniqueValues = {}, [], []
+
+    for key, value in DICT_data.items():
+        if key.count("-") == 1:
+            if key.split("-")[1].isdigit():
+                dictAux[key] = value
+                if not key.split("-")[0] in listUniqueKeys:
+                    listUniqueKeys.append(key.split("-")[0])
+
+    for i in range(0,len(listUniqueKeys),1):
+        listAux = []
+        for key, value in dictAux.items():
+            if key.split("-")[0] == listUniqueKeys[i]:
+                listAux.append(value)
+        listUniqueValues.append(listAux)
+
+    if len(listUniqueKeys) > 0 and len(listUniqueKeys) == len(listUniqueValues):
+        for i in range(0,len(listUniqueKeys),1):
+            DICT_data[listUniqueKeys[i]] = listUniqueValues[i]
+
+    for key in dictAux:
+        if key in DICT_data:
+            del DICT_data[key]
+                
+    return DICT_data
+
+def getFixFormatDictParams(TOTAL_data: dict):
+
+    listCheckKeys = ["PV_data", "INVPV_data", "RCPV_data", "AERO_data", "INVAERO_data", "RCAERO_data",
+                     "BAT_data", "GE_data", "rho", "PVs", "PVp", "Ns_BAT", "Np_BAT",
+                     "columnsOptionsData", "numberPhases", "validateEntries", "componentInTheProject"]
+                                    
+    listUniqueKeys, listLonelyKeys, dictOut = [], [], {}
+
+    for key in TOTAL_data:
+        if (key.count("[") > 0) and (key.count("]") > 0):
+            newKey = key[:key.find("]")+1][1:-1]
+            if not newKey in listUniqueKeys:
+                listUniqueKeys.append(newKey)
+        else:
+            listLonelyKeys.append(key)
+
+    for i in range(0,len(listUniqueKeys),1):
+        dictAux = {}
+        for key, value in TOTAL_data.items():
+            if (key.count("[") > 0) and (key.count("]") > 0):
+                if key[:key.find("]")+1][1:-1] == listUniqueKeys[i]:
+                    dictAux[key.split(" ")[1]] = value
+
+        dictOut[listUniqueKeys[i]] = dictAux
+
+    for i in range(0,len(listLonelyKeys),1):
+        dictOut[listLonelyKeys[i]] = TOTAL_data[listLonelyKeys[i]]
+                    
+    if "columnsOptionsData" in dictOut:
+        columnsOptionsData = fixDictColumnsOptionsData(columnsOptionsData=dictOut["columnsOptionsData"])
+        dictOut["columnsOptionsData"] = columnsOptionsData
+
+    for i in range(0,len(listCheckKeys),1):
+        if not listCheckKeys[i] in dictOut:
+            dictOut[listCheckKeys[i]] = None
+
+    for key, value in dictOut.items():
+        if type(value) is dict:
+            value = consolidationOfKeyIntoList(DICT_data=value)
+
+    return dictOut
 
 def get_label_params(dict_param: dict) -> str:
 
@@ -206,20 +334,6 @@ def getTimeData(df_data: pd.DataFrame) -> dict:
 
     return timeInfo
 
-def getBoolGeneration(validateEntries):
-
-    bool_PV = validateEntries["check_PV"] and validateEntries["check_INVPV"] and validateEntries["check_BATPV"] and validateEntries["check_RCPV"]
-    bool_AERO = validateEntries["check_AERO"] and validateEntries["check_INVAERO"] and validateEntries["check_BATAERO"] and validateEntries["check_RCAERO"]
-    bool_GE = validateEntries["check_GE"]
-
-    return bool_PV, bool_AERO, bool_GE
-
-def getConditionValidateEntriesOffGrid(validateEntries: dict):
-
-    bool_PV, bool_AERO, bool_GE = getBoolGeneration(validateEntries)
-
-    return (validateEntries['check_DATA'] and (bool_PV or bool_AERO)) or bool_GE
-
 def getNumberPhasesOffGrid(INVPV_data, INVAERO_data, GE_data):
 
     numberPhases = None
@@ -255,13 +369,25 @@ def getDataframePV(df_data: pd.DataFrame, PV_data: dict, INVPV_data: dict, PVs: 
                                          dict_replace=dict_replace,
                                          dict_conditions=columnsOptionsData["PV"],
                                          list_output=showOutputPV)
-    
-    df_pv['Pinv_PV(kW)'] =  df_pv['Pmpp(kW)']*INVPV_data['efficiency_max']/100
 
-    df_pv = df_pv[["Voc(V)", "Isc(A)", "Impp(A)", "Vmpp(V)", "Pmpp(kW)", "Pinv_PV(kW)"]]
-    df_pv.rename(columns={"Voc(V)": "Voc_PV(V)", "Isc(A)": "Isc_PV(A)", "Impp(A)": "Impp_PV(A)", "Vmpp(V)": "Vmpp_PV(V)", "Pmpp(kW)": "Pmpp_PV(kW)"}, inplace=True)
+    df_pv = df_pv[["Voc(V)", "Isc(A)", "Impp(A)", "Vmpp(V)", "Pmpp(kW)"]]
+    df_pv.rename(columns={"Voc(V)": "Voc_PV(V)", "Isc(A)": "Isc_PV(A)", "Impp(A)": "Impp_PV(A)", "Vmpp(V)": "Vmpp_PV(V)", "Pmpp(kW)": "Pgen_PV(kW)"}, inplace=True)
 
     return df_pv
+
+def getDataframeAERO(df_data: pd.DataFrame, AERO_data: dict, INVAERO_data: dict, rho, columnsOptionsData: list):
+
+    df_AERO = fun_app6.get_dataframe_power_wind_turbine(params=AERO_data,
+                                                        rho=rho,
+                                                        dataframe=df_data,
+                                                        column=columnsOptionsData["AERO"])
+    
+    df_AERO.rename(columns={"Pideal(kW)": "Pideal_AERO(kW)", "Pbetz(kW)": "Pbetz_AERO(kW)", "Pgen(kW)":"Pgen_AERO(kW)", "efficiency(%)": "efficiency_AERO(%)"}, inplace=True)
+
+    df_AERO['Pinv_AERO(kW)'] =  df_AERO["Pgen_AERO(kW)"]*(INVAERO_data["efficiency_max"]/100)
+    df_AERO = df_AERO[["Pideal_AERO(kW)", "Pbetz_AERO(kW)", "Pgen_AERO(kW)", "Pinv_AERO(kW)"]]
+
+    return df_AERO
 
 def getPerUnitSystem(Pac_nom: float, Vac_nom: float, numberPhases: int):
 
@@ -272,14 +398,12 @@ def getPerUnitSystem(Pac_nom: float, Vac_nom: float, numberPhases: int):
 
     return Sb, Vb, Ib, Zb
 
-def getGlobalPerUnitSystem(INVPV_data: dict, INVAERO_data: dict, numberPhases: int, bool_PV: bool, bool_AERO: bool):
+def getGlobalPerUnitSystem(INVPV_data: dict, INVAERO_data: dict, numberPhases: int, generationPV: bool, generationAERO: bool):
 
-    if INVPV_data and not INVAERO_data:
+    if generationPV and not generationAERO:
         Pac_nom, Vac_nom = INVPV_data["Pac_max"], INVPV_data["Vac_nom"]
-        
-    elif not INVPV_data and INVAERO_data:
+    elif not generationPV and generationAERO:
         Pac_nom, Vac_nom = INVAERO_data["Pac_max"], INVAERO_data["Vac_nom"]
-
     else:
         Pac_nom, Vac_nom = INVPV_data["Pac_max"], INVPV_data["Vac_nom"]
 
@@ -309,86 +433,286 @@ def getBatteryBankParameters(C: float, I_max: float, I_min: float, V_max: float,
 
     return Ebb_nom, Vbb_max, Vbb_min, Ibb_max, Ibb_min, m_ETP2, b_ETP2
 
-def getBatteryCalculationsPV(df_data: pd.DataFrame,
-                             df_PV: pd.DataFrame,
-                             C: float,
-                             DOD: float,
-                             I_max: float,
-                             I_min: float,
-                             V_max: float,
-                             V_min: float,
-                             V_nom: float,
-                             bat_type: str,
-                             bat_efficiency: float,
-                             SOC_0: float,
-                             SOC_ETP1: float,
-                             SOC_ETP2: float,
-                             SOC_conx: float,
-                             SOC_max: float,
-                             SOC_min: float,
-                             rc_efficiency: float,
-                             inv_efficiency: float,
-                             Ns: int,
-                             Np: int):
+def getBatteryCalculationsPV(df_data: pd.DataFrame, df_PV: pd.DataFrame,
+                             BATPV_data: dict, RCPV_data: dict, INVPV_data: dict,
+                             Ns: int, Np: int,
+                             numberPhases: int,
+                             Sb: float, Vb: float, Ib: float, Zb: float,
+                             bool_GE: bool,
+                             columnsOptionsData: dict):
+
+    df_batCalPV = df_PV.copy()
     
     timeInfo = getTimeData(df_data)
     delta_t = timeInfo["deltaMinutes"]/60
-    n_bat = bat_efficiency/100
+    n_bat = BATPV_data["bat_efficiency"]/100
+    n_rc = RCPV_data["rc_efficiency"]/100
+    n_inv = INVPV_data["efficiency_max"]/100
+    SOC_0 = RCPV_data["SOC_0"]
+    SOC_conx = RCPV_data["SOC_conx"]
+    SOC_max = RCPV_data["SOC_max"]
+    SOC_min = RCPV_data["SOC_min"]
+    SOC_ETP1 = RCPV_data["SOC_ETP1"]
+    SOC_ETP2 = RCPV_data["SOC_ETP2"]
 
-    Ebb_nom, Vbb_max, Vbb_min, Ibb_max, Ibb_min, m_ETP2, b_ETP2 = getBatteryBankParameters(C, I_max, I_min, V_max, V_min, V_nom, Ns, Np, SOC_ETP1, SOC_ETP2)
+    Voc_PU, Vnom_PU, Pnom_PU, Inom_PU, Rinv_PU = getInverterParameters(INVPV_data, numberPhases, Sb, Vb, Ib, Zb)
+
+    Ebb_nom, Vbb_max, Vbb_min, Ibb_max, Ibb_min, m_ETP2, b_ETP2 = getBatteryBankParameters(C=BATPV_data["C"],
+                                                                                           I_max=BATPV_data["I_max"],
+                                                                                           I_min=BATPV_data["I_min"],
+                                                                                           V_max=BATPV_data["V_max"],
+                                                                                           V_min=BATPV_data["V_min"],
+                                                                                           V_nom=BATPV_data["V_nom"],
+                                                                                           Ns=Ns, Np=Np,
+                                                                                           SOC_ETP1=SOC_ETP1, SOC_ETP2=SOC_ETP2)
     
-    df_PV["Pinv_PV(kW)"] = df_data["Load(kW)"]/(inv_efficiency/100)
-    df_PV["Pbb_PV(kW)"] = df_PV["Pmpp_PV(kW)"] - df_PV["Pinv_PV(kW)"]
-    df_PV["SOC(t)"] = 0
-    df_PV["deltaEbb(kWh)"] = 0.0
-    df_PV["SW1(t)"] = False
-    df_PV["SW2(t)"] = False
-    df_PV["conSD(t)"] = False
-    df_PV["conSC(t)"] = False
+    df_batCalPV.rename(columns={"Pmpp_PV(kW)": "PgenPV(kW)"}, inplace=True)
 
-    df_PV["deltaEbb(kWh)"] = df_PV["deltaEbb(kWh)"].astype(float)
+    df_batCalPV["Pload(kW)"] = df_data[columnsOptionsData["DATA"]["Load"]]
 
-    st.text(f"delta_t: {delta_t}")
-    st.text(f"type: {bat_efficiency}")
+    df_batCalPV["PgenDC(kW)"] = 0.0
+    df_batCalPV["VgenDC(V)"] = 0.0
+    df_batCalPV["IgenDC(A)"] = 0.0
 
-    st.text(df_PV.dtypes)
+    df_batCalPV["Pbb(kW)"] = 0.0
+    df_batCalPV["Vbb(V)"] = 0.0
+    df_batCalPV["Ibb(A)"] = 0.0
+    
+    df_batCalPV["PinvDC(kW)"] = 0.0
+    df_batCalPV["VinvDC(V)"] = 0.0
+    df_batCalPV["IinvDC(A)"] = 0.0
 
+    df_batCalPV["PinvAC(kW)"] = 0.0
+    df_batCalPV["VinvAC(V)"] = 0.0
+    df_batCalPV["IinvAC(A)"] = 0.0
+    
+    df_batCalPV["conSD(t)"] = False
+    df_batCalPV["conSC(t)"] = False
+    df_batCalPV["swLoad(t)"] = 1
 
-    for index, row in df_PV.iterrows():
-        #st.text(f"{index}: {df_PV.loc[index, 'Pbb_PV(kW)']}")
+    df_batCalPV["deltaEbb(kWh)"] = 0.0
+    df_batCalPV["Ebb(kWh)"] = 0.0
+    df_batCalPV["SOC(t)"] = 0.0
+    df_batCalPV["DOD(t)"] = 0.0
+    
+    for index, row in df_batCalPV.iterrows():
+        Pload = df_batCalPV.loc[index, "Pload(kW)"]
+        PgenPV = df_batCalPV.loc[index, "PgenPV(kW)"]
 
-        if index == 0:      # (t-1)
-            SOC_t_1, SW1_t_1, SW2_t_1 = SOC_0, True, True
+        # valores t-1
+
+        if index == 0: 
+            SOC_t_1, swLoad_t_1 = SOC_0, 1
         else:
-            SOC_t_1, SW1_t_1, SW2_t_1 = df_PV.loc[index-1, "SOC(t)"], df_PV.loc[index-1, "SW1(t)"], df_PV.loc[index-1, "SW1(t)"]
+            SOC_t_1, swLoad_t_1 = df_batCalPV.loc[index-1, "SOC(t)"], df_batCalPV.loc[index-1, "swLoad(t)"]
 
-        if df_PV.loc[index, 'Pbb_PV(kW)'] >= 0:
-            df_PV.loc[index, "deltaEbb(kWh)"] = df_PV.loc[index, 'Pbb_PV(kW)']*n_bat*delta_t
+        # condición sobreCarga (Limitar la generación al igualarla a la demanda)
+
+        if SOC_t_1 >= SOC_max and n_rc*PgenPV >= (Pload/n_inv) and swLoad_t_1 == 1:
+            PgenDC = Pload/n_inv
+            conSC = True
         else:
-            df_PV.loc[index, "deltaEbb(kWh)"] = df_PV.loc[index, 'Pbb_PV(kW)']*(1/n_bat)*delta_t
+            PgenDC = n_rc*PgenPV
+            conSC = False
 
-            
-            
-            
+        # condición sobreDescarga (Desconectar la carga e iniciar proceso de carga del banco de baterías)
 
-    # conditionSC
-    # conditionSD
+        if SOC_t_1 <= SOC_min and n_rc*PgenPV < (Pload/n_inv):
+            conSD = True
+        else:
+            conSD = False
 
-    st.dataframe(df_PV)
+        # condición de conexión de carga (Reconectar la carga cuando se alcance el SOC_conx)
 
-    st.dataframe(df_data)
+        if conSD and swLoad_t_1 == 1:
+            if bool_GE:
+                swLoad = 3
+            else:
+                swLoad = 2
+        else:
+            if SOC_t_1 >= SOC_conx and swLoad_t_1 != 1:
+                swLoad = 1
+            else:
+                swLoad = swLoad_t_1
 
-    return
+        # PinvDC
+
+        if swLoad == 1:
+            PinvDC = Pload/n_inv
+        else:
+            PinvDC = 0
+
+        # Pbb
+
+        Pbb = PgenDC - PinvDC
+
+        # deltaEbb
+
+        if Pbb >= 0:    # Carga de banco de baterías
+            deltaEbb = Pbb*n_bat*delta_t
+        else:
+            deltaEbb = Pbb*(1/n_bat)*delta_t
+
+        # SOC(t), DOD(t), Ebb(kWh), Vbb(V), Ibb(A)
+        
+        SOC = SOC_t_1 + (deltaEbb/Ebb_nom)
+        DOD = 1 - SOC
+        Ebb = SOC_t_1*Ebb_nom + deltaEbb
+        Vbb = (Vbb_max - Vbb_min)*SOC + Vbb_min
+        Ibb = (Pbb*1000)/Vbb
+        
+        # condición ETP1
+
+        if swLoad == 2 and SOC_ETP1 <= SOC_t_1:
+            I_ETP1, V_ETP1 = Ibb_max, Vbb
+        else:
+            I_ETP1, V_ETP1  = 0, 0
+
+        # condición ETP2
+
+        if swLoad == 2 and SOC_ETP1 < SOC_t_1 and SOC_ETP2 < SOC_t_1:
+            I_ETP2 = (m_ETP2*SOC_t_1) + b_ETP2
+            V_ETP2 = (Vbb_max - Vbb_min)*SOC_ETP1 + Vbb_min     # Vbb(SOC_ETP1)
+        else:
+            I_ETP2 = 0
+            V_ETP2 = 0
+
+        # inversor
+        PinvAC_PU = (PinvDC*n_inv)/Sb
+        IinvAC_PU = (Voc_PU - np.sqrt((Voc_PU**2) - 4*Rinv_PU*Pload))/(2*Rinv_PU)
+        VinvAC_PU = PinvAC_PU/IinvAC_PU
+
+        VinvAC, IinvAC = VinvAC_PU*Vb, IinvAC_PU*Ib
+
+        # Actualizar datos
+        
+        df_batCalPV.loc[index, "PgenDC(kW)"] = PgenDC
+        df_batCalPV.loc[index, "VgenDC(V)"] = Vbb
+        df_batCalPV.loc[index, "IgenDC(A)"] = (PgenDC*1000)/Vbb
+
+        df_batCalPV.loc[index, "Pbb(kW)"] = Pbb
+        df_batCalPV.loc[index, "Vbb(V)"] = Vbb
+        df_batCalPV.loc[index, "Ibb(A)"] = Ibb
+        
+        df_batCalPV.loc[index, "PinvDC(kW)"] = PinvDC
+        df_batCalPV.loc[index, "VinvDC(V)"] = Vbb
+        df_batCalPV.loc[index, "IinvDC(A)"] = (PinvDC*1000)/Vbb
+
+        df_batCalPV.loc[index, "PinvAC(kW)"] = PinvDC*n_inv
+        df_batCalPV.loc[index, "VinvAC(V)"] = VinvAC
+        df_batCalPV.loc[index, "IinvAC(A)"] = IinvAC
+        
+        df_batCalPV.loc[index, "conSD(t)"] = conSD
+        df_batCalPV.loc[index, "conSC(t)"] = conSC
+        df_batCalPV.loc[index, "swLoad(t)"] = swLoad
+
+        df_batCalPV.loc[index, "deltaEbb(kWh)"] = deltaEbb
+        df_batCalPV.loc[index, "Ebb(kWh)"] = Ebb
+        df_batCalPV.loc[index, "SOC(t)"] = SOC
+        df_batCalPV.loc[index, "DOD(t)"] = DOD
+
+    st.dataframe(df_batCalPV)
+
+    return df_batCalPV
+
+def initializeDictValidateEntries():
+
+    validateEntries = {
+                    "check_DATA": False,
+                    "check_PV": False,
+                    "check_INVPV": False,
+                    "check_RCPV": False,
+                    "check_AERO": False,
+                    "check_INVAERO": False,
+                    "check_RCAERO": False,
+                    "check_BAT": False,
+                    "check_GE": False
+                }
+
+    return validateEntries
+
+def getDictValidateComponent(validateEntries: dict) -> dict:
+
+    validateComponents = {}
+
+    validateComponents["validateDATA"] = validateEntries["check_DATA"]
+    validateComponents["validatePV"] = all([validateEntries["check_PV"], validateEntries["check_INVPV"], validateEntries["check_RCPV"]])
+    validateComponents["validateAERO"] = all([validateEntries["check_AERO"], validateEntries["check_INVAERO"], validateEntries["check_RCAERO"]])
+    validateComponents["validateGE"] = validateEntries["check_GE"]
+    validateComponents["validateBAT"] = validateEntries["check_BAT"]
+
+    return validateComponents
+
+def getDictComponentInTheProject(generationOptions: list, listGenerationOptions: list) -> dict:
+
+    componentInTheProject = {
+        "generationPV": listGenerationOptions[0] in generationOptions,
+        "generationAERO": listGenerationOptions[1] in generationOptions,
+        "generationGE": listGenerationOptions[2] in generationOptions,
+    }
+
+    return componentInTheProject
+
+def getCheckValidateGeneration(generationPV, generationAERO, generationGE, validateDATA, validatePV, validateAERO, validateGE, validateBAT):
+
+    checkProject = False
+
+    # Solo generación solar
+    if generationPV and not generationAERO and validatePV and validateBAT:
+        checkProject = True
+    # Solo generación eólica
+    elif not generationPV and generationAERO and validateAERO and validateBAT:
+        checkProject = True
+    # Generación solar  y eólica
+    elif generationPV and generationAERO and validatePV and validateAERO and validateBAT:
+        checkProject = True
+
+    # Respaldo grupo electrógeno
+    if generationGE:
+        checkProject = checkProject and validateGE
+    else:
+        checkProject = checkProject and not validateGE
+
+    checkProject = checkProject and validateDATA
+
+    return checkProject
+
+def validateCompatibilityOfCOMP_BAT(RCCOMP_data, Vnom_bb):
+
+    list_VdcBB, listAuxVnBB = RCCOMP_data["Vdc_bb"], []
+
+    for i in range(0,len(list_VdcBB),1):
+        listAuxVnBB.append(list_VdcBB[i] == Vnom_bb)
+
+    return any(listAuxVnBB)
+
+def getCompatibilityBAT(RCPV_data, RCAERO_data, BAT_data, Ns_BAT, generationPV, generationAERO):
+
+    Vnom_bb = Ns_BAT*BAT_data["V_nom"]
+    outCheck = False
+
+    if generationPV and not generationAERO:         # Solo generación solar
+        outCheck = validateCompatibilityOfCOMP_BAT(RCPV_data, Vnom_bb)
+
+    elif not generationPV and generationAERO:       # Solo generación eólica
+        outCheck = validateCompatibilityOfCOMP_BAT(RCAERO_data, Vnom_bb)
+
+    elif generationPV and generationAERO:           # Generación solar  y eólica
+        outCheckPV = validateCompatibilityOfCOMP_BAT(RCPV_data, Vnom_bb)
+        outCheckAERO = validateCompatibilityOfCOMP_BAT(RCAERO_data, Vnom_bb)
+        outCheck = outCheckPV and outCheckAERO
+
+    return outCheck
 
 def generationOffGrid(df_data: pd.DataFrame,
                       PV_data: dict| None,
                       INVPV_data: dict | None,
-                      BATPV_data: dict | None,
                       RCPV_data: dict | None,
                       AERO_data: dict | None,
                       INVAERO_data: dict | None,
-                      BATAERO_data: dict | None,
                       RCAERO_data: dict | None,
+                      BAT_data: dict | None,
+                      GE_data: dict | None,
                       rho: float | None,
                       PVs: int | None,
                       PVp: int | None,
@@ -398,78 +722,144 @@ def generationOffGrid(df_data: pd.DataFrame,
                       Np_AERO: int | None,
                       columnsOptionsData: list,
                       numberPhases: int,
-                      validateEntries: dict) -> pd.DataFrame:
+                      validateEntries: dict,
+                      componentInTheProject: dict) -> pd.DataFrame:
     
     params_PV, rename_PV, showOutputPV =  getGlobalVariablesPV()
-    bool_PV, bool_AERO, bool_GE = getBoolGeneration(validateEntries)
-    Sb, Vb, Ib, Zb = getGlobalPerUnitSystem(INVPV_data, INVAERO_data, numberPhases, bool_PV, bool_AERO)
+    Sb, Vb, Ib, Zb = getGlobalPerUnitSystem(INVPV_data, INVAERO_data, numberPhases, componentInTheProject["generationPV"], componentInTheProject["generationAERO"])
 
-    st.text(bool_PV)
-    st.text(bool_GE)
+    df_offGrid = df_data.copy()
 
-    if bool_PV:     # PV
+    if componentInTheProject["generationPV"]:     # PV
         df_PV = getDataframePV(df_data, PV_data, INVPV_data, PVs, PVp, columnsOptionsData, params_PV, rename_PV, showOutputPV, numberPhases)
-        
-        Voc_PUPV, Vnom_PUPV, Pnom_PUPV, Inom_PUPV, Rinv_PUPV = getInverterParameters(INVPV_data, numberPhases, Sb, Vb, Ib, Zb)
 
-        getBatteryCalculationsPV(df_data=df_data, df_PV=df_PV, Ns=Ns_PV, Np=Np_PV, inv_efficiency=INVPV_data["efficiency_max"], **BATPV_data, **RCPV_data)
 
+        """
+        df_batCalPV = getBatteryCalculationsPV(df_data=df_data, df_PV=df_PV, BATPV_data=BATPV_data, RCPV_data=RCPV_data, INVPV_data=INVPV_data,
+                                               Ns=Ns_PV, Np=Np_PV, numberPhases=numberPhases, Sb=Sb, Vb=Vb, Ib=Ib, Zb=Zb,
+                                               bool_GE=bool_GE, columnsOptionsData=columnsOptionsData)
+        """
+
+        #bytesFileExcel = toExcelResults(df=df_batCalPV, dictionary=None, df_sheetName="Prueba", dict_sheetName=None)
+        #botonOut = excelDownloadButton(bytesFileExcel, "prueba")
+
+    if componentInTheProject["generationAERO"]:   # AERO
+        df_AERO = getDataframeAERO(df_data, AERO_data, INVAERO_data, rho, columnsOptionsData)
+
+
+    if componentInTheProject["generationGE"]:     # GE
+        In_GE, Ra_GE, GE_dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
+        #df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
         
         
-
-    if bool_GE:     # GE
-        print("Ajaaaaaaaaaa")
-        
-         
-
     return
 
-def getUniqueDictColumnsOptionsData(columnsOptionsData: dict):
-
-    uniqueColumnsOptionsData = {}
+def getAddUniqueColumnsOptionsData(TOTAL_data: dict, columnsOptionsData: dict):
 
     for key, value in columnsOptionsData.items():
         for subKey, subValue in value.items():
-            st.text(f"[{key}][{subKey}]: {subValue}")
+            TOTAL_data[f"[columnsOptionsData] {key}-{subKey}"] = subValue
 
-            uniqueColumnsOptionsData[f"{key}-{subKey}"] = subValue
+    return TOTAL_data
 
-    return uniqueColumnsOptionsData
-
-def processComponentData(dictImput):
+def getImputProcessComponentData(dictImput: dict) -> dict:
 
     dictOutput = {
         "PV_data": dictImput["PV_data"],
         "INVPV_data": dictImput["INVPV_data"],
-        "BATPV_data": dictImput["BATPV_data"],
         "RCPV_data": dictImput["RCPV_data"],
         "AERO_data": dictImput["AERO_data"],
         "INVAERO_data": dictImput["INVAERO_data"],
-        "BATAERO_data": dictImput["BATAERO_data"],
         "RCAERO_data": dictImput["RCAERO_data"],
+        "BAT_data": dictImput["BAT_data"],
+        "GE_data": dictImput["GE_data"],
         "rho": dictImput["rho"],
         "PVs": dictImput["PVs"],
         "PVp": dictImput["PVp"],
-        "Ns_PV": dictImput["Ns_PV"],
-        "Np_PV": dictImput["Np_PV"],
-        "Ns_AERO": dictImput["Ns_AERO"],
-        "Np_AERO": dictImput["Np_AERO"],
+        "Ns_BAT": dictImput["Ns_BAT"],
+        "Np_BAT": dictImput["Np_BAT"],
+        "columnsOptionsData": dictImput["columnsOptionsData"],
         "numberPhases": dictImput["numberPhases"],
-        "validateEntries": dictImput["validateEntries"]
+        "validateEntries": dictImput["validateEntries"],
+        "componentInTheProject": dictImput["componentInTheProject"],
     }
 
-    dictImput["columnsOptionsData"]
-    dictImput["params_PV"]
-    dictImput["rename_PV"]
-    dictImput["showOutputPV"]
-    dictImput["validateEntries"]
+    return dictOutput
 
-    listPrint = ["columnsOptionsData", "params_PV", "rename_PV", "showOutputPV", "validateEntries"]
+def proccesComponentData(TOTAL_data: dict, COMP_data: dict, INV_data: dict, RC_data: dict, AddText: str):
 
-    for item in listPrint:
-        st.text("{0}: {1}".format(item, dictImput[item]))
+    auxListString1 = ["{0}_data", "INV{0}_data", "RC{0}_data"]
+    auxListDict = [COMP_data, INV_data, RC_data]
 
-    return
+    for i in range(0,len(auxListString1),1):
+        textAux = auxListString1[i].format(AddText)
+        for key, value in auxListDict[i].items():
+            if type(value) is list:
+                for j in range(0,len(value),1):
+                    TOTAL_data[f"[{textAux}] {key}-{j}"] = value[j]
+            else:
+                TOTAL_data[f"[{textAux}] {key}"] = value
+
+    return TOTAL_data
+
+def processComponentsData(PV_data: dict, INVPV_data: dict, RCPV_data: dict, AERO_data: dict, INVAERO_data: dict, RCAERO_data: dict,
+                          BAT_data: dict, GE_data: dict, rho: float, PVs: int, PVp: int, Ns_BAT: int, Np_BAT: int,
+                          columnsOptionsData: dict, numberPhases: int, validateEntries: dict, componentInTheProject: dict):
+
+    TOTAL_data = {}
+
+    if componentInTheProject["generationGE"]:
+        TOTAL_data = proccesComponentData(TOTAL_data, PV_data, INVPV_data, RCPV_data, "PV")
+        TOTAL_data["PVs"] = PVs
+        TOTAL_data["PVp"] = PVp
+
+    if componentInTheProject["generationAERO"]:
+        TOTAL_data = proccesComponentData(TOTAL_data, AERO_data, INVAERO_data, RCAERO_data, "AERO")
+        TOTAL_data["rho"] = rho
+
+    if BAT_data is not None:
+        for key, value in BAT_data.items():
+            TOTAL_data[f"[BAT_data] {key}"] = value
+
+    TOTAL_data["Ns_BAT"] = Ns_BAT
+    TOTAL_data["Np_BAT"] = Np_BAT
+
+    if GE_data is not None:
+        for key, value in GE_data.items():
+            TOTAL_data[f"[GE_data] {key}"] = value
+
+    if validateEntries is not None:
+        for key, value in validateEntries.items():
+            TOTAL_data[f"[validateEntries] {key}"] = value
+
+    if columnsOptionsData is not None:
+        TOTAL_data = getAddUniqueColumnsOptionsData(TOTAL_data, columnsOptionsData)
+
+    TOTAL_data["numberPhases"] = numberPhases
+
+    if validateEntries is not None:
+        for key, value in componentInTheProject.items():
+            TOTAL_data[f"[componentInTheProject] {key}"] = value
+
+    return TOTAL_data
+
+def getBytesFileExcelProjectOffGrid(dictDataOffGrid: dict) -> bytes:
+
+    dictOutput = getImputProcessComponentData(dictDataOffGrid)
+    TOTAL_data = processComponentsData(**dictOutput)
+    bytesFileExcel = toExcelResults(df=dictDataOffGrid["df_data"], dictionary=TOTAL_data,
+                                    df_sheetName="Data", dict_sheetName="Params")
+
+    return bytesFileExcel
+
+def getBytesFileYamlComponentsOffGrid(dictDataOffGrid: dict) -> bytes:
+
+    if "df_data" in dictDataOffGrid:
+        del dictDataOffGrid["df_data"]
+
+    bufferData = get_bytes_yaml(dictionary=dictDataOffGrid)
+
+    return bufferData
 
 #%% funtions streamlit
 
@@ -506,8 +896,8 @@ def getCompValidation(uploadedYaml, optionsKeys):
 
     return check, data
 
-def getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlBAT_COMP, uploadedYamlRC_COMP,
-                                 optKeysCOMP, optKeysINVCOMP, optKeysBATCOMP, optKeysRCCOMP):
+def getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlRC_COMP,
+                                 optKeysCOMP, optKeysINVCOMP, optKeysRCCOMP):
 
     check, data = {}, {}
 
@@ -515,36 +905,78 @@ def getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploade
         st.error("Cargar **Datos del Módulo**", icon="🚨")
     if uploadedYamlINV_COMP is None:
         st.error("Cargar **Datos del Inversor**", icon="🚨")
-    if uploadedYamlBAT_COMP is None:
-        st.error("Cargar **Datos del Banco de baterías**", icon="🚨")
-    if uploadedYamlBAT_COMP is None:
+    if uploadedYamlRC_COMP is None:
         st.error("Cargar **Datos del Regulador de carga**", icon="🚨")
 
     check["check_COMP"], data["COMP_data"] = getCompValidation(uploadedYamlCOMP, optKeysCOMP)               # COMP
     check["check_INVCOMP"], data["INVCOMP_data"] = getCompValidation(uploadedYamlINV_COMP, optKeysINVCOMP)  # INV_COMP
-    check["check_BATCOM"], data["BATCOMP_data"] = getCompValidation(uploadedYamlBAT_COMP, optKeysBATCOMP)   # BAT_COMP
     check["check_RCCOMP"], data["RCCOMP_data"] = getCompValidation(uploadedYamlRC_COMP, optKeysRCCOMP)      # RC_COMP
 
     return check, data
 
-def getDataOffGridValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlBAT_COMP, uploadedYamlRC_COMP, validateEntries: dict, typeOfSystem: str):
-
+def getDataOffGridValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlRC_COMP, validateEntries: dict, typeOfSystem: str):
+    
     if typeOfSystem == "PV":
-        check, data = getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlBAT_COMP, uploadedYamlRC_COMP,
-                                                   optKeysPV, optKeysINVCOMP, optKeysBATCOMP, optKeysRCCOMP)
+        check, data = getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlRC_COMP,
+                                                   optKeysPV, optKeysINVCOMP, optKeysRCCOMP)
 
         validateEntries["check_PV"] = check["check_COMP"]
         validateEntries["check_INVPV"] = check["check_INVCOMP"]
-        validateEntries["check_BATPV"] = check["check_BATCOM"]
         validateEntries["check_RCPV"] = check["check_RCCOMP"]
 
     if typeOfSystem == "AERO":
-        check, data = getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlBAT_COMP, uploadedYamlRC_COMP,
-                                                   optKeysAERO, optKeysINVCOMP, optKeysBATCOMP, optKeysRCCOMP)
+        check, data = getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlRC_COMP,
+                                                   optKeysAERO, optKeysINVCOMP, optKeysRCCOMP)
         
         validateEntries["check_AERO"] = check["check_COMP"]
         validateEntries["check_INVAERO"] = check["check_INVCOMP"]
-        validateEntries["check_BATAERO"] = check["check_BATCOM"]
         validateEntries["check_RCAERO"] = check["check_RCCOMP"]
 
-    return validateEntries, data["COMP_data"], data["INVCOMP_data"], data["BATCOMP_data"], data["RCCOMP_data"]
+    return validateEntries, data["COMP_data"], data["INVCOMP_data"], data["RCCOMP_data"]
+
+def getDataGEorBATValidation(uploadedYamlCOMP, validateEntries: dict, typeOfComponet: str):
+
+    if uploadedYamlCOMP is None:
+        if typeOfComponet == "GE":
+            st.error("Cargar **Datos del Grupo electrógeno**", icon="🚨")
+        elif typeOfComponet == "BAT":
+            st.error("Cargar **Datos del Banco de baterías**", icon="🚨")
+
+    if typeOfComponet == "GE":
+        optKeys = optKeysGE
+    elif typeOfComponet == "BAT":
+        optKeys = optKeysBAT
+
+    check, data = getCompValidation(uploadedYamlCOMP, optKeys)
+    validateEntries[f"check_{typeOfComponet}"] = check
+    
+    return validateEntries, data
+
+def getCompValidationBattery(check_RCCOMP: bool, RCCOMP_data: dict, BAT_data: dict):
+
+    outCheck = False
+
+    if check_RCCOMP:
+        list_VdcBB, listAuxVnBB = RCCOMP_data["Vdc_bb"], []
+        for i in range(0,len(list_VdcBB),1):
+            listAuxVnBB.append(list_VdcBB[i] == BAT_data["V_nom"])
+
+        outCheck = any(listAuxVnBB)
+
+        if not outCheck:
+            st.error("**Regulador de carga**", icon="🚨")
+        
+
+    return outCheck
+
+def excelDownloadButton(bytesFileExcel, file_name):
+
+    df_download = st.download_button(
+        label=f"📄 Descargar **:blue[{file_name}] XLSX**",
+        data=bytesFileExcel,
+        file_name=name_file_head(name=f"{file_name}.xlsx"),
+        mime='xlsx')
+
+    return df_download
+
+

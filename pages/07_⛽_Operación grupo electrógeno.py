@@ -159,7 +159,6 @@ with tab2:
                     st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
 
         if df_GE is not None:
-                
             if option_sel == options_sel_input[1]:
 
                 sub_tab1, sub_tab2 = st.tabs(["📋 Resultados",
@@ -181,7 +180,7 @@ with tab2:
 
             elif option_sel == options_sel_input[0]:
                 df_GE = fun_app7.get_columns_df_GE(dataframe=df_GE, dict_pu=dict_pu, dict_param=GE_data,
-                                                columnsOptionsSel={"Load": "Load(kW)"})
+                                                   columnsOptionsSel={"Load": "Load(kW)"})
 
                 sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados",
                                                         "📊 Graficas",
