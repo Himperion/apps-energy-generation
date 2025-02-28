@@ -199,7 +199,7 @@ with tab2:
 
                             if numberPhases is not None:
                                 if compatibilityBAT:
-                                    st.session_state['dictDataOffGrid'] = {
+                                    st.session_state["dictDataOffGrid"] = {
                                         "df_data": df_data,
                                         "PV_data": PV_data,
                                         "INVPV_data": INVPV_data,
@@ -231,9 +231,9 @@ with tab2:
                     df_data = pd.read_excel(uploadedXlsxPROJECT, sheet_name="Data")
                     TOTAL_data = pd.read_excel(uploadedXlsxPROJECT, sheet_name="Params").to_dict(orient="records")[0]
                     TOTAL_data = fun_app9.getFixFormatDictParams(TOTAL_data)
+                    TOTAL_data["df_data"] = df_data
 
-                    st.session_state["dictDataOffGrid"] = TOTAL_data
-                    st.session_state["dictDataOffGrid"]["df_data"] = df_data
+                    st.session_state["dictDataOffGrid"] = {**{"df_data": df_data}, **TOTAL_data}
 
                 elif projectDataEntry == selectDataEntryOptions[2]:
                     df_data, dictDataOffGrid = None, None
@@ -250,10 +250,7 @@ with tab2:
 
                     
         
-    if st.session_state['dictDataOffGrid'] is not None:
-
-        for key, value in dict(st.session_state['dictDataOffGrid']).items():
-            st.text(f"{key}: {value}")
+    if st.session_state["dictDataOffGrid"] is not None:
 
         bytesFileExcel1 = fun_app9.getBytesFileExcelProjectOffGrid(dictDataOffGrid=st.session_state["dictDataOffGrid"])
         bytesFileExcel2 = fun_app9.getBytesFileYamlComponentsOffGrid(dictDataOffGrid=st.session_state["dictDataOffGrid"])
@@ -269,8 +266,12 @@ with tab2:
             data=bytesFileExcel2,
             file_name=fun_app9.name_file_head(name="components_OffGrid.yaml"),
             mime="text/yaml")
+
+        fun_app9.generationOffGrid(**st.session_state["dictDataOffGrid"])
+
         
-        #fun_app9.generationOffGrid(**st.session_state['dictDataOffGrid'])
+
+        
         
 
         

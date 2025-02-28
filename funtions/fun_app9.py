@@ -369,9 +369,9 @@ def getDataframePV(df_data: pd.DataFrame, PV_data: dict, INVPV_data: dict, PVs: 
                                          dict_replace=dict_replace,
                                          dict_conditions=columnsOptionsData["PV"],
                                          list_output=showOutputPV)
-
-    df_pv = df_pv[["Voc(V)", "Isc(A)", "Impp(A)", "Vmpp(V)", "Pmpp(kW)"]]
-    df_pv.rename(columns={"Voc(V)": "Voc_PV(V)", "Isc(A)": "Isc_PV(A)", "Impp(A)": "Impp_PV(A)", "Vmpp(V)": "Vmpp_PV(V)", "Pmpp(kW)": "Pgen_PV(kW)"}, inplace=True)
+    
+    df_pv["Pgen_PV(kW)"] = df_pv["Pmpp(kW)"]
+    df_pv.rename(columns={"Voc(V)": "Voc_PV(V)", "Isc(A)": "Isc_PV(A)", "Impp(A)": "Impp_PV(A)", "Vmpp(V)": "Vmpp_PV(V)"}, inplace=True)
 
     return df_pv
 
@@ -381,11 +381,8 @@ def getDataframeAERO(df_data: pd.DataFrame, AERO_data: dict, INVAERO_data: dict,
                                                         rho=rho,
                                                         dataframe=df_data,
                                                         column=columnsOptionsData["AERO"])
-    
-    df_AERO.rename(columns={"Pideal(kW)": "Pideal_AERO(kW)", "Pbetz(kW)": "Pbetz_AERO(kW)", "Pgen(kW)":"Pgen_AERO(kW)", "efficiency(%)": "efficiency_AERO(%)"}, inplace=True)
 
     df_AERO['Pinv_AERO(kW)'] =  df_AERO["Pgen_AERO(kW)"]*(INVAERO_data["efficiency_max"]/100)
-    df_AERO = df_AERO[["Pideal_AERO(kW)", "Pbetz_AERO(kW)", "Pgen_AERO(kW)", "Pinv_AERO(kW)"]]
 
     return df_AERO
 
@@ -716,10 +713,8 @@ def generationOffGrid(df_data: pd.DataFrame,
                       rho: float | None,
                       PVs: int | None,
                       PVp: int | None,
-                      Ns_PV: int | None,
-                      Np_PV: int | None,
-                      Ns_AERO: int | None,
-                      Np_AERO: int | None,
+                      Ns_BAT: int | None,
+                      Np_BAT: int | None,
                       columnsOptionsData: list,
                       numberPhases: int,
                       validateEntries: dict,
@@ -729,11 +724,13 @@ def generationOffGrid(df_data: pd.DataFrame,
     Sb, Vb, Ib, Zb = getGlobalPerUnitSystem(INVPV_data, INVAERO_data, numberPhases, componentInTheProject["generationPV"], componentInTheProject["generationAERO"])
 
     df_offGrid = df_data.copy()
+    df_offGrid["Pgen_PV(kW)"] = 0.0
+    df_offGrid["Pgen_AERO(kW)"] = 0.0
 
     if componentInTheProject["generationPV"]:     # PV
-        df_PV = getDataframePV(df_data, PV_data, INVPV_data, PVs, PVp, columnsOptionsData, params_PV, rename_PV, showOutputPV, numberPhases)
+        df_offGrid = getDataframePV(df_offGrid, PV_data, INVPV_data, PVs, PVp, columnsOptionsData, params_PV, rename_PV, showOutputPV, numberPhases)
 
-
+        
         """
         df_batCalPV = getBatteryCalculationsPV(df_data=df_data, df_PV=df_PV, BATPV_data=BATPV_data, RCPV_data=RCPV_data, INVPV_data=INVPV_data,
                                                Ns=Ns_PV, Np=Np_PV, numberPhases=numberPhases, Sb=Sb, Vb=Vb, Ib=Ib, Zb=Zb,
@@ -744,14 +741,21 @@ def generationOffGrid(df_data: pd.DataFrame,
         #botonOut = excelDownloadButton(bytesFileExcel, "prueba")
 
     if componentInTheProject["generationAERO"]:   # AERO
-        df_AERO = getDataframeAERO(df_data, AERO_data, INVAERO_data, rho, columnsOptionsData)
+        df_offGrid = getDataframeAERO(df_offGrid, AERO_data, INVAERO_data, rho, columnsOptionsData)
+        
 
 
-    if componentInTheProject["generationGE"]:     # GE
-        In_GE, Ra_GE, GE_dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
+    #if componentInTheProject["generationGE"]:     # GE
+    #    In_GE, Ra_GE, GE_dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
         #df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
-        
-        
+
+    #df_offGrid = df_offGrid[[col for col in df_offGrid.columns if col != "Pgen_PV(kW)" and col != "Pgen_AERO(kW)"] + ["Pgen_PV(kW)", "Pgen_AERO(kW)"]]
+
+
+    #getBatteryCalculationsPV
+
+    st.dataframe(df_offGrid)
+
     return
 
 def getAddUniqueColumnsOptionsData(TOTAL_data: dict, columnsOptionsData: dict):
@@ -854,10 +858,12 @@ def getBytesFileExcelProjectOffGrid(dictDataOffGrid: dict) -> bytes:
 
 def getBytesFileYamlComponentsOffGrid(dictDataOffGrid: dict) -> bytes:
 
-    if "df_data" in dictDataOffGrid:
-        del dictDataOffGrid["df_data"]
+    dictDataOffGridCopy = dictDataOffGrid.copy()
 
-    bufferData = get_bytes_yaml(dictionary=dictDataOffGrid)
+    if "df_data" in dictDataOffGridCopy:
+        del dictDataOffGridCopy["df_data"]
+
+    bufferData = get_bytes_yaml(dictionary=dictDataOffGridCopy)
 
     return bufferData
 

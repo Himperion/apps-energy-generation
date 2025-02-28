@@ -85,19 +85,19 @@ def get_dataframe_power_wind_turbine(params: dict, rho: float, dataframe: pd.Dat
     column_label = column[next(iter(column))]
     df_out = dataframe.copy(deep=True)
 
-    df_out["Pideal(kW)"] = ""
-    df_out["Pbetz(kW)"] = ""
-    df_out["Pgen(kW)"] = ""
-    df_out["efficiency(%)"] = ""
+    df_out["Pideal_AERO(kW)"] = 0.0
+    df_out["Pbetz_AERO(kW)"] = 0.0
+    df_out["Pgen_AERO(kW)"] = 0.0
+    df_out["efficiency_AERO(%)"] = 0.0
 
     for index, row in df_out.iterrows():
         Vwind = row[column_label]
         P_gen, n, P_ideal, P_betz = get_power_wind_turbine(params, rho, Vwind)
 
-        df_out.loc[index, "Pideal(kW)"] = P_ideal
-        df_out.loc[index, "Pbetz(kW)"] = P_betz
-        df_out.loc[index, "Pgen(kW)"] = P_gen
-        df_out.loc[index, "efficiency(%)"] = n
+        df_out.loc[index, "Pideal_AERO(kW)"] = P_ideal
+        df_out.loc[index, "Pbetz_AERO(kW)"] = P_betz
+        df_out.loc[index, "Pgen_AERO(kW)"] = P_gen
+        df_out.loc[index, "efficiency_AERO(%)"] = n
         
     return df_out
 
