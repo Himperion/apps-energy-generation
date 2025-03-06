@@ -382,8 +382,6 @@ def getDataframeAERO(df_data: pd.DataFrame, AERO_data: dict, INVAERO_data: dict,
                                                         dataframe=df_data,
                                                         column=columnsOptionsData["AERO"])
 
-    df_AERO['Pinv_AERO(kW)'] =  df_AERO["Pgen_AERO(kW)"]*(INVAERO_data["efficiency_max"]/100)
-
     return df_AERO
 
 def getPerUnitSystem(Pac_nom: float, Vac_nom: float, numberPhases: int):
@@ -406,17 +404,47 @@ def getGlobalPerUnitSystem(INVPV_data: dict, INVAERO_data: dict, numberPhases: i
 
     return getPerUnitSystem(Pac_nom=Pac_nom, Vac_nom=Vac_nom, numberPhases=numberPhases)
 
-def getInverterParameters(INV_data: dict, numberPhases: int, Sb: float, Vb: float, Ib: float, Zb: float):
+def getListChargeRegulatorData(RCPV_data: dict, RCAERO_data: dict, generationPV: bool, generationAERO: bool):
 
-    Iac_nom = (INV_data["Pac_max"]*1000)/(np.sqrt(numberPhases)*INV_data["Vac_nom"])
+    listLabelParams = ["SOC_0", "SOC_conx", "SOC_max", "SOC_min", "SOC_ETP1", "SOC_ETP2"]
+    listOut = []
 
-    Voc_PU = INV_data["Vac_max"]/Vb
-    Vnom_PU = INV_data["Vac_nom"]/Vb
-    Pnom_PU = INV_data["Pac_max"]/Sb
-    Inom_PU = Iac_nom/Ib
-    Rinv_PU = (Voc_PU - Vnom_PU)/Inom_PU
+    for i in range(0,len(listLabelParams),1):
+        if generationPV and generationAERO:             # generación solar y eólica
+            listOut.append(RCPV_data[listLabelParams[i]])
+        elif generationPV and not generationAERO:       # generación solar
+            listOut.append(RCPV_data[listLabelParams[i]])
+        elif not generationPV and generationAERO:       # generación eólica
+            listOut.append(RCAERO_data[listLabelParams[i]])
+           
+    return listOut
 
-    return Voc_PU, Vnom_PU, Pnom_PU, Inom_PU, Rinv_PU
+def getInverterParameters(INV_data: dict, numberPhases: int, Sb: float, Vb: float, Ib: float, Zb: float, generationTYPE: bool):
+
+    if generationTYPE:
+        Iac_nom = (INV_data["Pac_max"]*1000)/(np.sqrt(numberPhases)*INV_data["Vac_nom"])
+
+        VocPU = INV_data["Vac_max"]/Vb
+        VnomPU = INV_data["Vac_nom"]/Vb
+        PnomPU = INV_data["Pac_max"]/Sb
+        InomPU = Iac_nom/Ib
+        RinvPU = (VocPU - VnomPU)/InomPU
+
+        n_InvCOMP = INV_data["efficiency_max"]/100
+    else:
+        VocPU, VnomPU, PnomPU, InomPU, RinvPU, n_InvCOMP = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+
+
+    return VocPU, VnomPU, PnomPU, InomPU, RinvPU, n_InvCOMP
+
+def getChargeRegulatorParameters(RC_data: dict, generationTYPE: bool):
+
+    if generationTYPE:
+        n_RcCOMP = RC_data["rc_efficiency"]/100
+    else:
+        n_RcCOMP = 0.0
+
+    return n_RcCOMP
 
 def getBatteryBankParameters(C: float, I_max: float, I_min: float, V_max: float, V_min: float, V_nom: float, Ns: int, Np: int, SOC_ETP1: float, SOC_ETP2: float):
 
@@ -430,99 +458,170 @@ def getBatteryBankParameters(C: float, I_max: float, I_min: float, V_max: float,
 
     return Ebb_nom, Vbb_max, Vbb_min, Ibb_max, Ibb_min, m_ETP2, b_ETP2
 
-def getBatteryCalculationsPV(df_data: pd.DataFrame, df_PV: pd.DataFrame,
-                             BATPV_data: dict, RCPV_data: dict, INVPV_data: dict,
-                             Ns: int, Np: int,
-                             numberPhases: int,
-                             Sb: float, Vb: float, Ib: float, Zb: float,
-                             bool_GE: bool,
-                             columnsOptionsData: dict):
+def getRootsQuadraticEcuation(a: float, b: float, c: float):
 
-    df_batCalPV = df_PV.copy()
+    x1 = (-b + np.sqrt((b**2)-4*a*c))/(2*a)
+    x2 = (-b - np.sqrt((b**2)-4*a*c))/(2*a)
+
+    return x1, x2
+
+def getVloadPU(VocPU_PV, RinvPU_PV, VocPU_AERO, RinvPU_AERO, Pload_PU, componentInTheProject):
+
+    if componentInTheProject["generationPV"] and not componentInTheProject["generationAERO"]:
+        a = 1
+        b = -VocPU_PV
+        c = RinvPU_PV*Pload_PU
+    elif not componentInTheProject["generationPV"] and componentInTheProject["generationAERO"]:
+        a = 1
+        b = -VocPU_AERO
+        c = RinvPU_AERO*Pload_PU
+    elif componentInTheProject["generationPV"] and componentInTheProject["generationAERO"]:
+        a = RinvPU_PV + RinvPU_AERO
+        b = -(RinvPU_AERO*VocPU_PV + RinvPU_PV*VocPU_AERO)
+        c = RinvPU_PV*RinvPU_AERO*Pload_PU
+
+    x1, x2 = getRootsQuadraticEcuation(a, b, c)
+
+    return [x1, x2]
+
+def getIinvPU(VocPU_PV, RinvPU_PV, VocPU_AERO, RinvPU_AERO, VloadPU, componentInTheProject):
+
+    IinvPU_PV, IinvPU_AERO = 0.0, 0.0
+
+    if componentInTheProject["generationPV"]:
+        IinvPU_PV = (VocPU_PV - VloadPU)/RinvPU_PV
+    if componentInTheProject["generationAERO"]:
+        IinvPU_AERO = (VocPU_AERO - VloadPU)/RinvPU_AERO
+
+    return IinvPU_PV, IinvPU_AERO
     
-    timeInfo = getTimeData(df_data)
+def getPinvCOMP_DC(PinvPV_PU, PinvAERO_PU, n_InvPV, n_InvAERO, Sb, componentInTheProject):
+
+    PinvPV_DC, PinvAERO_DC = 0.0, 0.0
+
+    if componentInTheProject["generationPV"]:
+        PinvPV_DC = (PinvPV_PU/n_InvPV)*Sb
+    if componentInTheProject["generationAERO"]:
+        PinvAERO_DC = (PinvAERO_PU/n_InvAERO)*Sb
+
+    return PinvPV_DC, PinvAERO_DC
+
+def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
+                           RCPV_data: dict, INVPV_data: dict,
+                           RCAERO_data: dict, INVAERO_data: dict,
+                           Ns_BAT: int, Np_BAT: int,
+                           numberPhases: int,
+                           Sb: float, Vb: float, Ib: float, Zb: float,
+                           columnsOptionsData: dict,
+                           componentInTheProject: dict):
+    
+    timeInfo = getTimeData(df_grid)
+    SOC_0, SOC_conx, SOC_max, SOC_min, SOC_ETP1, SOC_ETP2,  = getListChargeRegulatorData(RCPV_data, RCAERO_data, componentInTheProject["generationPV"], componentInTheProject["generationAERO"])
+    VocPU_PV, VnomPU_PV, PnomPU_PV, InomPU_PV, RinvPU_PV, n_InvPV = getInverterParameters(INVPV_data, numberPhases, Sb, Vb, Ib, Zb, componentInTheProject["generationPV"])
+    VocPU_AERO, VnomPU_AERO, PnomPU_AERO, InomPU_AERO, RinvPU_AERO, n_InvAERO = getInverterParameters(INVAERO_data, numberPhases, Sb, Vb, Ib, Zb, componentInTheProject["generationAERO"])
+    n_RcPV = getChargeRegulatorParameters(RCPV_data, componentInTheProject["generationPV"])
+    n_RcAERO = getChargeRegulatorParameters(RCAERO_data, componentInTheProject["generationAERO"])
+    
     delta_t = timeInfo["deltaMinutes"]/60
-    n_bat = BATPV_data["bat_efficiency"]/100
-    n_rc = RCPV_data["rc_efficiency"]/100
-    n_inv = INVPV_data["efficiency_max"]/100
-    SOC_0 = RCPV_data["SOC_0"]
-    SOC_conx = RCPV_data["SOC_conx"]
-    SOC_max = RCPV_data["SOC_max"]
-    SOC_min = RCPV_data["SOC_min"]
-    SOC_ETP1 = RCPV_data["SOC_ETP1"]
-    SOC_ETP2 = RCPV_data["SOC_ETP2"]
+    n_bat = BAT_data["bat_efficiency"]/100
 
-    Voc_PU, Vnom_PU, Pnom_PU, Inom_PU, Rinv_PU = getInverterParameters(INVPV_data, numberPhases, Sb, Vb, Ib, Zb)
-
-    Ebb_nom, Vbb_max, Vbb_min, Ibb_max, Ibb_min, m_ETP2, b_ETP2 = getBatteryBankParameters(C=BATPV_data["C"],
-                                                                                           I_max=BATPV_data["I_max"],
-                                                                                           I_min=BATPV_data["I_min"],
-                                                                                           V_max=BATPV_data["V_max"],
-                                                                                           V_min=BATPV_data["V_min"],
-                                                                                           V_nom=BATPV_data["V_nom"],
-                                                                                           Ns=Ns, Np=Np,
+    st.text(f"n_RcPV: {n_RcPV}")
+    st.text(f"n_RcAERO: {n_RcAERO}")
+    st.text(f"n_InvPV: {n_InvPV}")
+    st.text(f"n_InvAERO: {n_InvAERO}")
+    
+    Ebb_nom, Vbb_max, Vbb_min, Ibb_max, Ibb_min, m_ETP2, b_ETP2 = getBatteryBankParameters(C=BAT_data["C"],
+                                                                                           I_max=BAT_data["I_max"],
+                                                                                           I_min=BAT_data["I_min"],
+                                                                                           V_max=BAT_data["V_max"],
+                                                                                           V_min=BAT_data["V_min"],
+                                                                                           V_nom=BAT_data["V_nom"],
+                                                                                           Ns=Ns_BAT, Np=Np_BAT,
                                                                                            SOC_ETP1=SOC_ETP1, SOC_ETP2=SOC_ETP2)
+
+
+    df_grid["Pbb(kW)"] = 0.0
+    df_grid["Vbb(V)"] = 0.0
+    df_grid["Ibb(A)"] = 0.0
+    df_grid["IbbDC_PV(A)"] = 0.0
+    df_grid["IbbDC_AERO(A)"] = 0.0
     
-    df_batCalPV.rename(columns={"Pmpp_PV(kW)": "PgenPV(kW)"}, inplace=True)
 
-    df_batCalPV["Pload(kW)"] = df_data[columnsOptionsData["DATA"]["Load"]]
+    df_grid["PrcDC_PV(kW)"] = 0.0
+    df_grid["VrcDC_PV(V)"] = 0.0
+    df_grid["IrcDC_PV(A)"] = 0.0
 
-    df_batCalPV["PgenDC(kW)"] = 0.0
-    df_batCalPV["VgenDC(V)"] = 0.0
-    df_batCalPV["IgenDC(A)"] = 0.0
-
-    df_batCalPV["Pbb(kW)"] = 0.0
-    df_batCalPV["Vbb(V)"] = 0.0
-    df_batCalPV["Ibb(A)"] = 0.0
+    df_grid["PrcDC_AERO(kW)"] = 0.0
+    df_grid["VrcDC_AERO(V)"] = 0.0
+    df_grid["IrcDC_AERO(A)"] = 0.0
     
-    df_batCalPV["PinvDC(kW)"] = 0.0
-    df_batCalPV["VinvDC(V)"] = 0.0
-    df_batCalPV["IinvDC(A)"] = 0.0
+    df_grid["PinvDC_PV(kW)"] = 0.0
+    df_grid["VinvDC_PV(V)"] = 0.0
+    df_grid["IinvDC_PV(A)"] = 0.0
 
-    df_batCalPV["PinvAC(kW)"] = 0.0
-    df_batCalPV["VinvAC(V)"] = 0.0
-    df_batCalPV["IinvAC(A)"] = 0.0
+    df_grid["PinvDC_AERO(kW)"] = 0.0
+    df_grid["VinvDC_AERO(V)"] = 0.0
+    df_grid["IinvDC_AERO(A)"] = 0.0
+
+    df_grid["PinvAC_PV(kW)"] = 0.0
+    df_grid["VinvAC_PV(V)"] = 0.0
+    df_grid["IinvAC_PV(A)"] = 0.0
+
+    df_grid["PinvAC_AERO(kW)"] = 0.0
+    df_grid["VinvAC_AERO(V)"] = 0.0
+    df_grid["IinvAC_AERO(A)"] = 0.0
     
-    df_batCalPV["conSD(t)"] = False
-    df_batCalPV["conSC(t)"] = False
-    df_batCalPV["swLoad(t)"] = 1
+    df_grid["conSD(t)"] = False
+    df_grid["conSC(t)"] = False
+    df_grid["swLoad(t)"] = 1
 
-    df_batCalPV["deltaEbb(kWh)"] = 0.0
-    df_batCalPV["Ebb(kWh)"] = 0.0
-    df_batCalPV["SOC(t)"] = 0.0
-    df_batCalPV["DOD(t)"] = 0.0
-    
-    for index, row in df_batCalPV.iterrows():
-        Pload = df_batCalPV.loc[index, "Pload(kW)"]
-        PgenPV = df_batCalPV.loc[index, "PgenPV(kW)"]
+    df_grid["deltaEbb(kWh)"] = 0.0
+    df_grid["Ebb(kWh)"] = 0.0
+    df_grid["SOC(t)"] = 0.0
+    df_grid["DOD(t)"] = 0.0
 
-        # valores t-1
+    df_grid["NodoTotal"] = 0.0
+    df_grid["Nodo1"] = 0.0
+    df_grid["Nodo2"] = 0.0
+    df_grid["Nodo3"] = 0.0
+    df_grid["Nodo4"] = 0.0
 
+    for index, row in df_grid.iterrows():
+        Pload_PU = df_grid.loc[index, columnsOptionsData["DATA"]["Load"]]/Sb
+        Vload_PU = getVloadPU(VocPU_PV, RinvPU_PV, VocPU_AERO, RinvPU_AERO, Pload_PU, componentInTheProject)[0]
+        Iload_PU = Pload_PU/Vload_PU
+        IinvAC_PV_PU, IinvAC_AERO_PU = getIinvPU(VocPU_PV, RinvPU_PV, VocPU_AERO, RinvPU_AERO, Vload_PU, componentInTheProject)
+        PinvAC_PV_PU, PinvAC_AERO_PU = Vload_PU*IinvAC_PV_PU, Vload_PU*IinvAC_AERO_PU
+        PinvDC_PV, PinvDC_AERO = getPinvCOMP_DC(PinvAC_PV_PU, PinvAC_AERO_PU, n_InvPV, n_InvAERO, Sb, componentInTheProject)
+
+        Pgen_PV = df_grid.loc[index, "Pgen_PV(kW)"]
+        Pgen_AERO = df_grid.loc[index, "Pgen_AERO(kW)"]
+
+        # valores anteriores t-1
         if index == 0: 
             SOC_t_1, swLoad_t_1 = SOC_0, 1
         else:
-            SOC_t_1, swLoad_t_1 = df_batCalPV.loc[index-1, "SOC(t)"], df_batCalPV.loc[index-1, "swLoad(t)"]
+            SOC_t_1, swLoad_t_1 = df_grid.loc[index-1, "SOC(t)"], df_grid.loc[index-1, "swLoad(t)"]
 
         # condición sobreCarga (Limitar la generación al igualarla a la demanda)
-
-        if SOC_t_1 >= SOC_max and n_rc*PgenPV >= (Pload/n_inv) and swLoad_t_1 == 1:
-            PgenDC = Pload/n_inv
+        if SOC_t_1 >= SOC_max and (n_RcPV*Pgen_PV + n_RcAERO*Pgen_AERO) >= (PinvDC_PV + PinvDC_AERO) and swLoad_t_1 == 1:
+            PrcDC_PV = PinvDC_PV
+            PrcDC_AERO = PinvDC_AERO
             conSC = True
         else:
-            PgenDC = n_rc*PgenPV
+            PrcDC_PV = n_RcPV*Pgen_PV
+            PrcDC_AERO = n_RcAERO*Pgen_AERO
             conSC = False
 
         # condición sobreDescarga (Desconectar la carga e iniciar proceso de carga del banco de baterías)
-
-        if SOC_t_1 <= SOC_min and n_rc*PgenPV < (Pload/n_inv):
+        if SOC_t_1 <= SOC_min and (n_RcPV*Pgen_PV + n_RcAERO*Pgen_AERO) < (PinvDC_PV + PinvDC_AERO):
             conSD = True
         else:
             conSD = False
-
+        
         # condición de conexión de carga (Reconectar la carga cuando se alcance el SOC_conx)
-
         if conSD and swLoad_t_1 == 1:
-            if bool_GE:
+            if componentInTheProject["generationGE"]:
                 swLoad = 3
             else:
                 swLoad = 2
@@ -532,85 +631,110 @@ def getBatteryCalculationsPV(df_data: pd.DataFrame, df_PV: pd.DataFrame,
             else:
                 swLoad = swLoad_t_1
 
-        # PinvDC
+        # Carga desconectada
+        if swLoad != 1:
+            PinvAC_PV_PU = 0.0
+            PinvAC_AERO_PU = 0.0
+            PinvDC_PV = 0.0
+            PinvDC_AERO = 0.0
 
-        if swLoad == 1:
-            PinvDC = Pload/n_inv
-        else:
-            PinvDC = 0
-
-        # Pbb
-
-        Pbb = PgenDC - PinvDC
-
+        # Potencia del banco de baterías Pbb
+        #Pbb = (PrcDC_PV + PrcDC_AERO) - (PinvDC_PV + PinvDC_AERO)
+        Pbb_PV = PrcDC_PV - PinvDC_PV
+        Pbb_AERO = PrcDC_AERO - PinvDC_AERO
+        Pbb = Pbb_PV + Pbb_AERO
+        
         # deltaEbb
-
-        if Pbb >= 0:    # Carga de banco de baterías
+        if Pbb >= 0:    
             deltaEbb = Pbb*n_bat*delta_t
         else:
             deltaEbb = Pbb*(1/n_bat)*delta_t
 
         # SOC(t), DOD(t), Ebb(kWh), Vbb(V), Ibb(A)
-        
         SOC = SOC_t_1 + (deltaEbb/Ebb_nom)
         DOD = 1 - SOC
         Ebb = SOC_t_1*Ebb_nom + deltaEbb
         Vbb = (Vbb_max - Vbb_min)*SOC + Vbb_min
         Ibb = (Pbb*1000)/Vbb
-        
-        # condición ETP1
+        Ibb_PV = (Pbb_PV*1000)/Vbb
+        Ibb_AERO = (Pbb_AERO*1000)/Vbb
 
+        # condición ETP1
         if swLoad == 2 and SOC_ETP1 <= SOC_t_1:
             I_ETP1, V_ETP1 = Ibb_max, Vbb
         else:
-            I_ETP1, V_ETP1  = 0, 0
+            I_ETP1, V_ETP1  = 0.0, 0.0
 
         # condición ETP2
-
         if swLoad == 2 and SOC_ETP1 < SOC_t_1 and SOC_ETP2 < SOC_t_1:
             I_ETP2 = (m_ETP2*SOC_t_1) + b_ETP2
-            V_ETP2 = (Vbb_max - Vbb_min)*SOC_ETP1 + Vbb_min     # Vbb(SOC_ETP1)
+            V_ETP2 = (Vbb_max - Vbb_min)*SOC_ETP1 + Vbb_min
         else:
             I_ETP2 = 0
             V_ETP2 = 0
 
-        # inversor
-        PinvAC_PU = (PinvDC*n_inv)/Sb
-        IinvAC_PU = (Voc_PU - np.sqrt((Voc_PU**2) - 4*Rinv_PU*Pload))/(2*Rinv_PU)
-        VinvAC_PU = PinvAC_PU/IinvAC_PU
+        # Parametros AC
+        PinvAC_PV, VinvAC_PV, IinvAC_PV = PinvAC_PV_PU*Sb, Vload_PU*Vb, IinvAC_PV_PU*Ib
+        PinvAC_AERO, VinvAC_AERO, IinvAC_AERO = PinvAC_AERO_PU*Sb, Vload_PU*Vb, IinvAC_AERO_PU*Ib
+        Vload = Vload_PU*Vb
+        Iload = Iload_PU*Ib
 
-        VinvAC, IinvAC = VinvAC_PU*Vb, IinvAC_PU*Ib
+        # Parametros DC
+        IrcDC_PV = (n_RcPV*Pgen_PV*1000)/Vbb
+        IrcDC_AERO = (n_RcPV*Pgen_PV*1000)/Vbb
+        IinvDC_PV = (PinvDC_PV*1000)/Vbb
+        IinvDC_AERO = (PinvDC_AERO*1000)/Vbb
 
         # Actualizar datos
+        df_grid.loc[index, "Pbb(kW)"] = Pbb
+        df_grid.loc[index, "Vbb(V)"] = Vbb
+        df_grid.loc[index, "Ibb(A)"] = Ibb
+        df_grid.loc[index, "IbbDC_PV(A)"] = Ibb_PV
+        df_grid.loc[index, "IbbDC_AERO(A)"] = Ibb_AERO
+    
+
+        df_grid.loc[index, "PrcDC_PV(kW)"] = n_RcPV*Pgen_PV
+        df_grid.loc[index, "VrcDC_PV(V)"] = Vbb
+        df_grid.loc[index, "IrcDC_PV(A)"] = IrcDC_PV
+
+        df_grid.loc[index, "PrcDC_AERO(kW)"] = n_RcPV*Pgen_AERO
+        df_grid.loc[index, "VrcDC_AERO(V)"] = Vbb
+        df_grid.loc[index, "IrcDC_AERO(A)"] = IrcDC_AERO
         
-        df_batCalPV.loc[index, "PgenDC(kW)"] = PgenDC
-        df_batCalPV.loc[index, "VgenDC(V)"] = Vbb
-        df_batCalPV.loc[index, "IgenDC(A)"] = (PgenDC*1000)/Vbb
+        df_grid.loc[index, "PinvDC_PV(kW)"] = PinvDC_PV
+        df_grid.loc[index, "VinvDC_PV(V)"] = Vbb
+        df_grid.loc[index, "IinvDC_PV(A)"] = IinvDC_PV
 
-        df_batCalPV.loc[index, "Pbb(kW)"] = Pbb
-        df_batCalPV.loc[index, "Vbb(V)"] = Vbb
-        df_batCalPV.loc[index, "Ibb(A)"] = Ibb
+        df_grid.loc[index, "PinvDC_AERO(kW)"] = PinvDC_AERO
+        df_grid.loc[index, "VinvDC_AERO(V)"] = Vbb
+        df_grid.loc[index, "IinvDC_AERO(A)"] = IinvDC_AERO
+
+        df_grid.loc[index, "PinvAC_PV(kW)"] = PinvAC_PV
+        df_grid.loc[index, "VinvAC_PV(V)"] = VinvAC_PV
+        df_grid.loc[index, "IinvAC_PV(A)"] = IinvAC_PV
+
+        df_grid.loc[index, "PinvAC_AERO(kW)"] = PinvAC_AERO
+        df_grid.loc[index, "VinvAC_AERO(V)"] = VinvAC_AERO
+        df_grid.loc[index, "IinvAC_AERO(A)"] = IinvAC_AERO
         
-        df_batCalPV.loc[index, "PinvDC(kW)"] = PinvDC
-        df_batCalPV.loc[index, "VinvDC(V)"] = Vbb
-        df_batCalPV.loc[index, "IinvDC(A)"] = (PinvDC*1000)/Vbb
+        df_grid.loc[index, "conSD(t)"] = conSD
+        df_grid.loc[index, "conSC(t)"] = conSC
+        df_grid.loc[index, "swLoad(t)"] = swLoad
 
-        df_batCalPV.loc[index, "PinvAC(kW)"] = PinvDC*n_inv
-        df_batCalPV.loc[index, "VinvAC(V)"] = VinvAC
-        df_batCalPV.loc[index, "IinvAC(A)"] = IinvAC
+        df_grid.loc[index, "deltaEbb(kWh)"] = deltaEbb
+        df_grid.loc[index, "Ebb(kWh)"] = Ebb
+        df_grid.loc[index, "SOC(t)"] = SOC
+        df_grid.loc[index, "DOD(t)"] = DOD
+
+        # Pruebas
         
-        df_batCalPV.loc[index, "conSD(t)"] = conSD
-        df_batCalPV.loc[index, "conSC(t)"] = conSC
-        df_batCalPV.loc[index, "swLoad(t)"] = swLoad
-
-        df_batCalPV.loc[index, "deltaEbb(kWh)"] = deltaEbb
-        df_batCalPV.loc[index, "Ebb(kWh)"] = Ebb
-        df_batCalPV.loc[index, "SOC(t)"] = SOC
-        df_batCalPV.loc[index, "DOD(t)"] = DOD
-
-    st.dataframe(df_batCalPV)
-
-    return df_batCalPV
+        df_grid.loc[index, "NodoTotal"] = PrcDC_PV + PrcDC_AERO - Pbb - PinvDC_PV - PinvDC_AERO
+        df_grid.loc[index, "Nodo1"] = PrcDC_PV - PinvDC_PV - Pbb_PV
+        df_grid.loc[index, "Nodo2"] = PrcDC_AERO - PinvDC_AERO - Pbb_AERO
+        df_grid.loc[index, "Nodo3"] = Ibb - (Ibb_PV + Ibb_AERO)
+        df_grid.loc[index, "Nodo4"] = (Pbb_PV + Pbb_AERO) - Pbb
+    
+    return df_grid
 
 def initializeDictValidateEntries():
 
@@ -752,9 +876,22 @@ def generationOffGrid(df_data: pd.DataFrame,
     #df_offGrid = df_offGrid[[col for col in df_offGrid.columns if col != "Pgen_PV(kW)" and col != "Pgen_AERO(kW)"] + ["Pgen_PV(kW)", "Pgen_AERO(kW)"]]
 
 
-    #getBatteryCalculationsPV
+    df_offGrid = getBatteryCalculations(df_grid=df_offGrid,
+                                        BAT_data=BAT_data,
+                                        RCPV_data=RCPV_data,
+                                        INVPV_data=INVPV_data,
+                                        RCAERO_data=RCAERO_data,
+                                        INVAERO_data=INVAERO_data,
+                                        Ns_BAT=Ns_BAT, Np_BAT=Np_BAT,
+                                        numberPhases=numberPhases,
+                                        Sb=Sb, Vb=Vb, Ib=Ib, Zb=Zb,
+                                        columnsOptionsData=columnsOptionsData,
+                                        componentInTheProject=componentInTheProject)
+    
+    bytesFileExcel = toExcelResults(df=df_offGrid, dictionary=None, df_sheetName="Prueba", dict_sheetName=None)
+    botonOut = excelDownloadButton(bytesFileExcel, "prueba")
 
-    st.dataframe(df_offGrid)
+    
 
     return
 
