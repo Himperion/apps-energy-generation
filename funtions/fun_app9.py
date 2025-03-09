@@ -460,6 +460,11 @@ def getBatteryBankParameters(C: float, I_max: float, I_min: float, V_max: float,
 
 def getRootsQuadraticEcuation(a: float, b: float, c: float):
 
+    try:
+        discri = np.sqrt((b**2)-4*a*c)
+    except:
+        print(a, b, c)
+
     x1 = (-b + np.sqrt((b**2)-4*a*c))/(2*a)
     x2 = (-b - np.sqrt((b**2)-4*a*c))/(2*a)
 
@@ -539,14 +544,12 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
                                                                                            Ns=Ns_BAT, Np=Np_BAT,
                                                                                            SOC_ETP1=SOC_ETP1, SOC_ETP2=SOC_ETP2)
 
-
     df_grid["Pbb(kW)"] = 0.0
     df_grid["Vbb(V)"] = 0.0
     df_grid["Ibb(A)"] = 0.0
     df_grid["IbbDC_PV(A)"] = 0.0
     df_grid["IbbDC_AERO(A)"] = 0.0
     
-
     df_grid["PrcDC_PV(kW)"] = 0.0
     df_grid["VrcDC_PV(V)"] = 0.0
     df_grid["IrcDC_PV(A)"] = 0.0
@@ -807,7 +810,7 @@ def validateCompatibilityOfCOMP_BAT(RCCOMP_data, Vnom_bb):
 
     return any(listAuxVnBB)
 
-def getCompatibilityBAT(RCPV_data, RCAERO_data, BAT_data, Ns_BAT, generationPV, generationAERO):
+def getCompatibilityBAT(RCPV_data, RCAERO_data, BAT_data, Ns_BAT, generationPV, generationAERO) -> bool:
 
     Vnom_bb = Ns_BAT*BAT_data["V_nom"]
     outCheck = False
@@ -824,6 +827,22 @@ def getCompatibilityBAT(RCPV_data, RCAERO_data, BAT_data, Ns_BAT, generationPV, 
         outCheck = outCheckPV and outCheckAERO
 
     return outCheck
+
+def getDataframeGE(df_data: pd.DataFrame, GE_data: dict, columnsOptionsData) -> pd.DataFrame:
+
+    In_GE, Ra_GE, GE_dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
+
+    optionsList = {"Load": [columnsOptionsData["DATA"]["Load"]]}
+
+    df_data, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_data,
+                                                                       options=optionsList)
+    
+    df_data = fun_app7.getDataframeGE(dataframe=df_data,
+                                      dict_pu=GE_dictPU,
+                                      dict_param=GE_data,
+                                      columnsOptionsSel={"Load": columnsOptionsData["DATA"]["Load"]})
+
+    return df_data
 
 def generationOffGrid(df_data: pd.DataFrame,
                       PV_data: dict| None,
@@ -851,30 +870,11 @@ def generationOffGrid(df_data: pd.DataFrame,
     df_offGrid["Pgen_PV(kW)"] = 0.0
     df_offGrid["Pgen_AERO(kW)"] = 0.0
 
-    if componentInTheProject["generationPV"]:     # PV
+    if componentInTheProject["generationPV"]:       # PV
         df_offGrid = getDataframePV(df_offGrid, PV_data, INVPV_data, PVs, PVp, columnsOptionsData, params_PV, rename_PV, showOutputPV, numberPhases)
 
-        
-        """
-        df_batCalPV = getBatteryCalculationsPV(df_data=df_data, df_PV=df_PV, BATPV_data=BATPV_data, RCPV_data=RCPV_data, INVPV_data=INVPV_data,
-                                               Ns=Ns_PV, Np=Np_PV, numberPhases=numberPhases, Sb=Sb, Vb=Vb, Ib=Ib, Zb=Zb,
-                                               bool_GE=bool_GE, columnsOptionsData=columnsOptionsData)
-        """
-
-        #bytesFileExcel = toExcelResults(df=df_batCalPV, dictionary=None, df_sheetName="Prueba", dict_sheetName=None)
-        #botonOut = excelDownloadButton(bytesFileExcel, "prueba")
-
-    if componentInTheProject["generationAERO"]:   # AERO
+    if componentInTheProject["generationAERO"]:     # AERO
         df_offGrid = getDataframeAERO(df_offGrid, AERO_data, INVAERO_data, rho, columnsOptionsData)
-        
-
-
-    #if componentInTheProject["generationGE"]:     # GE
-    #    In_GE, Ra_GE, GE_dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
-        #df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
-
-    #df_offGrid = df_offGrid[[col for col in df_offGrid.columns if col != "Pgen_PV(kW)" and col != "Pgen_AERO(kW)"] + ["Pgen_PV(kW)", "Pgen_AERO(kW)"]]
-
 
     df_offGrid = getBatteryCalculations(df_grid=df_offGrid,
                                         BAT_data=BAT_data,
@@ -887,6 +887,11 @@ def generationOffGrid(df_data: pd.DataFrame,
                                         Sb=Sb, Vb=Vb, Ib=Ib, Zb=Zb,
                                         columnsOptionsData=columnsOptionsData,
                                         componentInTheProject=componentInTheProject)
+
+    if componentInTheProject["generationGE"]:       # GE
+        df_offGrid = getDataframeGE(df_offGrid, GE_data, columnsOptionsData)
+        
+    
     
     bytesFileExcel = toExcelResults(df=df_offGrid, dictionary=None, df_sheetName="Prueba", dict_sheetName=None)
     botonOut = excelDownloadButton(bytesFileExcel, "prueba")

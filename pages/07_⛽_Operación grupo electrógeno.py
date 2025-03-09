@@ -138,10 +138,10 @@ with tab2:
                 st.warning("Cargar archivo **YAML** (.yaml)", icon="⚠️")
 
         if GE_data is not None:
-            In, Ra, dict_pu = fun_app7.get_param_gp(GE_data, dict_phases)
+            In, Ra, dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
 
             if option_sel == options_sel_input[0]:
-                df_GE = fun_app7.get_df_option_characteristic_curve(dict_pu=dict_pu, dict_param=GE_data)
+                df_GE = fun_app7.get_df_option_characteristic_curve(dict_pu=dictPU, dict_param=GE_data)
 
             elif option_sel == options_sel_input[1] and archive_Load is not None:
                 check = False
@@ -150,7 +150,7 @@ with tab2:
                     df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
 
                     if check:
-                        df_GE = fun_app7.getGeneratorOperation(df_GE, dict_pu, GE_data, columnsOptionsSel)
+                        df_GE = fun_app7.getGraphLoadCharacteristic(df_GE, dictPU, GE_data, columnsOptionsSel)
                         
                     else:
                         st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
@@ -179,8 +179,10 @@ with tab2:
 
 
             elif option_sel == options_sel_input[0]:
-                df_GE = fun_app7.get_columns_df_GE(dataframe=df_GE, dict_pu=dict_pu, dict_param=GE_data,
-                                                   columnsOptionsSel={"Load": "Load(kW)"})
+                df_GE = fun_app7.getDataframeGE(dataframe=df_GE,
+                                                dict_pu=dictPU,
+                                                dict_param=GE_data,
+                                                columnsOptionsSel={"Load": "Load(kW)"})
 
                 sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados",
                                                         "📊 Graficas",
@@ -197,9 +199,9 @@ with tab2:
                                                         "📉 Curva de carga del generador"])
 
                             with re_tab1:
-                                fun_app7.get_graph_consumption_efficiency(dataframe=df_GE)
+                                fun_app7.getGraphConsumptionEfficiency(dataframe=df_GE)
                             with re_tab2:
-                                fun_app7.get_graph_load_characteristic(dataframe=df_GE)
+                                fun_app7.getGraphLoadCharacteristic(dataframe=df_GE)
 
                 with sub_tab3:
                     buffer_data = fun_app7.get_bytes_yaml(dictionary=GE_data)

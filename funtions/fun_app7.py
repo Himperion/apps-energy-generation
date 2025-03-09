@@ -48,33 +48,51 @@ def get_df_option_characteristic_curve(dict_pu: dict, dict_param: dict) -> pd.Da
 
     return df_GE
 
-def getGeneratorOperation(df_GE: pd.DataFrame, dict_pu: dict, dict_param: dict, columnsOptionsSel: dict) -> pd.DataFrame:
+def getRootsQuadraticEcuation(a: float, b: float, c: float):
 
-    df_GE["Load(p.u.)"] = df_GE[columnsOptionsSel["Load"]]/(dict_pu["Sb"]*dict_param["FP"])
+    x1 = (-b + np.sqrt((b**2)-4*a*c))/(2*a)
+    x2 = (-b - np.sqrt((b**2)-4*a*c))/(2*a)
 
-    df_GE = get_columns_df_GE(df_GE, dict_pu, dict_param, columnsOptionsSel)
+    return x1, x2
 
-    return df_GE
+def getParamsIaVtGE(load, dict_pu, dict_param):
 
-def get_columns_df_GE(dataframe: pd.DataFrame, dict_pu: dict, dict_param: dict, columnsOptionsSel: dict) -> pd.DataFrame:
+    load_PU = load/(dict_pu["Sb"]*dict_param["FP"])
+    Ia_PU = getRootsQuadraticEcuation(a=dict_pu["Ra"], b=(-1)*dict_pu["Ea"], c=load_PU)[1]
+    Vt_PU = dict_pu["Ea"] - Ia_PU*dict_pu["Ra"]
+    consumption = ((dict_param["C100"] - dict_param["C0"])*load_PU) + dict_param["C0"]
+    efficiency = (load/(consumption*dict_param["PE_fuel"]))*100
 
-    dataframe["Ia(p.u.)"] = 0.0
-    dataframe["Vt(p.u.)"] = 0.0
+    return Ia_PU, Vt_PU, consumption, efficiency
 
-    for index, row in dataframe.iterrows():
-        Ia = (dict_pu["Ea"] - np.sqrt((dict_pu["Ea"]**2)-4*dict_pu["Ra"]*row["Load(p.u.)"]))/(2*dict_pu["Ra"])
-        Vt = dict_pu["Ea"] - Ia*dict_pu["Ra"]
+def getDataframeGE(dataframe: pd.DataFrame, dict_pu: dict, dict_param: dict, columnsOptionsSel: dict) -> pd.DataFrame:
 
-        dataframe.loc[index, "Ia(p.u.)"] = Ia
-        dataframe.loc[index, "Vt(p.u.)"] = Vt
+    dataframe["Ia_GE(A)"] = 0.0
+    dataframe["Vt_GE(V)"] = 0.0
+    dataframe["Consumo_GE(l/h)"] = 0.0
+    dataframe["Eficiencia_GE(%)"] = 0.0
 
-    dataframe["Ia(A)"] = dataframe["Ia(p.u.)"]*dict_pu["Ib"]
-    dataframe["Vt(V)"] = dataframe["Vt(p.u.)"]*dict_pu["Vb"]
+    st.text(dataframe.columns)
+    st.text(f"columnsOptionsSel: {columnsOptionsSel}")
 
-    dataframe["Consumo(l/h)"] = ((dict_param["C100"] - dict_param["C0"])*dataframe["Load(p.u.)"]) + dict_param["C0"]
-    dataframe["Eficiencia(%)"] = (dataframe[columnsOptionsSel["Load"]]/(dataframe["Consumo(l/h)"]*dict_param["PE_fuel"]))*100
+    if "swLoad(t)" in dataframe.columns:
+        for index, row in dataframe.iterrows():
+            if row["swLoad(t)"] == 3:
+                load = row[columnsOptionsSel["Load"]]
+                Ia_PU, Vt_PU, consumption, efficiency = getParamsIaVtGE(load, dict_pu, dict_param)
 
-    dataframe = dataframe.drop(columns=["Load(p.u.)", "Ia(p.u.)", "Vt(p.u.)"])
+                dataframe.loc[index, "Ia_GE(A)"] = Ia_PU*dict_pu["Ib"]
+                dataframe.loc[index, "Vt_GE(V)"] = Vt_PU*dict_pu["Vb"]
+                dataframe.loc[index, "Consumo_GE(l/h)"] = consumption
+                dataframe.loc[index, "Eficiencia_GE(%)"] = efficiency
+    else:
+        for index, row in dataframe.iterrows():
+            Ia_PU, Vt_PU, consumption, efficiency = getParamsIaVtGE(row, dict_pu)
+
+            dataframe.loc[index, "Ia_GE(A)"] = Ia_PU*dict_pu["Ib"]
+            dataframe.loc[index, "Vt_GE(V)"] = Vt_PU*dict_pu["Vb"]
+            dataframe.loc[index, "Consumo_GE(l/h)"] = consumption
+            dataframe.loc[index, "Eficiencia_GE(%)"] = efficiency
 
     return dataframe
 
@@ -140,32 +158,32 @@ def get_download_button(directory: str, name_file: str, format_file: str, descri
                 
     return
 
-def get_graph_consumption_efficiency(dataframe: pd.DataFrame):
+def getGraphConsumptionEfficiency(dataframe: pd.DataFrame):
 
     fig, ax1 = plt.subplots()
 
     ax1.set_xlabel("Load(kW)")
     ax1.set_ylabel("Consumo(l/h)", color="tab:blue")
-    ax1.plot(dataframe["Load(kW)"], dataframe["Consumo(l/h)"], color="tab:blue")
+    ax1.plot(dataframe["Load(kW)"], dataframe["Consumo_GE(l/h)"], color="tab:blue")
     ax1.grid(True)
     
 
     ax2 = ax1.twinx()
 
     ax2.set_ylabel("Eficiencia(%)", color="tab:red")
-    ax2.plot(dataframe["Load(kW)"], dataframe["Eficiencia(%)"], color="tab:red")
+    ax2.plot(dataframe["Load(kW)"], dataframe["Eficiencia_GE(%)"], color="tab:red")
 
     st.pyplot(fig)
 
     return
 
-def get_graph_load_characteristic(dataframe: pd.DataFrame):
+def getGraphLoadCharacteristic(dataframe: pd.DataFrame):
 
     fig, ax1 = plt.subplots()
 
     ax1.set_xlabel("Load(kW)")
     ax1.set_ylabel("Tensión(V)", color="tab:red")
-    ax1.plot(dataframe["Load(kW)"], dataframe["Vt(V)"], color="tab:red")
+    ax1.plot(dataframe["Load(kW)"], dataframe["Vt_GE(V)"], color="tab:red")
     ax1.grid(True)
 
     st.pyplot(fig)
