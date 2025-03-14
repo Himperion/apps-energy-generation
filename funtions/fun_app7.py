@@ -72,9 +72,6 @@ def getDataframeGE(dataframe: pd.DataFrame, dict_pu: dict, dict_param: dict, col
     dataframe["Consumo_GE(l/h)"] = 0.0
     dataframe["Eficiencia_GE(%)"] = 0.0
 
-    st.text(dataframe.columns)
-    st.text(f"columnsOptionsSel: {columnsOptionsSel}")
-
     if "swLoad(t)" in dataframe.columns:
         for index, row in dataframe.iterrows():
             if row["swLoad(t)"] == 3:
