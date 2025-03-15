@@ -182,7 +182,7 @@ def getDataOnGridValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, validateEntr
 def getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlRC_COMP,
                                  optKeysCOMP, optKeysINVCOMP, optKeysRCCOMP, typeOfSystem):
     
-    check, data = getDataOnGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, optKeysCOMP, optKeysINVCOMP)
+    check, data = getDataOnGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, optKeysCOMP, optKeysINVCOMP, typeOfSystem)
 
     check["check_RCCOMP"], data["RCCOMP_data"] = getCompValidation(uploadedYamlRC_COMP, optKeysRCCOMP)      # RC_COMP
 

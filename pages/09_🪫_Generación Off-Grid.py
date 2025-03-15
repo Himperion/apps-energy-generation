@@ -166,12 +166,12 @@ with tab2:
                     checkProject, validateEntries = False, general.initializeDictValidateEntries(generationType="OffGrid")
                     componentInTheProject = general.getDictComponentInTheProject(generationOptions)
                     checkUploaded = general.getErrorForMissingComponent(uploadedYamlPV, uploadedYamlINV_PV, uploadedYamlRC_PV,
-                                                                uploadedYamlAERO, uploadedYamlINV_AERO, uploadedYamlRC_AERO,
-                                                                uploadedXlsxDATA, uploadedYamlGE, uploadedYamlBAT,
-                                                                "OffGrid", componentInTheProject)
+                                                                        uploadedYamlAERO, uploadedYamlINV_AERO, uploadedYamlRC_AERO,
+                                                                        uploadedXlsxDATA, uploadedYamlGE, uploadedYamlBAT,
+                                                                        "OffGrid", componentInTheProject)
                     
                     if checkUploaded:
-                        validateEntries['check_DATA'], df_data, columnsOptionsData = general.getDataValidation(uploadedXlsxDATA, generationOptions, listGenerationOptions)
+                        validateEntries['check_DATA'], df_data, columnsOptionsData = general.getDataValidation(uploadedXlsxDATA, componentInTheProject)
                     
                         if len(generationOptions) != 0:
                             PV_data, INVPV_data, RCPV_data,  = None, None, None
@@ -190,7 +190,7 @@ with tab2:
                                 validateEntries, GE_data = general.getDataGEorBATValidation(uploadedYamlGE, validateEntries, "GE")
 
                             validateComponents = general.getDictValidateComponent(validateEntries=validateEntries, generationType="OffGrid")
-                            checkProject = general.getCheckValidateGeneration(**componentInTheProject, **validateComponents, generationType="OnGrid")
+                            checkProject = general.getCheckValidateGeneration(**componentInTheProject, **validateComponents, generationType="OffGrid")
 
                             if checkProject:
                                 numberPhases = general.getNumberPhases(INVPV_data, INVAERO_data, GE_data)

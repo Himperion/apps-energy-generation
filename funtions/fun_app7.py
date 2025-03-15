@@ -84,7 +84,10 @@ def getDataframeGE(dataframe: pd.DataFrame, dict_pu: dict, dict_param: dict, col
                 dataframe.loc[index, "Eficiencia_GE(%)"] = efficiency
     else:
         for index, row in dataframe.iterrows():
-            Ia_PU, Vt_PU, consumption, efficiency = getParamsIaVtGE(row, dict_pu)
+            load = row[columnsOptionsSel["Load"]]
+            Ia_PU, Vt_PU, consumption, efficiency = getParamsIaVtGE(load, dict_pu, dict_param)
+
+            
 
             dataframe.loc[index, "Ia_GE(A)"] = Ia_PU*dict_pu["Ib"]
             dataframe.loc[index, "Vt_GE(V)"] = Vt_PU*dict_pu["Vb"]
