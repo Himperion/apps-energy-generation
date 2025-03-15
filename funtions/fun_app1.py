@@ -144,7 +144,7 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "V_nom": selected_row_column(selected_row, params_BAT, "V_nom"),
             "bat_type": selected_row_column(selected_row, params_BAT, "bat_type"),
             "C": selected_row_column(selected_row, params_BAT, "capacity"),
-            "efficiency": selected_row_column(selected_row, params_BAT, "efficiency"),
+            "bat_efficiency": selected_row_column(selected_row, params_BAT, "bat_efficiency"),
         }
     
     elif key == "GE":

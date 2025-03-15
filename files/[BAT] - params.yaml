@@ -106,7 +106,7 @@ capacity:
 bat_efficiency:
   data_type: float
   description: Eficiencia
-  label: efficiency
+  label: bat_efficiency
   number_input:
     format: '%.1f'
     max_value: 100.0
