@@ -17,11 +17,14 @@ with open("files//[BAT] - params.yaml", 'r') as archivo:
 with open("files//[GE] - params.yaml", 'r') as archivo:
     params_GE = yaml.safe_load(archivo)
 
-with open("files//[INV_PV] - params.yaml", 'r') as archivo:
-    params_INV_PV = yaml.safe_load(archivo)
+with open("files//[INVPV] - params.yaml", 'r') as archivo:
+    params_INVPV = yaml.safe_load(archivo)
 
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
+
+with open("files//[RC] - params.yaml", 'r') as archivo:
+    params_RC = yaml.safe_load(archivo)
 
 with open("files//[GE] - PE.yaml", 'r') as archivo:
     dict_fuel = yaml.safe_load(archivo)
@@ -49,6 +52,15 @@ def get_label_column(params: dict, key: str) -> str:
 
     return label_column
 
+def fixDataTypeList(value: str):
+
+    listOut = []
+
+    if value.count("/") > 0:
+        listOut = [float(item) for item in value.split("/")]
+
+    return listOut
+
 def selected_row_column(selected_row: pd.DataFrame, params: dict, key: str):
 
     column_name = get_label_column(params, key)
@@ -63,6 +75,8 @@ def selected_row_column(selected_row: pd.DataFrame, params: dict, key: str):
             output_value = float(value)
         elif params[key]["data_type"] == "str":
             output_value = str(value)
+        elif params[key]["data_type"] == "list":
+            output_value = fixDataTypeList(value)
     
     return output_value
 
@@ -98,26 +112,26 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "cells_in_series": selected_row_column(selected_row, params_PV, "cells_in_series")
             }
         
-    elif key == "INV_PV":
+    elif key == "INVPV":
         dict_data = {
-            "Pac_max": selected_row_column(selected_row, params_INV_PV, "Pac_max"),
-            "Vac_nom": selected_row_column(selected_row, params_INV_PV, "Vac_nom"),
-            "Vac_max": selected_row_column(selected_row, params_INV_PV, "Vac_max"),
-            "Vbb_nom": selected_row_column(selected_row, params_INV_PV, "Vbb_nom"),
-            "efficiency_max": selected_row_column(selected_row, params_INV_PV, "efficiency_max"),
-            "grid_type": selected_row_column(selected_row, params_INV_PV, "grid_type"),
-            "phases": selected_row_column(selected_row, params_INV_PV, "phases"),
+            "Pac_max": selected_row_column(selected_row, params_INVPV, "Pac_max"),
+            "Vac_nom": selected_row_column(selected_row, params_INVPV, "Vac_nom"),
+            "Vac_max": selected_row_column(selected_row, params_INVPV, "Vac_max"),
+            "Vbb_nom": selected_row_column(selected_row, params_INVPV, "Vbb_nom"),
+            "efficiency_max": selected_row_column(selected_row, params_INVPV, "efficiency_max"),
+            "grid_type": selected_row_column(selected_row, params_INVPV, "grid_type"),
+            "phases": selected_row_column(selected_row, params_INVPV, "phases"),
         }
 
-    elif key == "INV_AERO":
+    elif key == "INVAERO":
         dict_data = {
-            "Pac_max": selected_row_column(selected_row, params_INV_PV, "Pac_max"),
-            "Vac_nom": selected_row_column(selected_row, params_INV_PV, "Vac_nom"),
-            "Vac_max": selected_row_column(selected_row, params_INV_PV, "Vac_max"),
-            "Vbb_nom": selected_row_column(selected_row, params_INV_PV, "Vbb_nom"),
-            "efficiency_max": selected_row_column(selected_row, params_INV_PV, "efficiency_max"),
-            "grid_type": selected_row_column(selected_row, params_INV_PV, "grid_type"),
-            "phases": selected_row_column(selected_row, params_INV_PV, "phases"),
+            "Pac_max": selected_row_column(selected_row, params_INVPV, "Pac_max"),
+            "Vac_nom": selected_row_column(selected_row, params_INVPV, "Vac_nom"),
+            "Vac_max": selected_row_column(selected_row, params_INVPV, "Vac_max"),
+            "Vbb_nom": selected_row_column(selected_row, params_INVPV, "Vbb_nom"),
+            "efficiency_max": selected_row_column(selected_row, params_INVPV, "efficiency_max"),
+            "grid_type": selected_row_column(selected_row, params_INVPV, "grid_type"),
+            "phases": selected_row_column(selected_row, params_INVPV, "phases"),
         }
 
     elif key == "BAT":
@@ -155,7 +169,17 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "P_nom" : selected_row_column(selected_row, params_AERO, "P_nom"),
         }
 
-    # Quitar comonente RC, solo es necesario en valor de la eficiencia.
+    elif key == "RC":
+        dict_data = {
+            "Vdc_bb": selected_row_column(selected_row, params_RC, "Vdc_bb"),
+            "rc_efficiency": selected_row_column(selected_row, params_RC, "rc_efficiency"),
+            "SOC_0": selected_row_column(selected_row, params_RC, "SOC_0"),
+            "SOC_min": selected_row_column(selected_row, params_RC, "SOC_min"),
+            "SOC_max": selected_row_column(selected_row, params_RC, "SOC_max"),
+            "SOC_ETP1": selected_row_column(selected_row, params_RC, "SOC_ETP1"),
+            "SOC_ETP2": selected_row_column(selected_row, params_RC, "SOC_ETP2"),
+            "SOC_conx": selected_row_column(selected_row, params_RC, "SOC_conx"),
+        }
 
     return dict_data
 
@@ -231,7 +255,7 @@ def download_button_component(selected_row: pd.DataFrame, key: str, key_label: s
         st.download_button(
             label=f"📑 Descargar **:blue[archivo de datos]** del {key_label} **YAML**",
             data=buffer_data,
-            file_name=name_file_head(name=f"{key}_{name}.yaml"),
+            file_name=name_file_head(name=f"[{key}]_{name}.yaml"),
             mime="text/yaml"
             )
 

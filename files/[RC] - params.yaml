@@ -89,7 +89,7 @@ SOC_min:
 rc_efficiency:
   data_type: int
   description: Eficiencia del regulador cargador
-  label: efficiency
+  label: rc_efficiency
   number_input:
     format: null
     max_value: 100
@@ -98,7 +98,7 @@ rc_efficiency:
     value: 98
   unit: (%)
 Vdc_bb:
-  data_type: ''
+  data_type: list
   description: "Tensi\xF3n nominal del banco de bater\xEDas (V)"
   label: Vdc_bb
   number_input: {}

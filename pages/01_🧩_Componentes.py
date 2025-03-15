@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import yaml
 
-from funtions import fun_app1
+from funtions import general, fun_app1
 
 
 #%% global variables
@@ -11,8 +11,8 @@ from funtions import fun_app1
 with open("files//[PV] - params.yaml", 'r') as archivo:
     params_PV = yaml.safe_load(archivo)
 
-with open("files//[INV_PV] - params.yaml", 'r') as archivo:
-    params_INV_PV = yaml.safe_load(archivo)
+with open("files//[INVPV] - params.yaml", 'r') as archivo:
+    params_INVPV = yaml.safe_load(archivo)
 
 with open("files//[AERO] - params.yaml", 'r') as archivo:
     params_AERO = yaml.safe_load(archivo)
@@ -209,7 +209,7 @@ with tab2:
                     
                     st.session_state['component_description'] = ("AERO", "Aerogenerador")
 
-        elif dict_key == "INV_PV":
+        elif dict_key == "INVPV":
             disabled_Vbb = False
 
             with st.container(border=True):
@@ -229,20 +229,20 @@ with tab2:
             with st.form("INV_PV"):
                 st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
-                Pac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Pac_max"]),
-                                                            disabled=False, variable=params_INV_PV["Pac_max"]["number_input"])
+                Pac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Pac_max"]),
+                                                            disabled=False, variable=params_INVPV["Pac_max"]["number_input"])
                 
-                Vac_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vac_nom"]),
-                                                            disabled=False, variable=params_INV_PV["Vac_nom"]["number_input"])
+                Vac_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vac_nom"]),
+                                                            disabled=False, variable=params_INVPV["Vac_nom"]["number_input"])
                 
-                Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vac_max"]),
-                                                            disabled=False, variable=params_INV_PV["Vac_max"]["number_input"])
+                Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vac_max"]),
+                                                            disabled=False, variable=params_INVPV["Vac_max"]["number_input"])
                 
-                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vbb_nom"]),
-                                                           disabled=disabled_Vbb, variable=params_INV_PV["Vbb_nom"]["number_input"])
+                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vbb_nom"]),
+                                                           disabled=disabled_Vbb, variable=params_INVPV["Vbb_nom"]["number_input"])
                 
-                efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["efficiency_max"]),
-                                                                  disabled=disabled_Vbb, variable=params_INV_PV["efficiency_max"]["number_input"])
+                efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["efficiency_max"]),
+                                                                  disabled=disabled_Vbb, variable=params_INVPV["efficiency_max"]["number_input"])
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
@@ -260,7 +260,7 @@ with tab2:
 
                     st.session_state['component_description'] = (dict_key, dict_components[dict_key]['name'])
 
-        elif dict_key == "INV_AERO":
+        elif dict_key == "INVAERO":
             disabled_Vbb = False
 
             with st.container(border=True):
@@ -277,23 +277,23 @@ with tab2:
                 if grid_type == "On-Grid":
                     disabled_Vbb = True
                 
-            with st.form("INV_AERO"):
+            with st.form("INVAERO"):
                 st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
-                Pac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Pac_max"]),
-                                                            disabled=False, variable=params_INV_PV["Pac_max"]["number_input"])
+                Pac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Pac_max"]),
+                                                            disabled=False, variable=params_INVPV["Pac_max"]["number_input"])
                 
-                Vac_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vac_nom"]),
-                                                            disabled=False, variable=params_INV_PV["Vac_nom"]["number_input"])
+                Vac_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vac_nom"]),
+                                                            disabled=False, variable=params_INVPV["Vac_nom"]["number_input"])
                 
-                Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vac_max"]),
-                                                            disabled=False, variable=params_INV_PV["Vac_max"]["number_input"])
+                Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vac_max"]),
+                                                            disabled=False, variable=params_INVPV["Vac_max"]["number_input"])
                 
-                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["Vbb_nom"]),
-                                                           disabled=disabled_Vbb, variable=params_INV_PV["Vbb_nom"]["number_input"])
+                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vbb_nom"]),
+                                                           disabled=disabled_Vbb, variable=params_INVPV["Vbb_nom"]["number_input"])
                 
-                efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INV_PV["efficiency_max"]),
-                                                                  disabled=disabled_Vbb, variable=params_INV_PV["efficiency_max"]["number_input"])
+                efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["efficiency_max"]),
+                                                                  disabled=disabled_Vbb, variable=params_INVPV["efficiency_max"]["number_input"])
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
@@ -374,8 +374,8 @@ with tab2:
                     Vdc_bb = st.multiselect(label="Tensión nominal del banco de baterías (V)", options=options_VdcBB,
                                             key="Vdc_bb", default=[options_VdcBB[0]])
 
-                    rc_efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["rc_efficiency"]),
-                                                                     disabled=False, variable=params_RC["rc_efficiency"]["number_input"])
+                    rc_efficiency = general.getWidgetNumberInput(label=fun_app1.get_label_params(dict_param=params_RC["rc_efficiency"]),
+                                                                 disabled=False, key="rc_efficiency", variable=params_RC["rc_efficiency"]["number_input"])
                     
                 with st.container(border=True):
                     st.markdown("🔋 **:blue[{0}:]**".format("Gestión del banco de baterías"))

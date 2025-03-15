@@ -13,12 +13,12 @@ GE:
   label: "\u26FD Grupo electr\xF3geno"
   name: "Grupo electr\xF3geno"
   sheet_label: GE
-INV_PV:
+INVPV:
   emoji: "\U0001F5B2\uFE0F"
   label: "\U0001F5B2\uFE0F Inversor fotovoltaico"
   name: Inversor fotovoltaico
   sheet_label: INV_PV
-INV_AERO:
+INVAERO:
   emoji: "\U0001F5B2\uFE0F"
   label: "\U0001F5B2\uFE0F Inversor e\xF3lico"
   name: "Inversor e\xF3lico"
