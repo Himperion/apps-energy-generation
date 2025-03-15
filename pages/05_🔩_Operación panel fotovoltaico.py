@@ -64,18 +64,39 @@ keys_show_output, dict_show_output, list_show_output = fun_app5.get_show_output(
 
 st.markdown("# 🔩 Operación panel fotovoltaico")
 
-tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"])  
+tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])  
 
-with tab1:   
-    st.markdown(text["subheader_1"])
+with tab1:
+    with st.expander("**Marco teórico**"): 
+        st.markdown(text["subheader_1"])
 
-    col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
+        col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
 
-    with col1:
-        st.write("")
-    with col2:
-        st.image("images//app2_img1.png")
-    
+        with col1:
+            st.write("")
+        with col2:
+            st.image("images//app2_img1.png")
+
+    with st.expander("**Ingreso de datos**"):
+        st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
+        with st.container(border=True):
+            st.markdown(f"**:blue[{selectDataEntryOptions[0]}:]**")
+            st.markdown("Sí ya cuenta con los parámetros del panel fotovoltaico **alpha_sc**, **Iph**, **Isat**, **Rs**, **Rp**, **nNsVt** y  **Ajuste_Isc** en condiciones STC puede ingresarlos manualmente en esta sección. (Los parámetros STC pueden ser obtenidos en la sección **🔧 Parámetros panel fotovoltaico**.)")
+            st.markdown(f"**:blue[{selectDataEntryOptions[1]}:]**")
+            st.markdown("Sí cuenta con los datos de la ficha técnica del panel fotovoltaico puede ingresar manualmente desde este apartado.")
+            st.markdown(f"**:blue[{selectDataEntryOptions[2]}:]**")
+            st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
+            st.markdown(f"**:blue[{selectDataEntryOptions[3]}:]**")
+            st.markdown("Este archivo YAML para el ingreso rápido de información puede ser descargado en la sección de resultados de **🔧 Parámetros panel fotovoltaico**.")
+
+    with st.expander("**Opciones de la sección**"):
+        st.markdown("Esta sección es posible seleccionar las opciones del ingreso de condiciones **Gef(Irradiancia efectiva en W/m^2)** y **Toper(Temperatura de operación del módulo en °C)**:")
+        with st.container(border=True):
+            st.markdown(f"**:blue[{optionsSelOper[0]}:]**")
+            st.markdown("Permite el ingreso manual de un único valor de **Gef** y **Toper**. como resultado se mostrará la comparación de la condición STC y de operación ingresada. Mediante valores y curvas características.")
+            st.markdown(f"**:blue[{optionsSelOper[1]}:]**")
+            st.markdown("Permite el ingreso mediante un archivo **XLSX** de múltiples valores de **Gef** y **Toper**. Como resultado se podrá descargar un archivo **XLSX** de parámetros para cada par de puntos de operación del panel.")
+            
 with tab2:   
     dataEntryOptions = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                     index=0, placeholder="Selecciona una opción")

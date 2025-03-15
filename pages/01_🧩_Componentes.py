@@ -52,6 +52,8 @@ list_key_components = [key for key in dict_components]
 list_sel_components = [value["label"] for value in dict_components.values()]
 list_sheet_components = [value["sheet_label"] for key, value in dict_components.items()]
 
+listTabs = ["📑 Información", "📝 Entrada de datos", "📂 Listado de componentes"]
+
 #%% main
 
 if 'component_dict' not in st.session_state:
@@ -62,14 +64,16 @@ if 'component_description' not in st.session_state:
 
 st.markdown("# 🧩 Componentes")
 
-tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos", "📂 Listado de componentes"]) 
+tab1, tab2, tab3 = st.tabs(listTabs) 
 
 with tab1:
 
     st.session_state['component_dict'] = None
     st.session_state['component_description'] = None
 
-    st.markdown(text_header)
+    st.markdown("Este aplicativo para hacer rápido y sencillo el ingreso de datos permite la inserción de componentes por medio de archivos **YAML**.")
+    st.markdown(f"Puede crear sus propios archivos de componentes **YAML** en la pestaña de **:red[{listTabs[1]}]** o puede descargarlos desde una selección predeterminada desde la pestaña **:red[{listTabs[2]}]**.")
+
 
 with tab2:
     submitted_general, submitted_PV, submitted_AERO, submitted_GE, submitted_GE = False, False, False, False, False
@@ -226,7 +230,7 @@ with tab2:
                 if grid_type == "On-Grid":
                     disabled_Vbb = True
                 
-            with st.form("INV_PV"):
+            with st.form("INVPV"):
                 st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
                 Pac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Pac_max"]),
@@ -237,9 +241,6 @@ with tab2:
                 
                 Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vac_max"]),
                                                             disabled=False, variable=params_INVPV["Vac_max"]["number_input"])
-                
-                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vbb_nom"]),
-                                                           disabled=disabled_Vbb, variable=params_INVPV["Vbb_nom"]["number_input"])
                 
                 efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["efficiency_max"]),
                                                                   disabled=disabled_Vbb, variable=params_INVPV["efficiency_max"]["number_input"])
@@ -252,7 +253,6 @@ with tab2:
                         'Pac_max': Pac_max,
                         'Vac_max': Vac_max,
                         'Vac_nom': Vac_nom,
-                        'Vbb_nom': Vbb_nom,
                         'efficiency_max': efficiency_max,
                         'grid_type': grid_type,
                         'phases': phases
@@ -289,9 +289,6 @@ with tab2:
                 Vac_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vac_max"]),
                                                             disabled=False, variable=params_INVPV["Vac_max"]["number_input"])
                 
-                Vbb_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["Vbb_nom"]),
-                                                           disabled=disabled_Vbb, variable=params_INVPV["Vbb_nom"]["number_input"])
-                
                 efficiency_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_INVPV["efficiency_max"]),
                                                                   disabled=disabled_Vbb, variable=params_INVPV["efficiency_max"]["number_input"])
                 submitted = st.form_submit_button("Aceptar")
@@ -303,7 +300,6 @@ with tab2:
                         'Pac_max': Pac_max,
                         'Vac_max': Vac_max,
                         'Vac_nom': Vac_nom,
-                        'Vbb_nom': Vbb_nom,
                         'efficiency_max': efficiency_max,
                         'grid_type': grid_type,
                         'phases': phases

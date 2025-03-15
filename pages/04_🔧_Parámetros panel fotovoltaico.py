@@ -30,44 +30,54 @@ text = {
 
 options_celltype = fun_app4.celltype_options(celltype)
 
-select_data_entry_options = ["🪟 Datos del panel",
-                             "💾 Cargar archivo de datos del panel fotovoltaico YAML"]
+selectDataEntryOptions = ["🪟 Datos del panel",
+                          "💾 Cargar archivo de datos del panel fotovoltaico YAML"]
 
 #%% main
 
 st.markdown("# 🔧 Obtención de parámetros STC")
 
-tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"])
+tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])
 
 with tab1:
-    st.markdown(text["subheader_1"])
-    st.markdown(text["subheader_2"])
-        
-    col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
 
-    with col1:
-        st.write("")
-    with col2:
-        st.image("images//app1_img1.png")
-    with col3:
-        st.write("")
+    with st.expander("**Marco teórico**"):
+        st.markdown(text["subheader_1"])
+        st.markdown(text["subheader_2"])
+            
+        col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
 
-    st.markdown(text["subheader_3"])
-    st.latex(r"""I=I_{ph}-I_{d}-I_{R_{p}}=I_{ph}-I_{sat}\cdot \left ( e\tfrac{V+I\cdot R_{s}}{N_{s}nv_{t}} -1\right )-\frac{V+I\cdot R_{s}}{R_{p}}""")
+        with col1:
+            st.write("")
+        with col2:
+            st.image("images//app1_img1.png")
+        with col3:
+            st.write("")
 
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Iph"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["n"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Vt"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Isat"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rs"]))
-    st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rp"]))
+        st.markdown(text["subheader_3"])
+        st.latex(r"""I=I_{ph}-I_{d}-I_{R_{p}}=I_{ph}-I_{sat}\cdot \left ( e\tfrac{V+I\cdot R_{s}}{N_{s}nv_{t}} -1\right )-\frac{V+I\cdot R_{s}}{R_{p}}""")
 
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Iph"]))
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["n"]))
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Vt"]))
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]))
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Isat"]))
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rs"]))
+        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rp"]))
+
+    with st.expander("**Ingreso de datos**"):
+        st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
+        with st.container(border=True):
+            st.markdown(f"**:blue[{selectDataEntryOptions[0]}:]**")
+            st.markdown("Sí cuenta con los datos de la ficha técnica del panel fotovoltaico puede ingresar manualmente desde este apartado.")
+            st.markdown(f"**:blue[{selectDataEntryOptions[1]}:]**")
+            st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
+    
 with tab2:
-    data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=select_data_entry_options,
+    data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")
     
-    if data_entry_options == select_data_entry_options[0]:
+    if data_entry_options == selectDataEntryOptions[0]:
 
         with st.container(border=True):
             st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
@@ -102,7 +112,7 @@ with tab2:
             Ns = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]),
                                                   variable=dict_params["cells_in_series"]["number_input"])
             
-    elif data_entry_options == select_data_entry_options[1]:
+    elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
             uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
             
@@ -111,7 +121,7 @@ with tab2:
     if app_5_submitted:
         PV_data = None
 
-        if data_entry_options == select_data_entry_options[0]:
+        if data_entry_options == selectDataEntryOptions[0]:
 
             PV_data = {
                 "celltype": fun_app4.for_options_get_celltype(cell_type),
@@ -125,7 +135,7 @@ with tab2:
                 "cells_in_series": Ns
             }
 
-        elif data_entry_options == select_data_entry_options[1]:
+        elif data_entry_options == selectDataEntryOptions[1]:
 
             if uploaded_file_yaml is not None:
                 PV_data = yaml.safe_load(uploaded_file_yaml)
