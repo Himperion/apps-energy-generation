@@ -68,14 +68,14 @@ if 'check_DATA' not in st.session_state:
 if 'check_PV' not in st.session_state:
     st.session_state['check_PV'] = False
 
-if 'check_INV_PV' not in st.session_state:
-    st.session_state['check_INV_PV'] = False
+if 'check_INVPV' not in st.session_state:
+    st.session_state['check_INVPV'] = False
 
 if 'check_AERO' not in st.session_state:
     st.session_state['check_AERO'] = False
 
-if 'check_INV_AERO' not in st.session_state:
-    st.session_state['check_INV_AERO'] = False
+if 'check_INVAERO' not in st.session_state:
+    st.session_state['check_INVAERO'] = False
 
 if 'dictDataOnGrid' not in st.session_state:
     st.session_state['dictDataOnGrid'] = None
@@ -107,7 +107,7 @@ with tab2:
 
                 if listGenerationOptions[1] in generationOptions:
                     rho = general.getWidgetNumberInput(label=fun_app8.get_label_params(dict_param=params_AERO["rho"]),
-                                                       variable=params_AERO["rho"]["number_input"], disabled=False)
+                                                       variable=params_AERO["rho"]["number_input"], disabled=False, key="rho")
                 else:
                     rho = None
                 
@@ -126,13 +126,13 @@ with tab2:
 
                             with col1:
                                 PVs = general.getWidgetNumberInput(label=fun_app8.get_label_params(dict_param=params_PV["PVs"]),
-                                                                   disabled=False, variable=params_PV["PVs"]["number_input"])
+                                                                   disabled=False, variable=params_PV["PVs"]["number_input"], key="PVs")
                             with col2:
                                 PVp = general.getWidgetNumberInput(label=fun_app8.get_label_params(dict_param=params_PV["PVp"]),
-                                                                   disabled=False, variable=params_PV["PVp"]["number_input"])
+                                                                   disabled=False, variable=params_PV["PVp"]["number_input"], key="PVp")
                         
                         with st.container(border=True):
-                            st.markdown(f"{dict_components['INV_PV']['emoji']} **:blue[{dict_components['INV_PV']['name']}:]**")
+                            st.markdown(f"{dict_components['INVPV']['emoji']} **:blue[{dict_components['INVPV']['name']}:]**")
                             uploadedYamlINV_PV = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_PV')
 
                 if listGenerationOptions[1] in generationOptions:
@@ -143,7 +143,7 @@ with tab2:
                             uploadedYamlAERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlAERO')
 
                         with st.container(border=True):
-                            st.markdown(f"{dict_components['INV_AERO']['emoji']} **:green[{dict_components['INV_AERO']['name']}:]**")
+                            st.markdown(f"{dict_components['INVAERO']['emoji']} **:green[{dict_components['INVAERO']['name']}:]**")
                             uploadedYamlINV_AERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_AERO')
 
                 with st.container(border=True):
@@ -188,7 +188,7 @@ with tab2:
                                                                               generationType="OnGrid")
                             
                             if checkProject:
-                                numberPhases = general.getNumberPhases(INVPV_data=INVAERO_data, INVAERO_data=INVAERO_data, GE_data=None)
+                                numberPhases = general.getNumberPhases(INVPV_data=INVPV_data, INVAERO_data=INVAERO_data, GE_data=None)
 
                                 if numberPhases is not None:
                                     st.session_state["dictDataOnGrid"] = {

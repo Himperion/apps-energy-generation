@@ -87,8 +87,6 @@ def getDataframeGE(dataframe: pd.DataFrame, dict_pu: dict, dict_param: dict, col
             load = row[columnsOptionsSel["Load"]]
             Ia_PU, Vt_PU, consumption, efficiency = getParamsIaVtGE(load, dict_pu, dict_param)
 
-            
-
             dataframe.loc[index, "Ia_GE(A)"] = Ia_PU*dict_pu["Ib"]
             dataframe.loc[index, "Vt_GE(V)"] = Vt_PU*dict_pu["Vb"]
             dataframe.loc[index, "Consumo_GE(l/h)"] = consumption
@@ -105,43 +103,6 @@ def get_bytes_yaml(dictionary: dict):
     buffer.seek(0)
 
     return buffer
-
-def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
-
-    columns_options, columns_options_sel, columns_options_check = {}, {}, {}
-    columns_options_drop, check = [], True
-
-    header = dataframe.columns
-
-    for key in options:
-        list_options = options[key]
-        columns_aux = []
-        for column in header:
-            if column in list_options:
-                columns_aux.append(column)
-        columns_options[key] = columns_aux
-
-    for key in columns_options:
-        list_columns_options = columns_options[key]
-        if len(list_columns_options) != 0:
-            columns_options_sel[key] = list_columns_options[0]
-            columns_options_check[key] = True
-
-            if len(list_columns_options) > 1:
-                for i in range(1,len(list_columns_options),1):
-                    columns_options_drop.append(list_columns_options[i])
-
-        else:
-            columns_options_sel[key] = None
-            columns_options_check[key] = False
-
-    if len(columns_options_drop) != 0:
-        dataframe = dataframe.drop(columns=columns_options_drop)
-
-    for key in columns_options_check:
-        check = check and columns_options_check[key]
-
-    return dataframe, check, columns_options_sel
 
 #%% funtions streamlit
 

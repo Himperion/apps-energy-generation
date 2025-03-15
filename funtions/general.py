@@ -487,8 +487,7 @@ def getDataframeGE(df_data: pd.DataFrame, GE_data: dict, columnsOptionsData) -> 
 
     optionsList = {"Load": [columnsOptionsData["DATA"]["Load"]]}
 
-    df_data, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_data,
-                                                                       options=optionsList)
+    df_data, check, columnsOptionsSel = checkDataframeInput(dataframe=df_data, options=optionsList)
     
     df_data = fun_app7.getDataframeGE(dataframe=df_data,
                                       dict_pu=GE_dictPU,

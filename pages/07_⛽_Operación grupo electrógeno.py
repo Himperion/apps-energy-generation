@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import yaml
 from io import BytesIO
-from funtions import fun_app7
+from funtions import general, fun_app7
 
 #%% funtions
 
@@ -147,16 +147,17 @@ with tab2:
                 check = False
                 try:
                     df_input = pd.read_excel(archive_Load)
-                    df_GE, check, columnsOptionsSel = fun_app7.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
+                    df_GE, check, columnsOptionsSel = general.checkDataframeInput(dataframe=df_input, options=items_options_columns_df)
 
                     if check:
-                        df_GE = fun_app7.getGraphLoadCharacteristic(df_GE, dictPU, GE_data, columnsOptionsSel)
+                        df_GE = fun_app7.getDataframeGE(df_GE, dictPU, GE_data, columnsOptionsSel)
                         
                     else:
                         st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
 
                 except:
                     st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
+                
 
         if df_GE is not None:
             if option_sel == options_sel_input[1]:
@@ -170,12 +171,24 @@ with tab2:
 
                 with sub_tab2:
                     excel = to_excel(df_GE)
+                    buffer_data = fun_app7.get_bytes_yaml(dictionary=GE_data)
 
-                    st.download_button(
-                            label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
-                            data=excel,
-                            file_name=fun_app7.name_file_head(name="GE_operationAnalysis.xlsx"),
-                            mime="xlsx")
+                    with st.container(border=True):
+                        st.markdown("**Archivos de opciones de ingreso de datos:**")
+                        st.download_button(
+                                label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
+                                data=buffer_data,
+                                file_name=fun_app7.name_file_head(name="GE_data.yaml"),
+                                mime="text/yaml"
+                                )
+                    
+                    with st.container(border=True):
+                        st.markdown("**Archivos de resultados:**")
+                        st.download_button(
+                                label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
+                                data=excel,
+                                file_name=fun_app7.name_file_head(name="GE_operationAnalysis.xlsx"),
+                                mime="xlsx")
 
 
             elif option_sel == options_sel_input[0]:
@@ -208,16 +221,19 @@ with tab2:
                     excel = to_excel(df_GE)
 
                     with st.container(border=True):
-
-                        st.download_button(
-                            label="📑 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
-                            data=buffer_data,
-                            file_name=fun_app7.name_file_head(name="GE_data.yaml"),
-                            mime="text/yaml"
-                            )
-                        
-                        st.download_button(
-                            label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
-                            data=excel,
-                            file_name=fun_app7.name_file_head(name="GE_characteristicCurve.xlsx"),
-                            mime="xlsx")                
+                        with st.container(border=True):
+                            st.markdown("**Archivos de opciones de ingreso de datos:**")
+                            st.download_button(
+                                label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
+                                data=buffer_data,
+                                file_name=fun_app7.name_file_head(name="GE_data.yaml"),
+                                mime="text/yaml"
+                                )
+                            
+                        with st.container(border=True):
+                            st.markdown("**Archivos de resultados:**")
+                            st.download_button(
+                                label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
+                                data=excel,
+                                file_name=fun_app7.name_file_head(name="GE_characteristicCurve.xlsx"),
+                                mime="xlsx")                
