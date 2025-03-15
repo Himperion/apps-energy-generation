@@ -200,7 +200,7 @@ def getDataOffGridValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYam
 
     if typeOfSystem == "AERO":
         check, data = getDataOffGridCompValidation(uploadedYamlCOMP, uploadedYamlINV_COMP, uploadedYamlRC_COMP,
-                                                   optKeysAERO, optKeysINVCOMP, optKeysRCCOMP)
+                                                   optKeysAERO, optKeysINVCOMP, optKeysRCCOMP, typeOfSystem)
         
         validateEntries["check_AERO"] = check["check_COMP"]
         validateEntries["check_INVAERO"] = check["check_INVCOMP"]
