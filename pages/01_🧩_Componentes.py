@@ -436,9 +436,9 @@ with tab3:
     
     if components_tab3 is not None:
         dict_key = list_key_components[list_sel_components.index(components_tab3)]
-
-        df_data = fun_app1.get_data_component(dir=dir_components,
-                                              sheet_label=dict_components[dict_key]["sheet_label"])
+        
+        df_data = fun_app1.getDataComponent(sheetLabel=dict_components[dict_key]["sheet_label"],
+                                            dir=dir_components, onLine=True)
         
     if df_data is not None:
         selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)

@@ -94,6 +94,24 @@ dictPhases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
+googleSheetID = "1qAuH22Z4BXIGlIsOLD1TspTwVRdPtRNQDOZHXls1uYI"
+urlGoogleSheet = "https://docs.google.com/spreadsheets/d/{0}/export?format=csv&gid={1}&format"
+dictGoogleSheet = {
+    "PV": 1325609592,
+    "INV_PV": 1215828711,
+    "INV_AERO": 39151170,
+    "BAT": 1587251122,
+    "GE": 1362364921,
+    "AERO": 22566103,
+    "RC": 1264893162
+    }
+
+#%% funtions
+
+def getGoogleSheetUrl(sheetName):
+
+    return urlGoogleSheet.format(googleSheetID, dictGoogleSheet[sheetName])
+
 def nameFileHead(name: str) -> str:
     now = datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"

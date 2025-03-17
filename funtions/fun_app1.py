@@ -3,8 +3,9 @@ import pandas as pd
 import datetime as dt
 import yaml
 from io import BytesIO
-
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode
+
+from funtions import general
 
 #%% global variables
 
@@ -191,9 +192,13 @@ def get_bytes_yaml(dictionary: dict):
 
     return buffer
 
-def get_data_component(dir: str, sheet_label: str) -> pd.DataFrame:
+def getDataComponent(sheetLabel: str, dir: str, onLine: bool) -> pd.DataFrame:
 
-    df_data = pd.read_excel(dir, sheet_name=sheet_label)
+    if onLine:
+        sheetUrl = general.getGoogleSheetUrl(sheetName=sheetLabel)
+        df_data = pd.read_csv(sheetUrl)
+    else:
+        df_data = pd.read_excel(dir, sheet_name=sheetLabel)
 
     return df_data
 
