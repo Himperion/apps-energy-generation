@@ -94,16 +94,18 @@ dictPhases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-googleSheetID = "1qAuH22Z4BXIGlIsOLD1TspTwVRdPtRNQDOZHXls1uYI"
+googleSheetID = st.secrets.GOOGLE_DRIVE["googleSheetID"]
+
 urlGoogleSheet = "https://docs.google.com/spreadsheets/d/{0}/export?format=csv&gid={1}&format"
+
 dictGoogleSheet = {
-    "PV": 1325609592,
-    "INV_PV": 1215828711,
-    "INV_AERO": 39151170,
-    "BAT": 1587251122,
-    "GE": 1362364921,
-    "AERO": 22566103,
-    "RC": 1264893162
+    "PV": st.secrets.GOOGLE_DRIVE["googleSheetPV"],
+    "INV_PV": st.secrets.GOOGLE_DRIVE["googleSheetINVPV"],
+    "INV_AERO": st.secrets.GOOGLE_DRIVE["googleSheetINVAERO"],
+    "BAT": st.secrets.GOOGLE_DRIVE["googleSheetBAT"],
+    "GE": st.secrets.GOOGLE_DRIVE["googleSheetGE"],
+    "AERO": st.secrets.GOOGLE_DRIVE["googleSheetAERO"],
+    "RC": st.secrets.GOOGLE_DRIVE["googleSheetRC"]
     }
 
 #%% funtions
@@ -116,6 +118,14 @@ def nameFileHead(name: str) -> str:
     now = datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
+def fromValueLabelGetKey(dict_in: dict, key_label: str, value_label: str) -> str:
+
+    for key, value in dict_in.items():
+        if value[key_label] == value_label:
+            return key
+
+    return
+
 def toExcelResults(df: pd.DataFrame, dictionary: dict | None, df_sheetName: str, dict_sheetName: str | None) -> bytes:
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
@@ -126,7 +136,51 @@ def toExcelResults(df: pd.DataFrame, dictionary: dict | None, df_sheetName: str,
 
     return output.getvalue()
 
+def getLabelColumn(params: dict, key: str) -> str:
+
+    if params[key]['unit'] == "":
+        label_column = str(params[key]['label'])
+    else:
+        label_column = f"{params[key]['label']} {params[key]['unit']}"
+
+    return label_column
+
+def fixDataTypeList(value: str):
+
+    listOut = []
+
+    if value.count("/") > 0:
+        listOut = [float(item) for item in value.split("/")]
+
+    return listOut
+
+def selectedRowColumn(selected_row: pd.DataFrame, params: dict, key: str):
+
+    column_name = getLabelColumn(params, key)
+    value = selected_row.loc[0, column_name]
+
+    if value is None:
+        output_value = None
+    else:
+        if params[key]["data_type"] == "int":
+            output_value = int(value)
+        elif params[key]["data_type"] == "float":
+            if type(value) is str:
+                if value.count(",") == 1 and value.count(".") == 0:
+                    output_value = float(value.replace(",", "."))
+                else:
+                    output_value = float(value)
+            else:
+                output_value = float(value)
+        elif params[key]["data_type"] == "str":
+            output_value = str(value)
+        elif params[key]["data_type"] == "list":
+            output_value = fixDataTypeList(value)
+    
+    return output_value
+
 def getBytesYaml(dictionary: dict):
+
     yaml_data = yaml.dump(dictionary, allow_unicode=True)
     buffer = io.BytesIO()
     buffer.write(yaml_data.encode('utf-8'))
@@ -811,6 +865,16 @@ def excelDownloadButton(bytesFileExcel, file_name):
         mime='xlsx')
 
     return df_download
+
+def yamlDownloadButton(bytesFileYaml, file_name, label):
+
+    buttonDownload = st.download_button(
+        label=label,
+        data=bytesFileYaml,
+        file_name=nameFileHead(name=f"{file_name}.yaml"),
+        mime="text/yaml")
+
+    return buttonDownload
 
 def getErrorForMissingItem(uploadedYamlItem, labelItem, boolItem):
 
