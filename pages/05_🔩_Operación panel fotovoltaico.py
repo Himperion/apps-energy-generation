@@ -38,9 +38,9 @@ text = {
 options_celltype = fun_app5.celltype_options(celltype)
 
 selectDataEntryOptions = ["🔧 Parámetros del panel",
-                             "🪟 Datos del panel",
-                             "💾 Cargar archivo de datos del panel fotovoltaico YAML",
-                             "💾 Cargar archivo de parámetros del panel fotovoltaico YAML"]
+                          "🪟 Datos del panel",
+                          "💾 Cargar archivo de datos del panel fotovoltaico YAML",
+                          "💾 Cargar archivo de parámetros del panel fotovoltaico YAML"]
 
 optionsSelOper = ["📗 Única", "📚 Múltiple"]
 

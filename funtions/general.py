@@ -856,6 +856,17 @@ def getWidgetNumberInput(label: str, disabled: bool, key: str, variable: dict):
 
     return st.number_input(label=label, disabled=disabled, key=key, **variable)
 
+def getParamsWidgetNumberInput(dictParam:dict, key:str, disabled: bool):
+
+    dictOut = {
+        "label": getLabelParams(dict_param=dictParam),
+        "disabled": disabled,
+        "key": key,
+        "variable": dictParam["number_input"]
+    }
+
+    return dictOut
+
 def excelDownloadButton(bytesFileExcel, file_name):
 
     df_download = st.download_button(

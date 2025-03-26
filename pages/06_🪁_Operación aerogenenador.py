@@ -33,8 +33,8 @@ template = {
     "description": "Velocidad del viento"
 }
 
-select_data_entry_options = ["🛠️ Datos del aerogenerador",
-                             "💾 Cargar archivo de datos del aerogenerador YAML"]
+selectDataEntryOptions = ["🪁 Datos del aerogenerador",
+                          "💾 Cargar archivo de datos del aerogenerador YAML"]
 
 #%% main
 
@@ -43,13 +43,21 @@ st.markdown("# 🪁 Operación aerogenerador")
 tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"])  
 
 with tab1:
-    st.text("Ajaaaaaaaaaaaaa")
-
+    with st.expander("**Marco teórico**"): 
+        st.markdown("Marco teórico")
+    with st.expander("**Ingreso de datos**"):
+        st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
+        with st.container(border=True):
+            st.markdown(f"**:blue[{selectDataEntryOptions[0]}:]**")
+            st.markdown("Sí cuenta con los datos de la ficha técnica del aerogenerador puede ingresar manualmente desde este apartado.")
+            st.markdown(f"**:blue[{selectDataEntryOptions[1]}:]**")
+            st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
+    
 with tab2:
-    data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=select_data_entry_options,
+    data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")
     
-    if data_entry_options == select_data_entry_options[0]:
+    if data_entry_options == selectDataEntryOptions[0]:
         with st.container(border=True):
             st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del aerogenerador"))
             
@@ -64,7 +72,7 @@ with tab2:
             Pnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["P_nom"]),
                                                     variable=dict_params["P_nom"]["number_input"])
             
-    elif data_entry_options == select_data_entry_options[1]:
+    elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
             uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
 
@@ -83,7 +91,7 @@ with tab2:
     if app_submitted:
         params_turbine, df_turbine = None, None 
 
-        if data_entry_options == select_data_entry_options[0]:
+        if data_entry_options == selectDataEntryOptions[0]:
             params_turbine = {
                 "D" : D, 
                 "V_in" : Vin, 
@@ -92,7 +100,7 @@ with tab2:
                 "P_nom" : Pnom
                 }
         
-        elif data_entry_options == select_data_entry_options[1]:
+        elif data_entry_options == selectDataEntryOptions[1]:
 
             if uploaded_file_yaml is not None:
                 params_turbine = yaml.safe_load(uploaded_file_yaml)
@@ -165,9 +173,9 @@ with tab2:
 
                     label_Y = ["P_ideal(kW)", "P_betz(kW)", "P_gen(kW)"]
 
-                    title = "Curva de eficiencia"
+                    title = "Curva de potencias"
                     xlabel = "Velocidad de viento (m/s)"
-                    ylabel = "Eficiencia (%)"
+                    ylabel = "Potencia (kW)"
 
                     fun_app6.curve_x_yyy(xval, y1, y2, y3, title, xlabel, ylabel, label_Y)
 

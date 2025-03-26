@@ -92,32 +92,45 @@ with tab2:
                     st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
                     col1, col2 = st.columns(2)
                     with col1:
-                        Vmpp = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Vmpp"]),
-                                                                disabled=False, variable=params_PV["Vmpp"]["number_input"])
-                        Voc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Voc"]),
-                                                               disabled=False, variable=params_PV["Voc"]["number_input"])
+                        Vmpp = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["Vmpp"]),
+                                                            disabled=False, variable=params_PV["Vmpp"]["number_input"],
+                                                            key="Vmpp")
+                        
+                        Voc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["Voc"]),
+                                                           disabled=False, variable=params_PV["Voc"]["number_input"],
+                                                           key="Voc")
                     with col2:
-                        Impp = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Impp"]),
-                                                                disabled=False, variable=params_PV["Impp"]["number_input"])
-                        Isc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["Isc"]),
-                                                               disabled=False, variable=params_PV["Isc"]["number_input"])
+                        Impp = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["Impp"]),
+                                                            disabled=False, variable=params_PV["Impp"]["number_input"],
+                                                            key="Impp")
+                        
+                        Isc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["Isc"]),
+                                                           disabled=False, variable=params_PV["Isc"]["number_input"],
+                                                           key="Isc")
+                        
                 with st.container(border=True):
                     st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
                 
-                    alpha_sc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["alpha_sc"]),
-                                                                disabled=False, variable=params_PV["alpha_sc"]["number_input"])
-                    beta_voc = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["beta_voc"]),
-                                                                disabled=False, variable=params_PV["beta_voc"]["number_input"])
-                    gamma_pmp = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["gamma_pmp"]),
-                                                                 disabled=False, variable=params_PV["gamma_pmp"]["number_input"])
+                    alpha_sc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["alpha_sc"]),
+                                                            disabled=False, variable=params_PV["alpha_sc"]["number_input"],
+                                                            key="alpha_sc")
+                    
+                    beta_voc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["beta_voc"]),
+                                                            disabled=False, variable=params_PV["beta_voc"]["number_input"],
+                                                            key="beta_voc")
+                    
+                    gamma_pmp = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["gamma_pmp"]),
+                                                             disabled=False, variable=params_PV["gamma_pmp"]["number_input"],
+                                                             key="gamma_pmp")
                     
                 with st.container(border=True):
                     st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
                 
                     cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
-                    cells_in_series = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_PV["cells_in_series"]),
-                                                                       disabled=False, variable=params_PV["cells_in_series"]["number_input"])
+                    cells_in_series = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_PV["cells_in_series"]),
+                                                                   disabled=False, variable=params_PV["cells_in_series"]["number_input"],
+                                                                   key="cells_in_series")
 
                 submitted = st.form_submit_button("Aceptar")
 
@@ -141,31 +154,26 @@ with tab2:
                 st.markdown(title)
 
                 bat_type = st.selectbox("Tecnologia", options=options_batteryType, index=0)
-                capacity = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["capacity"]),
-                                                            disabled=False, variable=params_BAT["capacity"]["number_input"])
+                
+                capacity = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["capacity"], key="capacity", disabled=False))
+                
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    V_min = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["V_min"]),
-                                                             disabled=False, variable=params_BAT["V_max"]["number_input"])
+                    V_min = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["V_min"], key="V_min", disabled=False))
                 with col2:
-                    V_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["V_max"]),
-                                                             disabled=False, variable=params_BAT["V_max"]["number_input"])
+                    V_max = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["V_max"], key="V_max", disabled=False))
                 with col3:
-                    V_nom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["V_nom"]),
-                                                             disabled=False, variable=params_BAT["V_nom"]["number_input"])
+                    V_nom = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["V_nom"], key="V_nom", disabled=False))
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    I_min = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["I_min"]),
-                                                             disabled=False, variable=params_BAT["I_min"]["number_input"])
-                with col2:
-                    I_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["I_max"]),
-                                                             disabled=False, variable=params_BAT["I_max"]["number_input"])
+                    I_min = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["I_min"], key="I_min", disabled=False))
+                with col2:    
+                    I_max = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["I_max"], key="I_max", disabled=False))
                 
-                efficiency = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["bat_efficiency"]),
-                                                              disabled=False, variable=params_BAT["bat_efficiency"]["number_input"])
-                DOD = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_BAT["DOD"]),
-                                                       disabled=False, variable=params_BAT["DOD"]["number_input"])
+                efficiency = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["bat_efficiency"], key="efficiency", disabled=False))
+                DOD = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_BAT["DOD"], key="DOD", disabled=False))
+                
 
                 submitted = st.form_submit_button("Aceptar")
 
@@ -188,17 +196,26 @@ with tab2:
         elif dict_key == "AERO":
             with st.form("AERO"):
                 st.markdown(title)
-            
-                D = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["D"]),
-                                                     disabled=False, variable=params_AERO["D"]["number_input"])
-                Vin = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["V_in"]),
-                                                       disabled=False, variable=params_AERO["V_in"]["number_input"])
-                Vnom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["V_nom"]),
-                                                        disabled=False, variable=params_AERO["V_nom"]["number_input"])
-                Vmax = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["V_max"]),
-                                                        disabled=False, variable=params_AERO["V_max"]["number_input"])
-                Pnom = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_AERO["P_nom"]),
-                                                        disabled=False, variable=params_AERO["P_nom"]["number_input"])
+
+                D = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_AERO["D"]),
+                                                 disabled=False, variable=params_AERO["D"]["number_input"],
+                                                 key="D")
+                
+                Vin = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_AERO["V_in"]),
+                                                   disabled=False, variable=params_AERO["V_in"]["number_input"],
+                                                   key="Vin")
+                
+                Vnom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_AERO["V_nom"]),
+                                                    disabled=False, variable=params_AERO["V_nom"]["number_input"],
+                                                    key="Vnom")
+                
+                Vmax = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_AERO["V_max"]),
+                                                    disabled=False, variable=params_AERO["V_max"]["number_input"],
+                                                    key="Vmax")
+                
+                Pnom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_AERO["P_nom"]),
+                                                    disabled=False, variable=params_AERO["P_nom"]["number_input"],
+                                                    key="Pnom")
                 
                 submitted = st.form_submit_button("Aceptar")
 
@@ -214,41 +231,38 @@ with tab2:
                     st.session_state['component_description'] = ("AERO", "Aerogenerador")
 
         elif dict_key == "INVPV":
-            disabled_Vbb = False
-
-            with st.container(border=True):
-                st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
-
-                grid_type = st.selectbox(label="Sistema de conexión a red",
-                                         options=["Off-Grid", "On-Grid"],
-                                         index=0, placeholder="Selecciona una opción")
-                
-                phases = st.selectbox(label="Sistema de voltaje",
-                                      options=["Monofásico", "Trifásico"],
-                                      index=0, placeholder="Selecciona una opción")
-
-                if grid_type == "On-Grid":
-                    disabled_Vbb = True
-                
             with st.form("INVPV"):
-                st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
+                st.markdown(title)
+                with st.container(border=True):
+                    st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
 
-                Pac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Pac_max"]),
-                                                       disabled=False, variable=params_INVPV["Pac_max"]["number_input"],
-                                                       key="Pac_max")
-                
-                Vac_nom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_nom"]),
-                                                       disabled=False, variable=params_INVPV["Vac_nom"]["number_input"],
-                                                       key="Vac_nom")
-                
-                Vac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_max"]),
-                                                       disabled=False, variable=params_INVPV["Vac_max"]["number_input"],
-                                                       key="Vac_max")
-                
-                efficiency_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["efficiency_max"]),
-                                                              disabled=disabled_Vbb, variable=params_INVPV["efficiency_max"]["number_input"],
-                                                              key="efficiency_max")
-                
+                    grid_type = st.selectbox(label="Sistema de conexión a red",
+                                            options=["Off-Grid", "On-Grid"],
+                                            index=0, placeholder="Selecciona una opción")
+                    
+                    phases = st.selectbox(label="Sistema de voltaje",
+                                        options=["Monofásico", "Trifásico"],
+                                        index=0, placeholder="Selecciona una opción")
+
+                with st.container(border=True):
+                    st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
+
+                    Pac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Pac_max"]),
+                                                        disabled=False, variable=params_INVPV["Pac_max"]["number_input"],
+                                                        key="Pac_max")
+                    
+                    Vac_nom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_nom"]),
+                                                        disabled=False, variable=params_INVPV["Vac_nom"]["number_input"],
+                                                        key="Vac_nom")
+                    
+                    Vac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_max"]),
+                                                        disabled=False, variable=params_INVPV["Vac_max"]["number_input"],
+                                                        key="Vac_max")
+                    
+                    efficiency_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["efficiency_max"]),
+                                                                disabled=False, variable=params_INVPV["efficiency_max"]["number_input"],
+                                                                key="efficiency_max")
+                    
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
@@ -266,41 +280,38 @@ with tab2:
                     st.session_state['component_description'] = (dict_key, dict_components[dict_key]['name'])
 
         elif dict_key == "INVAERO":
-            disabled_Vbb = False
-
-            with st.container(border=True):
-                st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
-
-                grid_type = st.selectbox(label="Sistema de conexión a red",
-                                         options=["Off-Grid", "On-Grid"],
-                                         index=0, placeholder="Selecciona una opción")
-                
-                phases = st.selectbox(label="Sistema de voltaje",
-                                      options=["Monofásico", "Trifásico"],
-                                      index=0, placeholder="Selecciona una opción")
-
-                if grid_type == "On-Grid":
-                    disabled_Vbb = True
-                
             with st.form("INVAERO"):
-                st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
+                st.markdown(title)
+                with st.container(border=True):
+                    st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
 
-                Pac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Pac_max"]),
-                                                       disabled=False, variable=params_INVPV["Pac_max"]["number_input"],
-                                                       key="Pac_max")
-                
-                Vac_nom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_nom"]),
-                                                       disabled=False, variable=params_INVPV["Vac_nom"]["number_input"],
-                                                       key="Vac_nom")
-                
-                Vac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_max"]),
-                                                       disabled=False, variable=params_INVPV["Vac_max"]["number_input"],
-                                                       key="Vac_max")
-                
-                efficiency_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["efficiency_max"]),
-                                                              disabled=disabled_Vbb, variable=params_INVPV["efficiency_max"]["number_input"],
-                                                              key="efficiency_max")
-                
+                    grid_type = st.selectbox(label="Sistema de conexión a red",
+                                            options=["Off-Grid", "On-Grid"],
+                                            index=0, placeholder="Selecciona una opción")
+                    
+                    phases = st.selectbox(label="Sistema de voltaje",
+                                        options=["Monofásico", "Trifásico"],
+                                        index=0, placeholder="Selecciona una opción")
+                    
+                with st.container(border=True):
+                    st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
+
+                    Pac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Pac_max"]),
+                                                        disabled=False, variable=params_INVPV["Pac_max"]["number_input"],
+                                                        key="Pac_max")
+                    
+                    Vac_nom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_nom"]),
+                                                        disabled=False, variable=params_INVPV["Vac_nom"]["number_input"],
+                                                        key="Vac_nom")
+                    
+                    Vac_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["Vac_max"]),
+                                                        disabled=False, variable=params_INVPV["Vac_max"]["number_input"],
+                                                        key="Vac_max")
+                    
+                    efficiency_max = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_INVPV["efficiency_max"]),
+                                                                disabled=False, variable=params_INVPV["efficiency_max"]["number_input"],
+                                                                key="efficiency_max")
+                    
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
@@ -319,6 +330,7 @@ with tab2:
                
         elif dict_key == "GE":
             with st.form("GE"):
+                st.markdown(title)
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
@@ -337,9 +349,12 @@ with tab2:
                                             index=0, placeholder="Selecciona una opción")
                     with col2:
                         Vpc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["Vpc"]),
-                                                               disabled=False, variable=params_GE["Vpc"]["number_input"])
+                                                           disabled=False, variable=params_GE["Vpc"]["number_input"],
+                                                           key="Vpc")
+                        
                         FP = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["FP"]),
-                                                              disabled=False, variable=params_GE["FP"]["number_input"])
+                                                          disabled=False, variable=params_GE["FP"]["number_input"],
+                                                          key="FP")
             
                 with st.container(border=True):
                     st.markdown("🛢️ **:blue[{0}:]**".format("Datos de combustible"))
@@ -379,6 +394,7 @@ with tab2:
 
         elif dict_key == "RC":
             with st.form("RC"):
+                st.markdown(title)
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
