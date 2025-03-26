@@ -1,28 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
 import streamlit as st
-import datetime as dt
-from io import BytesIO
-import pvlib, yaml
+import pvlib
 
 #%% funtions general
-
-def name_file_head(name: str) -> str:
-    now = dt.datetime.now()
-    return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
-
-def changeUnitsK(K, Base):
-
-    K_out = (Base*K)/100
-    
-    return K_out
-
-def get_label_params(dict_param: dict) -> str:
-
-    return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
 
 def celltype_options(celltype: dict):
 
@@ -32,7 +15,7 @@ def celltype_options(celltype: dict):
 
     return options
 
-def for_options_get_celltype(option):
+def for_options_get_celltype(option: str) -> str:
 
     key = option.split("(")[0][:-1]
 
@@ -92,60 +75,9 @@ def get_singlediode(PV_params):
 
     return return_singlediode
 
-def get_bytes_yaml(dictionary: dict):
-
-    yaml_data = yaml.dump(dictionary, allow_unicode=True)
-
-    buffer = BytesIO()
-    buffer.write(yaml_data.encode('utf-8'))
-    buffer.seek(0)
-
-    return buffer
-
 #%% funtions streamlit
 
-def get_widget_number_input(label: str, variable: dict):
-
-    return st.number_input(label=label, **variable)
-
-def get_col_for_length(length):
-
-    if length == 1:
-        col1 = st.columns(1)
-        return [col1]
-    elif length == 2:
-        col1, col2 = st.columns(2)
-        return [col1, col2]
-    elif length == 3:
-        col1, col2, col3 = st.columns(3)
-        return [col1, col2, col3]
-
-    return
-
-def get_print_params_dataframe(dataframe: pd.DataFrame, params_label: list, dict_param: dict, head_column: list):
-
-    dataframe = dataframe[params_label]
-    colors_string = [":grey[{0}]", ":blue[{0}]", ":red[{0}]"]
-
-    with st.container(border=True):
-        list_columns_title = get_col_for_length(len(head_column))
-
-        for i in range(0,len(head_column),1):
-            list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
-
-        for i in range(0,len(params_label),1):
-            label = get_label_params(dict_param=dict_param[params_label[i]])
-
-            list_columns = get_col_for_length(len(head_column))
-
-            list_columns[0].markdown(colors_string[0].format(label))
-
-            for index, row in dataframe.iterrows():
-                list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
-                
-    return
-
-def curve_x_y(x, y, points, lines, title, xlabel, ylabel):
+def curve_x_y(x, y, points: dict, lines: list, title: str, xlabel: str, ylabel: str):
 
     p_x, p_y = [], []
 

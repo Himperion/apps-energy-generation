@@ -110,6 +110,10 @@ dictGoogleSheet = {
 
 #%% funtions
 
+def changeUnitsK(K, Base):
+    
+    return (Base*K)/100
+
 def getGoogleSheetUrl(sheetName):
 
     return urlGoogleSheet.format(googleSheetID, dictGoogleSheet[sheetName])
@@ -910,3 +914,40 @@ def getDataValidation(uploadedXlsxDATA, componentInTheProject):
         st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
 
     return check_OUT, df_data, columnsOptionsData
+
+def getColForLength(length):
+
+    if length == 1:
+        col1 = st.columns(1)
+        return [col1]
+    elif length == 2:
+        col1, col2 = st.columns(2)
+        return [col1, col2]
+    elif length == 3:
+        col1, col2, col3 = st.columns(3)
+        return [col1, col2, col3]
+
+    return
+
+def getPrintParamsDataframe(dataframe: pd.DataFrame, params_label: list, dict_param: dict, head_column: list):
+
+    dataframe = dataframe[params_label]
+    colors_string = [":grey[{0}]", ":blue[{0}]", ":red[{0}]"]
+
+    with st.container(border=True):
+        list_columns_title = getColForLength(len(head_column))
+
+        for i in range(0,len(head_column),1):
+            list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
+
+        for i in range(0,len(params_label),1):
+            label = getLabelParams(dict_param=dict_param[params_label[i]])
+
+            list_columns = getColForLength(len(head_column))
+
+            list_columns[0].markdown(colors_string[0].format(label))
+
+            for index, row in dataframe.iterrows():
+                list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
+                
+    return

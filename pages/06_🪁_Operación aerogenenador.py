@@ -5,6 +5,8 @@ import yaml
 from io import BytesIO
 from funtions import fun_app6
 
+from funtions import general
+
 #%% funtions
 
 @st.cache_data
@@ -40,7 +42,7 @@ selectDataEntryOptions = ["🪁 Datos del aerogenerador",
 
 st.markdown("# 🪁 Operación aerogenerador")
 
-tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"])  
+tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])  
 
 with tab1:
     with st.expander("**Marco teórico**"): 
@@ -61,16 +63,11 @@ with tab2:
         with st.container(border=True):
             st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del aerogenerador"))
             
-            D = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["D"]),
-                                                 variable=dict_params["D"]["number_input"])
-            Vin = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["V_in"]),
-                                                   variable=dict_params["V_in"]["number_input"])
-            Vnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["V_nom"]),
-                                                    variable=dict_params["V_nom"]["number_input"])
-            Vmax = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["V_max"]),
-                                                    variable=dict_params["V_max"]["number_input"])
-            Pnom = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["P_nom"]),
-                                                    variable=dict_params["P_nom"]["number_input"])
+            D = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["D"], key="D", disabled=False))
+            Vin = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["V_in"], key="Vin", disabled=False))
+            Vnom = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["V_nom"], key="Vnom", disabled=False))
+            Vmax = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["V_max"], key="Vmax", disabled=False))
+            Pnom = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["P_nom"], key="Pnom", disabled=False))
             
     elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
@@ -78,9 +75,8 @@ with tab2:
 
     with st.container(border=True):
         st.markdown("📌 **:blue[{0}:]**".format("Datos del sitio"))
-    
-        rho = fun_app6.get_widget_number_input(label=fun_app6.get_label_params(dict_param=dict_params["rho"]),
-                                                  variable=dict_params["rho"]["number_input"])
+        
+        rho = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["rho"], key="rho", disabled=False))
 
         archive_Vwind = st.file_uploader("Cargar archivo **Velocidad del viento** (m/s)", type={"xlsx"})
             
@@ -111,8 +107,7 @@ with tab2:
             check = False
             try:
                 df_input = pd.read_excel(archive_Vwind)
-                df_turbine, check, columns_options_sel = fun_app6.check_dataframe_input(dataframe=df_input,
-                                                                                        options=items_options_columns_df)
+                df_turbine, check, columns_options_sel = general.checkDataframeInput(dataframe=df_input, options=items_options_columns_df)
             except:
                 st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
 
@@ -180,22 +175,19 @@ with tab2:
                     fun_app6.curve_x_yyy(xval, y1, y2, y3, title, xlabel, ylabel, label_Y)
 
                 with sub_tab4:
-                    buffer_data = fun_app6.get_bytes_yaml(dictionary=params_turbine)
+                    bufferData = general.getBytesYaml(dictionary=params_turbine)
                     excel = to_excel(df_powerTurbine)
 
                     with st.container(border=True):
-                    
-                        st.download_button(
-                            label="📑 Descargar **:blue[archivo de datos]** del aerogenerador **YAML**",
-                            data=buffer_data,
-                            file_name=fun_app6.name_file_head(name="AERO_data.yaml"),
-                            mime="text/yaml"
-                            )
+
+                        buttonYaml = general.yamlDownloadButton(bytesFileYaml=bufferData,
+                                                                file_name="AERO_data",
+                                                                label="💾 Descargar **:blue[archivo de datos]** del aerogenerador **YAML**") 
                     
                         st.download_button(
                             label="📄 Descargar **:blue[Potencias]** del aerogenerador **XLSX**",
                             data=excel,
-                            file_name=fun_app6.name_file_head(name="AERO_windTurbinePower.xlsx"),
+                            file_name=general.nameFileHead(name="AERO_windTurbinePower.xlsx"),
                             mime="xlsx")
         else:
             if archive_Vwind is None:

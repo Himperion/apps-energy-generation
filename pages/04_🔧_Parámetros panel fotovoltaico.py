@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import yaml
 from scipy.special import lambertw
 from scipy.optimize import root_scalar, fsolve
-from funtions import fun_app4
+
+from funtions import general, fun_app4
 
 #%% Funtions
 
@@ -57,13 +58,13 @@ with tab1:
         st.markdown(text["subheader_3"])
         st.latex(r"""I=I_{ph}-I_{d}-I_{R_{p}}=I_{ph}-I_{sat}\cdot \left ( e\tfrac{V+I\cdot R_{s}}{N_{s}nv_{t}} -1\right )-\frac{V+I\cdot R_{s}}{R_{p}}""")
 
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Iph"]))
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["n"]))
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Vt"]))
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]))
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Isat"]))
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rs"]))
-        st.markdown(fun_app4.get_label_params(dict_param=dict_params["Rp"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Iph"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["n"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Vt"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["cells_in_series"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Isat"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Rs"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Rp"]))
 
     with st.expander("**Ingreso de datos**"):
         st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
@@ -83,34 +84,25 @@ with tab2:
             st.markdown("🔌 **:blue[{0}:]**".format("Características eléctricas"))
             col1, col2 = st.columns(2)
             with col1:
-                Vmpp = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Vmpp"]),
-                                                        variable=dict_params["Vmpp"]["number_input"])
-                Voc = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Voc"]),
-                                                       variable=dict_params["Voc"]["number_input"])
+                Vmpp = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["Vmpp"], key="Vmpp", disabled=False))
+                Voc = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["Voc"], key="Voc", disabled=False))
             with col2:
-                Impp = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Impp"]),
-                                                        variable=dict_params["Impp"]["number_input"])
-                
-                Isc = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["Isc"]),
-                                                       variable=dict_params["Isc"]["number_input"])
+                Impp = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["Impp"], key="Impp", disabled=False))
+                Isc = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["Isc"], key="Isc", disabled=False))
                 
         with st.container(border=True):
             st.markdown("🌡️ **:blue[{0}:]**".format("Características de temperatura"))
                 
-            Alfa = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["alpha_sc"]),
-                                                    variable=dict_params["alpha_sc"]["number_input"])
-            Beta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["beta_voc"]),
-                                                    variable=dict_params["beta_voc"]["number_input"])
-            Delta = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["gamma_pmp"]),
-                                                     variable=dict_params["gamma_pmp"]["number_input"])
+            Alfa = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["alpha_sc"], key="Alfa", disabled=False))
+            Beta = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["beta_voc"], key="Beta", disabled=False))
+            Delta = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["gamma_pmp"], key="Delta", disabled=False))
             
         with st.container(border=True):
             st.markdown("🔧 **:blue[{0}:]**".format("Características mecánicas"))
                 
             cell_type = st.selectbox("Tecnologia", options=options_celltype, index=4)
 
-            Ns = fun_app4.get_widget_number_input(label=fun_app4.get_label_params(dict_param=dict_params["cells_in_series"]),
-                                                  variable=dict_params["cells_in_series"]["number_input"])
+            Ns = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["cells_in_series"], key="Ns", disabled=False))
             
     elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
@@ -129,8 +121,8 @@ with tab2:
                 "i_mp": Impp,
                 "v_oc": Voc,
                 "i_sc": Isc,
-                "alpha_sc": fun_app4.changeUnitsK(Alfa, Isc),
-                "beta_voc": fun_app4.changeUnitsK(Beta, Voc),
+                "alpha_sc": general.changeUnitsK(Alfa, Isc),
+                "beta_voc": general.changeUnitsK(Beta, Voc),
                 "gamma_pmp": Delta,
                 "cells_in_series": Ns
             }
@@ -158,7 +150,7 @@ with tab2:
                 head_column = ["", "Condiciones STC"]
                 labels_output = ["Iph", "Isat", "Rs", "Rp", "nNsVt", "Ajuste_Isc"]
 
-                fun_app4.get_print_params_dataframe(df_curve_info, labels_output, dict_params, head_column)
+                general.getPrintParamsDataframe(df_curve_info, labels_output, dict_params, head_column)
 
             with sub_tab2:
                 points = {
@@ -199,21 +191,17 @@ with tab2:
                 fun_app4.curve_x_y(v, p, points, lines, title, xlabel, ylabel)
 
             with sub_tab4:
-                buffer_data = fun_app4.get_bytes_yaml(dictionary=PV_data)
-                buffer_params = fun_app4.get_bytes_yaml(dictionary=PV_params)
+                buffer_data = general.getBytesYaml(dictionary=PV_data)
+                buffer_params = general.getBytesYaml(dictionary=PV_params)
 
                 with st.container(border=True):
                     
-                    st.download_button(
-                        label="📑 Descargar **:blue[archivo de datos]** del panel fotovoltaico **YAML**",
-                        data=buffer_data,
-                        file_name=fun_app4.name_file_head(name="PV_data.yaml"),
-                        mime="text/yaml"
-                        )
+                    buttonDowmload2 = general.yamlDownloadButton(bytesFileYaml=buffer_data,
+                                                                 file_name="PV_data",
+                                                                 label="💾 Descargar **:blue[archivo de datos]** del panel fotovoltaico **YAML**")
                     
-                    st.download_button(
-                        label="🔧 Descargar **:blue[archivo de parámetros]** del panel fotovoltaico **YAML**",
-                        data=buffer_params,
-                        file_name=fun_app4.name_file_head(name="PV_params.yaml"),
-                        mime="text/yaml"
-                        )
+                    
+                    buttonDowmload1 = general.yamlDownloadButton(bytesFileYaml=buffer_params,
+                                                                 file_name="PV_params",
+                                                                 label="💾 Descargar **:blue[archivo de parámetros]** del panel fotovoltaico **YAML**")
+                    

@@ -9,12 +9,6 @@ def name_file_head(name: str) -> str:
     now = dt.datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
 
-def changeUnitsK(K, Base):
-
-    K_out = (Base*K)/100
-    
-    return K_out
-
 def get_label_params(dict_param: dict) -> str:
 
     return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
@@ -66,43 +60,6 @@ def get_PV_params(celltype, v_mp, i_mp, v_oc, i_sc, alpha_sc, beta_voc, gamma_pm
     }
 
     return PV_params
-
-def check_dataframe_input(dataframe: pd.DataFrame, options: list) -> bool:
-
-    columns_options, columns_options_sel, columns_options_check = {}, {}, {}
-    columns_options_drop, check = [], True
-
-    header = dataframe.columns
-
-    for key in options:
-        list_options = options[key]
-        columns_aux = []
-        for column in header:
-            if column in list_options:
-                columns_aux.append(column)
-        columns_options[key] = columns_aux
-
-    for key in columns_options:
-        list_columns_options = columns_options[key]
-        if len(list_columns_options) != 0:
-            columns_options_sel[key] = list_columns_options[0]
-            columns_options_check[key] = True
-
-            if len(list_columns_options) > 1:
-                for i in range(1,len(list_columns_options),1):
-                    columns_options_drop.append(list_columns_options[i])
-
-        else:
-            columns_options_sel[key] = None
-            columns_options_check[key] = False
-
-    if len(columns_options_drop) != 0:
-        dataframe = dataframe.drop(columns=columns_options_drop)
-
-    for key in columns_options_check:
-        check = check and columns_options_check[key]
-
-    return dataframe, check, columns_options_sel
 
 def get_dataframe_conditions(dataframe: pd.DataFrame, columns_options_sel: dict) -> pd.DataFrame:
 
@@ -275,29 +232,6 @@ def get_expander_params(list_show_output):
         show_output = st.multiselect(label="Seleccionar parámetros", options=list_show_output, default=list_show_output)
 
     return show_output
-
-def get_print_params_dataframe(dataframe: pd.DataFrame, params_label: list, dict_param: dict, head_column: list):
-
-    dataframe = dataframe[params_label]
-    colors_string = [":grey[{0}]", ":blue[{0}]", ":red[{0}]"]
-
-    with st.container(border=True):
-        list_columns_title = get_col_for_length(len(head_column))
-
-        for i in range(0,len(head_column),1):
-            list_columns_title[i].markdown(f"**{colors_string[i].format(head_column[i])}**")
-
-        for i in range(0,len(params_label),1):
-            label = get_label_params(dict_param=dict_param[params_label[i]])
-
-            list_columns = get_col_for_length(len(head_column))
-
-            list_columns[0].markdown(colors_string[0].format(label))
-
-            for index, row in dataframe.iterrows():
-                list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
-                
-    return
 
 def curveMulti_x_y(conditions: pd.DataFrame, x, y, df_info: pd.DataFrame, option: str):
 

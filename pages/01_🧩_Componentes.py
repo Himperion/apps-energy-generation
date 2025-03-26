@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import streamlit as st
-import pandas as pd
 import yaml
 
 from funtions import general, fun_app1
-
 
 #%% global variables
 
@@ -67,7 +66,7 @@ st.markdown("# 🧩 Componentes")
 tab1, tab2, tab3 = st.tabs(listTabs) 
 
 with tab1:
-
+    
     st.session_state['component_dict'] = None
     st.session_state['component_description'] = None
 

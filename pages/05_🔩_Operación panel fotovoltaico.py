@@ -4,7 +4,8 @@ import pandas as pd
 import numpy as np
 import yaml
 from io import BytesIO
-from funtions import fun_app5
+
+from funtions import general, fun_app5
 
 #%% funtions
 
@@ -221,8 +222,8 @@ with tab2:
                 "i_mp": Impp,
                 "v_oc": Voc,
                 "i_sc": Isc,
-                "alpha_sc": fun_app5.changeUnitsK(Alfa, Isc),
-                "beta_voc": fun_app5.changeUnitsK(Beta, Voc),
+                "alpha_sc": general.changeUnitsK(Alfa, Isc),
+                "beta_voc": general.changeUnitsK(Beta, Voc),
                 "gamma_pmp": Delta,
                 "cells_in_series": Ns
                 }
@@ -250,7 +251,7 @@ with tab2:
                 check = False
                 try:
                     df_input = pd.read_excel(archive_Gef_Toper)
-                    df_pv, check, columns_options_sel = fun_app5.check_dataframe_input(dataframe=df_input, options=items_options_columns_df)
+                    df_pv, check, columns_options_sel = general.checkDataframeInput(dataframe=df_input, options=items_options_columns_df)
                 except:
                     st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
 
@@ -284,8 +285,8 @@ with tab2:
                 with sub_tab1:
                     labels_output = fun_app5.get_labels_params_output(show_output, dict_show_output)
                     head_column = ["Parámetro", "Condiciones STC", "Ajuste de operación"]
-                    
-                    fun_app5.get_print_params_dataframe(df_pv, labels_output, dict_params, head_column)
+
+                    general.getPrintParamsDataframe(df_pv, labels_output, dict_params, head_column)
 
                 with sub_tab2:
                     fun_app5.curveMulti_x_y(conditions, v, i, df_pv, option="current")
