@@ -333,27 +333,19 @@ with tab2:
                 with st.container(border=True):
                     st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
 
-                    Pnom = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["Pnom"]),
-                                                        disabled=False, variable=params_GE["Pnom"]["number_input"],
-                                                        key="Pnom")
+                    Pnom = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_GE["Pnom"], key="Pnom", disabled=False))
                 
                     col1, col2 = st.columns(2)
                     with col1:
-                        Voc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["Voc"]),
-                                                           disabled=False, variable=params_GE["Voc"]["number_input"],
-                                                           key="Voc")
+                        Voc = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_GE["Voc"], key="Voc", disabled=False))
                         
                         Fases = st.selectbox(label="**Fases:** sistema de corriente alterna",
                                             options=[value["label"] for value in dict_phases.values()],
                                             index=0, placeholder="Selecciona una opción")
                     with col2:
-                        Vpc = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["Vpc"]),
-                                                           disabled=False, variable=params_GE["Vpc"]["number_input"],
-                                                           key="Vpc")
-                        
-                        FP = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["FP"]),
-                                                          disabled=False, variable=params_GE["FP"]["number_input"],
-                                                          key="FP")
+                        Vpc = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_GE["Vpc"], key="Vpc", disabled=False))
+
+                        FP = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_GE["FP"], key="FP", disabled=False))
             
                 with st.container(border=True):
                     st.markdown("🛢️ **:blue[{0}:]**".format("Datos de combustible"))
@@ -364,13 +356,9 @@ with tab2:
 
                     col1, col2 = st.columns(2)
                     with col1:
-                        C100 = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["C'100"]),
-                                                            disabled=False, variable=params_GE["C'100"]["number_input"],
-                                                            key="C100")
+                        C100 = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_GE["C'100"], key="C100", disabled=False))
                     with col2:
-                        C0 = general.getWidgetNumberInput(label=general.getLabelParams(dict_param=params_GE["C'0"]),
-                                                          disabled=False, variable=params_GE["C'0"]["number_input"],
-                                                          key="C0")
+                        C0 = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_GE["C'0"], key="C0", disabled=False))
                         
                 submitted = st.form_submit_button("Aceptar")
 
@@ -400,33 +388,26 @@ with tab2:
                     Vdc_bb = st.multiselect(label="Tensión nominal del banco de baterías (V)", options=options_VdcBB,
                                             key="Vdc_bb", default=[options_VdcBB[0]])
 
-                    rc_efficiency = general.getWidgetNumberInput(label=fun_app1.get_label_params(dict_param=params_RC["rc_efficiency"]),
-                                                                 disabled=False, key="rc_efficiency", variable=params_RC["rc_efficiency"]["number_input"])
+                    rc_efficiency = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["rc_efficiency"], key="rc_efficiency", disabled=False))
                     
                 with st.container(border=True):
                     st.markdown("🔋 **:blue[{0}:]**".format("Gestión del banco de baterías"))
-
-                    SOC_0 = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_0"]),
-                                                             disabled=False, variable=params_RC["SOC_0"]["number_input"])
+                    
+                    SOC_0 = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["SOC_0"], key="SOC_0", disabled=False))
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        SOC_min = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_min"]),
-                                                                   disabled=False, variable=params_RC["SOC_min"]["number_input"])
+                        SOC_min = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["SOC_min"], key="SOC_min", disabled=False))
                     with col2:
-                        SOC_max = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_max"]),
-                                                                   disabled=False, variable=params_RC["SOC_max"]["number_input"])
+                        SOC_max = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["SOC_max"], key="SOC_max", disabled=False))
                         
                     col1, col2 = st.columns(2)
                     with col1:
-                        SOC_ETP1 = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_ETP1"]),
-                                                                    disabled=False, variable=params_RC["SOC_ETP1"]["number_input"])
+                        SOC_ETP1 = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["SOC_ETP1"], key="SOC_ETP1", disabled=False))
                     with col2:
-                        SOC_ETP2 = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_ETP2"]),
-                                                                    disabled=False, variable=params_RC["SOC_ETP2"]["number_input"])
+                        SOC_ETP2 = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["SOC_ETP2"], key="SOC_ETP2", disabled=False))
                         
-                    SOC_conx = fun_app1.get_widget_number_input(label=fun_app1.get_label_params(dict_param=params_RC["SOC_conx"]),
-                                                                disabled=False, variable=params_RC["SOC_conx"]["number_input"])
+                    SOC_conx = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=params_RC["SOC_conx"], key="SOC_conx", disabled=False))
                     
                     submitted = st.form_submit_button("Aceptar")
 
