@@ -76,7 +76,7 @@ with tab1:
         with col1:
             st.write("")
         with col2:
-            st.image("images//app2_img1.png")
+            st.image("images//app5_img1.png")
 
     with st.expander("**Ingreso de datos**"):
         st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")

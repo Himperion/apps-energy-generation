@@ -118,6 +118,16 @@ def getGoogleSheetUrl(sheetName):
 
     return urlGoogleSheet.format(googleSheetID, dictGoogleSheet[sheetName])
 
+def getDataComponent(sheetLabel: str, dir: str, onLine: bool) -> pd.DataFrame:
+
+    if onLine:
+        sheetUrl = getGoogleSheetUrl(sheetName=sheetLabel)
+        df_data = pd.read_csv(sheetUrl)
+    else:
+        df_data = pd.read_excel(dir, sheet_name=sheetLabel)
+
+    return df_data
+
 def nameFileHead(name: str) -> str:
     now = datetime.now()
     return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"

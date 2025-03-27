@@ -84,7 +84,13 @@ if 'dictDataOnGrid' not in st.session_state:
 
 st.markdown("# 🔌 Generación On-Grid")
 
-tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "📝 Análisis de resultados"])
+tab1, tab2, tab3 = st.tabs(["📑 Información", "💾 Entrada de datos", "📝 Análisis de resultados"])
+
+with tab1:
+    with st.expander("**Marco teórico**"):
+        st.markdown("Marco teórico")
+    with st.expander("**Ingreso de datos**"):
+        st.markdown("Ingreso de datos")
 
 with tab2:
     generationOptions = None

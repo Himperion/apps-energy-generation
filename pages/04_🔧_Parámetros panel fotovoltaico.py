@@ -41,7 +41,6 @@ st.markdown("# 🔧 Obtención de parámetros STC")
 tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])
 
 with tab1:
-
     with st.expander("**Marco teórico**"):
         st.markdown(text["subheader_1"])
         st.markdown(text["subheader_2"])
@@ -51,7 +50,7 @@ with tab1:
         with col1:
             st.write("")
         with col2:
-            st.image("images//app1_img1.png")
+            st.image("images//app4_img1.png")
         with col3:
             st.write("")
 

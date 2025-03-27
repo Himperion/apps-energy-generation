@@ -30,10 +30,10 @@ dict_phases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-select_data_entry_options = ["🛠️ Datos del grupo electrógeno",
-                             "💾 Cargar archivo de datos del grupo electrógeno YAML"]
+selectDataEntryOptions = ["🛠️ Datos del grupo electrógeno",
+                          "💾 Cargar archivo de datos del grupo electrógeno YAML"]
 
-options_sel_input = ["📗 Obtener curvas característica del grupo electrógeno",
+optionsSelInput = ["📗 Obtener curvas característica del grupo electrógeno",
                      "📚 Ingresar datos de potencia demandada por la carga"]
 
 template = {
@@ -54,12 +54,49 @@ st.markdown("# ⛽ Operación grupo electrógeno")
 tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"]) 
 
 with tab1:
-    st.text("Información tab1")
+    with st.expander("**Marco teórico**"): 
+        st.markdown("Un grupo electrógeno convierte la energía química en cinética y luego en eléctrica, todo esto a partir de un motor de combustión y un generador eléctrico.")
+
+        col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
+
+        with col1:
+            st.write("")
+        with col2:
+            st.image("images//app7_img1.png")
+        with col3:
+            st.write("")
+
+        st.markdown(general.getLabelParams(dict_param=dict_params["Pnom"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Voc"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["Vpc"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["phases"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["FP"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["fuel_type"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["C'100"]))
+        st.markdown(general.getLabelParams(dict_param=dict_params["C'0"]))
+
+        
+    with st.expander("**Ingreso de datos**"):
+        st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
+        with st.container(border=True):
+            st.markdown(f"**:blue[{selectDataEntryOptions[0]}:]**")
+            st.markdown("Sí cuenta con los datos de la ficha técnica del grupo electrógeno puede ingresar manualmente desde este apartado.")
+            st.markdown(f"**:blue[{selectDataEntryOptions[1]}:]**")
+            st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
+
+    with st.expander("**Opciones de la sección**"):
+            st.markdown("Esta sección es posible seleccionar las opciones del ingreso de condiciones del componente")
+            with st.container(border=True):
+                st.markdown(f"**:blue[{optionsSelInput[0]}:]**")
+                st.markdown("Generación automática de vector de carga **Load(kW)** para la caracterización del componente.")
+                st.markdown(f"**:blue[{optionsSelInput[1]}:]**")
+                st.markdown("Permite el ingreso mediante un archivo **XLSX** de múltiples valores de carga **Load(kW)** para obtener la operación del componente en el tiempo.")
+
 with tab2:
-    data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=select_data_entry_options,
+    data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")
     
-    if data_entry_options == select_data_entry_options[0]:
+    if data_entry_options == selectDataEntryOptions[0]:
     
         with st.container(border=True):
             st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
@@ -95,19 +132,19 @@ with tab2:
                 C0 = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["C'0"]),
                                                       variable=dict_params["C'0"]["number_input"])
                 
-    elif data_entry_options == select_data_entry_options[1]:
+    elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
             uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
 
     with st.container(border=True):
-        st.markdown("🌞 **:blue[{0}:]**".format("Condiciones de operación del módulo"))
+        st.markdown("🌞 **:blue[{0}:]**".format("Condiciones de operación del componente"))
 
         option_sel = st.radio(label="Opciones para el ingreso de condiciones",
-                              options=options_sel_input,
+                              options=optionsSelInput,
                               captions=["Generación automática de vector de carga para la caracterización del componente",
                                         "Ingreso de múltiples condiciones de carga para obtener la operación del componente "])
         
-        if option_sel == options_sel_input[1]:
+        if option_sel == optionsSelInput[1]:
             label_Load = "Cargar archivo de carga del grupo electrógeno"
             archive_Load = st.file_uploader(label=label_Load, type={"xlsx"})
 
@@ -117,7 +154,7 @@ with tab2:
 
     if app_submitted:
         GE_data, df_GE = None, None
-        if data_entry_options == select_data_entry_options[0]:
+        if data_entry_options == selectDataEntryOptions[0]:
 
             GE_data = {
                 "Pnom": Pnom,
@@ -131,7 +168,7 @@ with tab2:
                 "C0": C0
             }
 
-        elif data_entry_options == select_data_entry_options[1]:
+        elif data_entry_options == selectDataEntryOptions[1]:
             if uploaded_file_yaml is not None:
                 GE_data = yaml.safe_load(uploaded_file_yaml)
             else:
@@ -140,10 +177,10 @@ with tab2:
         if GE_data is not None:
             In, Ra, dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
 
-            if option_sel == options_sel_input[0]:
+            if option_sel == optionsSelInput[0]:
                 df_GE = fun_app7.get_df_option_characteristic_curve(dict_pu=dictPU, dict_param=GE_data)
 
-            elif option_sel == options_sel_input[1] and archive_Load is not None:
+            elif option_sel == optionsSelInput[1] and archive_Load is not None:
                 check = False
                 try:
                     df_input = pd.read_excel(archive_Load)
@@ -160,7 +197,7 @@ with tab2:
                 
 
         if df_GE is not None:
-            if option_sel == options_sel_input[1]:
+            if option_sel == optionsSelInput[1]:
 
                 sub_tab1, sub_tab2 = st.tabs(["📋 Resultados",
                                               "💾 Descargas"])
@@ -191,7 +228,7 @@ with tab2:
                                 mime="xlsx")
 
 
-            elif option_sel == options_sel_input[0]:
+            elif option_sel == optionsSelInput[0]:
                 df_GE = fun_app7.getDataframeGE(dataframe=df_GE,
                                                 dict_pu=dictPU,
                                                 dict_param=GE_data,
@@ -207,7 +244,7 @@ with tab2:
 
                 with sub_tab2:
                     with st.container(border=True):
-                        if option_sel == options_sel_input[0]:
+                        if option_sel == optionsSelInput[0]:
                             re_tab1, re_tab2 = st.tabs(["📈 Curva de consumo y eficiencia del GE",
                                                         "📉 Curva de carga del generador"])
 

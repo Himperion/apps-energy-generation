@@ -49,14 +49,18 @@ tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "�
 with tab1:
     st.session_state['dictDataOffGrid'] = None
 
-    col1, col2, col3 = st.columns( [0.05, 0.9, 0.05])
+    with st.expander("**Marco teórico**"):
+        col1, col2, col3 = st.columns( [0.05, 0.9, 0.05])
 
-    with col1:
-        st.write("")
-    with col2:
-        st.image("images//app9_img1.png")
-    with col3:
-        st.write("")
+        with col1:
+            st.write("")
+        with col2:
+            st.image("images//app9_img1.png")
+        with col3:
+            st.write("")
+
+    with st.expander("**Ingreso de datos**"):
+        st.markdown("Ingreso de datos")
 
 with tab2:
     generationOptions = None

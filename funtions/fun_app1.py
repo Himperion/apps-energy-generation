@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-import datetime as dt
 import yaml
-from io import BytesIO
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode
 
 from funtions import general
@@ -32,12 +30,6 @@ with open("files//[GE] - PE.yaml", 'r') as archivo:
 
 #%% funtions general
 
-def changeUnitsK(K, Base):
-
-    K_out = (Base*K)/100
-    
-    return K_out
-
 def for_options_get_celltype(option):
 
     key = option.split("(")[0][:-1]
@@ -58,8 +50,8 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
             "i_mp": general.selectedRowColumn(selected_row, params_PV, "Impp"),
             "v_oc": v_oc,
             "i_sc": i_sc,
-            "alpha_sc": changeUnitsK(general.selectedRowColumn(selected_row, params_PV, "alpha_sc"), i_sc),
-            "beta_voc": changeUnitsK(general.selectedRowColumn(selected_row, params_PV, "beta_voc"), v_oc),
+            "alpha_sc": general.changeUnitsK(general.selectedRowColumn(selected_row, params_PV, "alpha_sc"), i_sc),
+            "beta_voc": general.changeUnitsK(general.selectedRowColumn(selected_row, params_PV, "beta_voc"), v_oc),
             "gamma_pmp": general.selectedRowColumn(selected_row, params_PV, "gamma_pmp"),
             "cells_in_series": general.selectedRowColumn(selected_row, params_PV, "cells_in_series")
             }
@@ -132,16 +124,6 @@ def get_dict_data(selected_row: pd.DataFrame, key: str) -> dict:
         }
 
     return dict_data
-
-def getDataComponent(sheetLabel: str, dir: str, onLine: bool) -> pd.DataFrame:
-
-    if onLine:
-        sheetUrl = general.getGoogleSheetUrl(sheetName=sheetLabel)
-        df_data = pd.read_csv(sheetUrl)
-    else:
-        df_data = pd.read_excel(dir, sheet_name=sheetLabel)
-
-    return df_data
 
 def celltype_options(celltype: dict):
 

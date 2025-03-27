@@ -140,8 +140,8 @@ with tab2:
                         "i_mp": Impp,
                         "v_oc": Voc,
                         "i_sc": Isc,
-                        "alpha_sc": fun_app1.changeUnitsK(alpha_sc, Isc),
-                        "beta_voc": fun_app1.changeUnitsK(beta_voc, Voc),
+                        "alpha_sc": general.changeUnitsK(alpha_sc, Isc),
+                        "beta_voc": general.changeUnitsK(beta_voc, Voc),
                         "gamma_pmp": gamma_pmp,
                         "cells_in_series": cells_in_series
                         }
@@ -448,8 +448,8 @@ with tab3:
     if components_tab3 is not None:
         dict_key = list_key_components[list_sel_components.index(components_tab3)]
         
-        df_data = fun_app1.getDataComponent(sheetLabel=dict_components[dict_key]["sheet_label"],
-                                            dir=dir_components, onLine=True)
+        df_data = general.getDataComponent(sheetLabel=dict_components[dict_key]["sheet_label"],
+                                           dir=dir_components, onLine=True)
         
     if df_data is not None:
         selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)
