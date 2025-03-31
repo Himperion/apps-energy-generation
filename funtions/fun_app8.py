@@ -2,10 +2,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import io, calendar, yaml
-from datetime import datetime
 
-from funtions import fun_app5, fun_app6
 from funtions import general
 
 #%%
@@ -27,10 +24,6 @@ dict_reportParams = {
     }
 
 #%% funtions general
-
-def get_label_params(dict_param: dict) -> str:
-
-    return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
 
 def getParametersINV_data(INV_data: dict) -> dict:
 

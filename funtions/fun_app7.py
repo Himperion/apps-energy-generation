@@ -1,27 +1,10 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 import streamlit as st
-import datetime as dt
 import matplotlib.pyplot as plt
-from io import BytesIO
-import yaml
 
 #%% funtions general
-
-def name_file_head(name: str) -> str:
-    now = dt.datetime.now()
-    return f"[{now.day}-{now.month}-{now.year}_{now.hour}-{now.minute}] {name}"
-
-def get_label_params(dict_param: dict) -> str:
-    return f"**{dict_param['label']}:** {dict_param['description']} {dict_param['unit']}"
-
-def from_value_label_get_key(dict_in: dict, value_label: str) -> str:
-
-    for key, value in dict_in.items():
-        if value["label"] == value_label:
-            return key
-
-    return
 
 def get_param_gp(dict_param: dict, dict_phases: dict):
 
@@ -94,20 +77,7 @@ def getDataframeGE(dataframe: pd.DataFrame, dict_pu: dict, dict_param: dict, col
 
     return dataframe
 
-def get_bytes_yaml(dictionary: dict):
-
-    yaml_data = yaml.dump(dictionary, allow_unicode=True)
-
-    buffer = BytesIO()
-    buffer.write(yaml_data.encode('utf-8'))
-    buffer.seek(0)
-
-    return buffer
-
 #%% funtions streamlit
-
-def get_widget_number_input(label: str, variable: dict):
-    return st.number_input(label=label, **variable)
 
 def get_download_button(directory: str, name_file: str, format_file: str, description: str):
     

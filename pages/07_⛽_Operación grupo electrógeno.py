@@ -100,22 +100,18 @@ with tab2:
     
         with st.container(border=True):
             st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
-
-            Pnom = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["Pnom"]),
-                                                    variable=dict_params["Pnom"]["number_input"])
+            
+            Pnom = general.widgetNumberImput(dictParam=dict_params["Pnom"], key="Pnom", disabled=False)
             
             col1, col2 = st.columns(2)
             with col1:
-                Voc = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["Voc"]),
-                                                       variable=dict_params["Voc"]["number_input"])
+                Voc = general.widgetNumberImput(dictParam=dict_params["Voc"], key="Voc", disabled=False)
                 phases = st.selectbox(label="**Fases:** sistema de corriente alterna",
                                       options=[value["label"] for value in dict_phases.values()],
                                       index=0, placeholder="Selecciona una opción")
             with col2:
-                Vpc = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["Vpc"]),
-                                                       variable=dict_params["Vpc"]["number_input"])
-                FP = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["FP"]),
-                                                      variable=dict_params["FP"]["number_input"])
+                Vpc = general.widgetNumberImput(dictParam=dict_params["Vpc"], key="Vpc", disabled=False)
+                FP = general.widgetNumberImput(dictParam=dict_params["FP"], key="FP", disabled=False)
         
         with st.container(border=True):
             st.markdown("🛢️ **:blue[{0}:]**".format("Datos de combustible"))
@@ -126,11 +122,9 @@ with tab2:
 
             col1, col2 = st.columns(2)
             with col1:
-                C100 = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["C'100"]),
-                                                        variable=dict_params["C'100"]["number_input"])
+                C100 = general.widgetNumberImput(dictParam=dict_params["C'100"], key="C100", disabled=False)
             with col2:
-                C0 = fun_app7.get_widget_number_input(label=fun_app7.get_label_params(dict_param=dict_params["C'0"]),
-                                                      variable=dict_params["C'0"]["number_input"])
+                C0 = general.widgetNumberImput(dictParam=dict_params["C'0"], key="C0", disabled=False)
                 
     elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
@@ -160,7 +154,7 @@ with tab2:
                 "Pnom": Pnom,
                 "Voc": Voc,
                 "Vpc": Vpc,
-                "phases": fun_app7.from_value_label_get_key(dict_phases, phases),
+                "phases": general.fromValueLabelGetKey(dict_in=dict_phases, key_label="label", value_label=phases),
                 "FP": FP,
                 "Combustible": Combustible,
                 "PE_fuel": dict_fuel[Combustible]["PE"],
@@ -208,23 +202,20 @@ with tab2:
 
                 with sub_tab2:
                     excel = to_excel(df_GE)
-                    buffer_data = fun_app7.get_bytes_yaml(dictionary=GE_data)
+                    buffer_data = general.getBytesYaml(dictionary=GE_data)
 
                     with st.container(border=True):
                         st.markdown("**Archivos de opciones de ingreso de datos:**")
-                        st.download_button(
-                                label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
-                                data=buffer_data,
-                                file_name=fun_app7.name_file_head(name="GE_data.yaml"),
-                                mime="text/yaml"
-                                )
+                        buttonYaml1 = general.yamlDownloadButton(bytesFileYaml=buffer_data,
+                                                                file_name="GE_data",
+                                                                label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**")
                     
                     with st.container(border=True):
                         st.markdown("**Archivos de resultados:**")
                         st.download_button(
                                 label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
                                 data=excel,
-                                file_name=fun_app7.name_file_head(name="GE_operationAnalysis.xlsx"),
+                                file_name=general.nameFileHead(name="GE_operationAnalysis.xlsx"),
                                 mime="xlsx")
 
 
@@ -254,23 +245,21 @@ with tab2:
                                 fun_app7.getGraphLoadCharacteristic(dataframe=df_GE)
 
                 with sub_tab3:
-                    buffer_data = fun_app7.get_bytes_yaml(dictionary=GE_data)
+                    buffer_data = general.getBytesYaml(dictionary=GE_data)
                     excel = to_excel(df_GE)
 
                     with st.container(border=True):
                         with st.container(border=True):
                             st.markdown("**Archivos de opciones de ingreso de datos:**")
-                            st.download_button(
-                                label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**",
-                                data=buffer_data,
-                                file_name=fun_app7.name_file_head(name="GE_data.yaml"),
-                                mime="text/yaml"
-                                )
+                            
+                            buttonYaml2 = general.yamlDownloadButton(bytesFileYaml=buffer_data,
+                                                                     file_name="GE_data",
+                                                                     label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**")
                             
                         with st.container(border=True):
                             st.markdown("**Archivos de resultados:**")
                             st.download_button(
                                 label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
                                 data=excel,
-                                file_name=fun_app7.name_file_head(name="GE_characteristicCurve.xlsx"),
+                                file_name=general.nameFileHead(name="GE_characteristicCurve.xlsx"),
                                 mime="xlsx")                

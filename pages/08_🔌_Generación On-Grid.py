@@ -6,8 +6,6 @@ import yaml
 
 from funtions import general, fun_app8
 
-
-
 #%%  global variables
 
 with open("files//[COMP] - dict_components.yaml", 'r') as archivo:
@@ -112,8 +110,7 @@ with tab2:
                 uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
 
                 if listGenerationOptions[1] in generationOptions:
-                    rho = general.getWidgetNumberInput(label=fun_app8.get_label_params(dict_param=params_AERO["rho"]),
-                                                       variable=params_AERO["rho"]["number_input"], disabled=False, key="rho")
+                    rho = general.widgetNumberImput(dictParam=params_AERO["rho"], key="rho", disabled=False)
                 else:
                     rho = None
                 
@@ -131,11 +128,9 @@ with tab2:
                             col1, col2 = st.columns(2)
 
                             with col1:
-                                PVs = general.getWidgetNumberInput(label=fun_app8.get_label_params(dict_param=params_PV["PVs"]),
-                                                                   disabled=False, variable=params_PV["PVs"]["number_input"], key="PVs")
+                                PVs = general.widgetNumberImput(dictParam=params_AERO["PVs"], key="PVs", disabled=False)
                             with col2:
-                                PVp = general.getWidgetNumberInput(label=fun_app8.get_label_params(dict_param=params_PV["PVp"]),
-                                                                   disabled=False, variable=params_PV["PVp"]["number_input"], key="PVp")
+                                PVp = general.widgetNumberImput(dictParam=params_AERO["PVp"], key="PVp", disabled=False)
                         
                         with st.container(border=True):
                             st.markdown(f"{dict_components['INVPV']['emoji']} **:blue[{dict_components['INVPV']['name']}:]**")

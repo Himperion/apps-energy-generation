@@ -881,6 +881,10 @@ def getParamsWidgetNumberInput(dictParam:dict, key:str, disabled: bool):
 
     return dictOut
 
+def widgetNumberImput(dictParam:dict, key:str, disabled: bool):
+
+    return getWidgetNumberInput(**getParamsWidgetNumberInput(dictParam=dictParam, key=key, disabled=disabled))            
+
 def excelDownloadButton(bytesFileExcel, file_name):
 
     df_download = st.download_button(
