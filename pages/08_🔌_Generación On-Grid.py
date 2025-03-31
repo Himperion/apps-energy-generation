@@ -128,9 +128,9 @@ with tab2:
                             col1, col2 = st.columns(2)
 
                             with col1:
-                                PVs = general.widgetNumberImput(dictParam=params_AERO["PVs"], key="PVs", disabled=False)
+                                PVs = general.widgetNumberImput(dictParam=params_PV["PVs"], key="PVs", disabled=False)
                             with col2:
-                                PVp = general.widgetNumberImput(dictParam=params_AERO["PVp"], key="PVp", disabled=False)
+                                PVp = general.widgetNumberImput(dictParam=params_PV["PVp"], key="PVp", disabled=False)
                         
                         with st.container(border=True):
                             st.markdown(f"{dict_components['INVPV']['emoji']} **:blue[{dict_components['INVPV']['name']}:]**")
