@@ -92,6 +92,63 @@ def get_download_button(directory: str, name_file: str, format_file: str, descri
                 
     return
 
+def curve_x_yy(x, y1, y2, points_y1: dict, points_y2: dict, lines_y1: list, lines_y2: list, x_label: str, y1_label: str, y2_label: str, title: str):
+
+    p_x1, p_y1 = [], []
+    p_x2, p_y2 = [], []
+
+    fig, ax1 = plt.subplots()
+
+    for item in lines_y1:
+        x_item = [points_y1[item[0]][0], points_y1[item[1]][0]]
+        y_item = [points_y1[item[0]][1], points_y1[item[1]][1]]
+
+        ax1.plot(x_item, y_item, color="tab:gray", linestyle='--')
+
+    for key, value in points_y1.items():
+        ax1.annotate(text=key,
+                     xy=value,
+                     textcoords="offset points",
+                     xytext=(5,0),
+                     ha="left")
+        
+        p_x1.append(value[0])
+        p_y1.append(value[1])
+
+    ax1.set_xlabel(x_label)
+    ax1.set_ylabel(y1_label, color="tab:red")
+    ax1.plot(x, y1, color="tab:red")
+    ax1.tick_params(axis="y", labelcolor="tab:red")
+
+    ax2 = ax1.twinx()
+
+    for item in lines_y2:
+        x_item = [points_y2[item[0]][0], points_y2[item[1]][0]]
+        y_item = [points_y2[item[0]][1], points_y2[item[1]][1]]
+
+        ax2.plot(x_item, y_item, color="tab:olive", linestyle='--')
+
+    for key, value in points_y2.items():
+        ax2.annotate(text=key,
+                     xy=value,
+                     textcoords="offset points",
+                     xytext=(5,0),
+                     ha="left")
+        
+        p_x2.append(value[0])
+        p_y2.append(value[1])
+
+    ax2.set_ylabel(y2_label, color="tab:blue")
+    ax2.plot(x, y2, color="tab:blue", linestyle=':')
+    ax2.tick_params(axis='y', labelcolor="tab:blue")
+
+    plt.title(title)
+
+    with st.container(border=True):
+        st.pyplot(fig)
+
+    return
+
 def curve_x_y(x, y, points, lines, title, xlabel, ylabel):
 
     p_x, p_y = [], []

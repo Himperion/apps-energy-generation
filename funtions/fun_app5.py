@@ -276,6 +276,3 @@ def curveMulti_x_y(conditions: pd.DataFrame, x, y, df_info: pd.DataFrame, option
         st.pyplot(fig)
 
     return
-
-
-

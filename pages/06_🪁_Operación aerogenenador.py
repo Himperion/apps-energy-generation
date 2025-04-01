@@ -56,8 +56,6 @@ with tab1:
             st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
     
 with tab2:
-    validateWind = False
-
     data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")
     
@@ -79,14 +77,13 @@ with tab2:
             with col3:
                 Vmax = general.widgetNumberImput(dictParam=dict_params["V_max"], key="Vmax", disabled=False)
 
-            submittedFormWind = st.form_submit_button("Validar velocidades")
+            submittedFormWind = st.form_submit_button("Validar parámetros")
 
             if submittedFormWind:
                 if Vin < Vnom < Vmax:
-                    validateWind = True
-                    st.caption(":green[✅ Parámetros validos]")
+                    st.success("Parámetros validos", icon="✅")
                 else:
-                    st.markdown(":red[🚨 Parámetros incompatibles]")    
+                    st.error("Parámetros incompatibles", icon="🚨")  
 
     elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
@@ -104,10 +101,10 @@ with tab2:
     app_submitted = st.button("Aceptar")
 
     if app_submitted:
-        params_turbine, df_turbine = None, None 
+        params_turbine, df_turbine = None, None
 
         if data_entry_options == selectDataEntryOptions[0]:
-            if validateWind:
+            if Vin < Vnom < Vmax:
                 params_turbine = {
                     "D" : D, 
                     "V_in" : Vin, 
@@ -115,8 +112,8 @@ with tab2:
                     "V_max" : Vmax, 
                     "P_nom" : Pnom
                     }
-            else:
-                st.markdown(":red[🚨 Características de velocidad del viento incompatiobles]") 
+            else: 
+                st.error("Características de velocidad del viento incompatiobles", icon="🚨")
         
         elif data_entry_options == selectDataEntryOptions[1]:
 
@@ -143,8 +140,8 @@ with tab2:
                                                               rho=rho)
 
                 sub_tab1, sub_tab2, sub_tab3, sub_tab4 = st.tabs(["📋 Resultados",
-                                                                  "📈 Curva característica del aerogenerador",
-                                                                  "📉 Curva de potencia del aerogenerador",
+                                                                  "📈 Curva de potencia del  aerogenerador",
+                                                                  "📉 Curva de eficiencia del aerogenerador",
                                                                   "💾 Descargas"])
                 
                 with sub_tab1:
@@ -153,24 +150,32 @@ with tab2:
 
                 with sub_tab2:
                     xval = df_values["V_wind"]
-                    yval = df_values["P_gen"]
+                    y1val = df_values["P_gen"]
+                    y2val = df_values["n_turbine"]
 
-                    points = {
+                    points_y1 = {
                         "Vnom": (params_turbine["V_nom"], 0),
                         "Pnom": (0, params_turbine["P_nom"]),
                         "Nom": (params_turbine["V_nom"], params_turbine["P_nom"])
                         }
 
-                    lines = [
+                    lines_y1 = [
                         ("Nom", "Vnom"),
                         ("Pnom", "Nom")
                         ]
 
                     title = "Curva aerogenerador (Paero-Vwind)"
                     xlabel = "Velocidad de viento (m/s)"
-                    ylabel = "Potencia del aerogenerador (kW)"
+                    y1_label = "Potencia del aerogenerador (kW)"
+                    y2_label = "Eficiencia del aerogenerador (%)"
 
-                    fun_app6.curve_x_y(xval, yval, points, lines, title, xlabel, ylabel)
+                    #fun_app6.curve_x_y(xval, yval, points, lines, title, xlabel, ylabel)
+
+                    fun_app6.curve_x_yy(x=xval,
+                                        y1=y1val, y2=y2val,
+                                        points_y1=points_y1, points_y2={},
+                                        lines_y1=lines_y1, lines_y2=[],
+                                        x_label=xlabel, y1_label=y1_label, y2_label=y2_label, title=title)
 
                 with sub_tab3:
                     xval = df_values["V_wind"]
