@@ -25,8 +25,8 @@ V_in:
   label: Vin
   number_input:
     format: '%.3f'
-    max_value: 6.0
-    min_value: 2.0
+    max_value: 999.0
+    min_value: 1.0
     step: null
     value: 3.5
   unit: (m/s)
@@ -36,8 +36,8 @@ V_max:
   label: Vmax
   number_input:
     format: '%.3f'
-    max_value: 80.0
-    min_value: 30.0
+    max_value: 999.0
+    min_value: 1.0
     step: null
     value: 60.0
   unit: (m/s)
@@ -47,8 +47,8 @@ V_nom:
   label: Vnom
   number_input:
     format: '%.3f'
-    max_value: 16.0
-    min_value: 9.0
+    max_value: 999.0
+    min_value: 1.0
     step: null
     value: 12.0
   unit: (m/s)
@@ -62,5 +62,5 @@ rho:
     min_value: 0.4
     step: null
     value: 1.225
-  unit: "(Kg/m\xB3)"
+  unit: "(kg/m\xB3)"
   data_type: float

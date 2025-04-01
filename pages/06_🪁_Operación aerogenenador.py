@@ -56,19 +56,38 @@ with tab1:
             st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
     
 with tab2:
+    validateWind = False
+
     data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")
     
     if data_entry_options == selectDataEntryOptions[0]:
         with st.container(border=True):
             st.markdown("⚙️ **:blue[{0}:]**".format("Parámetros del aerogenerador"))
-            
-            D = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["D"], key="D", disabled=False))
-            Vin = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["V_in"], key="Vin", disabled=False))
-            Vnom = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["V_nom"], key="Vnom", disabled=False))
-            Vmax = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["V_max"], key="Vmax", disabled=False))
-            Pnom = general.getWidgetNumberInput(**general.getParamsWidgetNumberInput(dictParam=dict_params["P_nom"], key="Pnom", disabled=False))
-            
+            Pnom = general.widgetNumberImput(dictParam=dict_params["P_nom"], key="Pnom", disabled=False)
+            D = general.widgetNumberImput(dictParam=dict_params["D"], key="D", disabled=False)
+
+        with st.form("formWind"):
+            st.markdown("🍃 **:blue[{0}:]**".format("Características de velocidad del viento"))
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                Vin = general.widgetNumberImput(dictParam=dict_params["V_in"], key="Vin", disabled=False)
+            with col2:
+                Vnom = general.widgetNumberImput(dictParam=dict_params["V_nom"], key="Vnom", disabled=False)
+            with col3:
+                Vmax = general.widgetNumberImput(dictParam=dict_params["V_max"], key="Vmax", disabled=False)
+
+            submittedFormWind = st.form_submit_button("Validar velocidades")
+
+            if submittedFormWind:
+                if Vin < Vnom < Vmax:
+                    validateWind = True
+                    st.caption(":green[✅ Parámetros validos]")
+                else:
+                    st.markdown(":red[🚨 Parámetros incompatibles]")    
+
     elif data_entry_options == selectDataEntryOptions[1]:
         with st.container(border=True):
             uploaded_file_yaml = st.file_uploader(label="Sube tu archivo YAML", type=["yaml", "yml"])
@@ -88,13 +107,16 @@ with tab2:
         params_turbine, df_turbine = None, None 
 
         if data_entry_options == selectDataEntryOptions[0]:
-            params_turbine = {
-                "D" : D, 
-                "V_in" : Vin, 
-                "V_nom" : Vnom, 
-                "V_max" : Vmax, 
-                "P_nom" : Pnom
-                }
+            if validateWind:
+                params_turbine = {
+                    "D" : D, 
+                    "V_in" : Vin, 
+                    "V_nom" : Vnom, 
+                    "V_max" : Vmax, 
+                    "P_nom" : Pnom
+                    }
+            else:
+                st.markdown(":red[🚨 Características de velocidad del viento incompatiobles]") 
         
         elif data_entry_options == selectDataEntryOptions[1]:
 
