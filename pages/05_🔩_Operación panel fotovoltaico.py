@@ -72,7 +72,6 @@ with tab1:
         st.markdown(text["subheader_1"])
 
         col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
-
         with col1:
             st.write("")
         with col2:

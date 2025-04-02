@@ -50,6 +50,8 @@ with tab1:
     st.session_state['dictDataOffGrid'] = None
 
     with st.expander("**Marco teórico**"):
+        st.markdown("Los sistemas de generación eólica Off-Grid son especialmente relevantes en áreas remotas donde no hay acceso a la red eléctrica. Los sistemas híbridos con baterías y grupos electrógenos (GE), añaden una capa extra de seguridad y continuidad en el suministro eléctrico. Cuando la generación combinada de las celdas solares y los aerogeneradores, junto con las baterías, no es suficiente para satisfacer la demanda energética, el grupo electrógeno actúa como respaldo. Este se enciende automáticamente para suplir la carga del usuario, mientras que el sistema de generación fotovoltaica y eólica continúa operando para recargar las baterías hasta alcanzar los niveles necesarios para reconectarse.")
+
         col1, col2, col3 = st.columns( [0.05, 0.9, 0.05])
 
         with col1:

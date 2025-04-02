@@ -82,11 +82,11 @@ if 'dictDataOnGrid' not in st.session_state:
 
 st.markdown("# 🔌 Generación On-Grid")
 
-tab1, tab2, tab3 = st.tabs(["📑 Información", "💾 Entrada de datos", "📝 Análisis de resultados"])
+tab1, tab2, tab3, tab4 = st.tabs(["📑 Información", "💾 Entrada de datos", "📝 Análisis de resultados",  "🌇 Visualización diaria"])
 
 with tab1:
     with st.expander("**Marco teórico**"):
-        st.markdown("Marco teórico")
+        st.markdown("Los sistemas híbridos combinan diferentes fuentes de energía renovable para maximizar la generación y asegurar un suministro constante y confiable. Al integrar tecnologías fotovoltaicas y eólicas, se puede aprovechar la energía del sol y del viento, compensando las limitaciones de cada una y proporcionando una solución más robusta y versátil. El sistema hibrido On-Grid está configurado de forma que se reduzca el consumo o que se puedan inyectar los excedentes a la red.")
     with st.expander("**Ingreso de datos**"):
         st.markdown("Ingreso de datos")
 
@@ -281,3 +281,12 @@ with tab3:
                     st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
             else:
                 st.error("Cargar **Dataset generación Off-Grid**", icon="🚨")
+
+with tab4:
+    st.session_state["dictDataOnGrid"] = None
+
+    with st.container(border=True):
+        uploaderAnalysisXlsx = st.file_uploader(label="**Cargar archivo :blue[Analysis_OnGrid] EXCEL**", type=["xlsx"], key="uploaderAnalysisXlsx")  
+        submittedDaily = st.button("Aceptar", key="submittedDaily")
+
+    #Analysis_OnGrid

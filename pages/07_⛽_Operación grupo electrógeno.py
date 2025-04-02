@@ -55,7 +55,12 @@ tab1, tab2 = st.tabs(["📑 Marco teórico", "📝 Entrada de datos"])
 
 with tab1:
     with st.expander("**Marco teórico**"): 
-        st.markdown("Un grupo electrógeno convierte la energía química en cinética y luego en eléctrica, todo esto a partir de un motor de combustión y un generador eléctrico.")
+        st.markdown("Un grupo electrógeno convierte la energía química en cinética y luego en eléctrica, todo esto a partir de un motor de combustión y un generador eléctrico. Se pueden clasificar por:")
+        st.markdown("Tipos de combustible:")
+        st.markdown(" - **Diésel:** Alta eficiencia y durabilidad para uso intensivo.")
+        st.markdown(" - **Gasolina:** Portátiles y económicos, ideales para usos temporales o de menor escala.")
+        st.markdown(" - **Gas:** Menos emisiones y operación más silenciosa; requieren acceso continuo a gas natural o propano.")
+        st.markdown("*Esquema del grupo electrógeno*")
 
         col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
 
@@ -226,7 +231,7 @@ with tab2:
                                                 columnsOptionsSel={"Load": "Load(kW)"})
 
                 sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📋 Resultados",
-                                                        "📊 Graficas",
+                                                        "📊 Gráficas",
                                                         "💾 Descargas"])
                 
                 with sub_tab1:

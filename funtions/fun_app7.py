@@ -93,15 +93,15 @@ def getGraphConsumptionEfficiency(dataframe: pd.DataFrame):
 
     fig, ax1 = plt.subplots()
 
-    ax1.set_xlabel("Load(kW)")
-    ax1.set_ylabel("Consumo(l/h)", color="tab:blue")
+    ax1.set_xlabel("Load (kW)")
+    ax1.set_ylabel("Tasa de consumo (l/h)", color="tab:blue")
     ax1.plot(dataframe["Load(kW)"], dataframe["Consumo_GE(l/h)"], color="tab:blue")
     ax1.grid(True)
     
 
     ax2 = ax1.twinx()
 
-    ax2.set_ylabel("Eficiencia(%)", color="tab:red")
+    ax2.set_ylabel("Eficiencia de conversión (%)", color="tab:red")
     ax2.plot(dataframe["Load(kW)"], dataframe["Eficiencia_GE(%)"], color="tab:red")
 
     st.pyplot(fig)
@@ -112,8 +112,8 @@ def getGraphLoadCharacteristic(dataframe: pd.DataFrame):
 
     fig, ax1 = plt.subplots()
 
-    ax1.set_xlabel("Load(kW)")
-    ax1.set_ylabel("Tensión(V)", color="tab:red")
+    ax1.set_xlabel("Load (kW)")
+    ax1.set_ylabel("Tensión (V)", color="tab:red")
     ax1.plot(dataframe["Load(kW)"], dataframe["Vt_GE(V)"], color="tab:red")
     ax1.grid(True)
 

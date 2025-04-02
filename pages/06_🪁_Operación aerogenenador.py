@@ -46,7 +46,23 @@ tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])
 
 with tab1:
     with st.expander("**Marco teórico**"): 
-        st.markdown("Marco teórico")
+        st.markdown("El aerogenerador convierte la energía cinética del viento en energía eléctrica. Está compuesto de un rotor con palas, el generador, la torre y el sistema de control, entre otros elementos. Las palas capturan el viento y giran, transmitiendo este movimiento a un generador eléctrico a través de un eje de transmisión. El generador convierte la energía mecánica en energía eléctrica.")
+        st.markdown("*Esquema del aerogenerador*")
+
+        col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
+        with col1:
+            st.write("")
+        with col2:
+            st.image("images//app6_img1.png")
+        with col3:
+            st.write("")
+
+        st.markdown("**Vwind:** Velocidad del viento (m/s)")
+        st.markdown("**rho:** Densidad del aire (kg/m³)")
+        st.markdown("**Pgen:** Potencia generada (kW)")
+        st.markdown("**Vgen:** Tensión salida del aerogenerador (V)")
+        st.markdown("**Igen:** Corriente salida del aerogenerador (A)")
+
     with st.expander("**Ingreso de datos**"):
         st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
         with st.container(border=True):
@@ -169,26 +185,12 @@ with tab2:
                     y1_label = "Potencia del aerogenerador (kW)"
                     y2_label = "Eficiencia del aerogenerador (%)"
 
-                    #fun_app6.curve_x_y(xval, yval, points, lines, title, xlabel, ylabel)
-
                     fun_app6.curve_x_yy(x=xval,
                                         y1=y1val, y2=y2val,
                                         points_y1=points_y1, points_y2={},
                                         lines_y1=lines_y1, lines_y2=[],
                                         x_label=xlabel, y1_label=y1_label, y2_label=y2_label, title=title)
-
-                with sub_tab3:
-                    xval = df_values["V_wind"]
-                    yval = df_values["n_turbine"]
-
-                    points, lines = {}, []
-
-                    title = "Curva de eficiencia"
-                    xlabel = "Velocidad de viento (m/s)"
-                    ylabel = "Eficiencia (%)"
-
-                    fun_app6.curve_x_y(xval, yval, points, lines, title, xlabel, ylabel)
-
+                    
                     y1 = df_values["P_ideal"]
                     y2 = df_values["P_betz"]
                     y3 = df_values["P_gen"]
@@ -200,6 +202,23 @@ with tab2:
                     ylabel = "Potencia (kW)"
 
                     fun_app6.curve_x_yyy(xval, y1, y2, y3, title, xlabel, ylabel, label_Y)
+
+                with sub_tab3:
+
+                    xval = df_values["V_wind"]
+                    y1val = df_values["n_turbine"]
+                    y2val = df_values["P_gen"]
+
+                    title = "Curva de eficiencia"
+                    xlabel = "Velocidad de viento (m/s)"
+                    y1_label = "Eficiencia del aerogenerador (%)"
+                    y2_label = "Potencia del aerogenerador (kW)"
+
+                    fun_app6.curve_x_yy(x=xval,
+                                        y1=y1val, y2=y2val,
+                                        points_y1={}, points_y2={},
+                                        lines_y1=[], lines_y2=[],
+                                        x_label=xlabel, y1_label=y1_label, y2_label=y2_label, title=title)
 
                 with sub_tab4:
                     bufferData = general.getBytesYaml(dictionary=params_turbine)

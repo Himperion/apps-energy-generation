@@ -103,7 +103,7 @@ def curve_x_yy(x, y1, y2, points_y1: dict, points_y2: dict, lines_y1: list, line
         x_item = [points_y1[item[0]][0], points_y1[item[1]][0]]
         y_item = [points_y1[item[0]][1], points_y1[item[1]][1]]
 
-        ax1.plot(x_item, y_item, color="tab:gray", linestyle='--')
+        ax1.plot(x_item, y_item, color="tab:blue", linestyle='--')
 
     for key, value in points_y1.items():
         ax1.annotate(text=key,
@@ -115,10 +115,11 @@ def curve_x_yy(x, y1, y2, points_y1: dict, points_y2: dict, lines_y1: list, line
         p_x1.append(value[0])
         p_y1.append(value[1])
 
+    ax1.scatter(p_x1, p_y1, color="tab:blue", label='Puntos de interés')
     ax1.set_xlabel(x_label)
-    ax1.set_ylabel(y1_label, color="tab:red")
-    ax1.plot(x, y1, color="tab:red")
-    ax1.tick_params(axis="y", labelcolor="tab:red")
+    ax1.set_ylabel(y1_label, color="tab:blue")
+    ax1.plot(x, y1, color="tab:blue")
+    ax1.tick_params(axis="y", labelcolor="tab:blue")
 
     ax2 = ax1.twinx()
 
@@ -126,7 +127,7 @@ def curve_x_yy(x, y1, y2, points_y1: dict, points_y2: dict, lines_y1: list, line
         x_item = [points_y2[item[0]][0], points_y2[item[1]][0]]
         y_item = [points_y2[item[0]][1], points_y2[item[1]][1]]
 
-        ax2.plot(x_item, y_item, color="tab:olive", linestyle='--')
+        ax2.plot(x_item, y_item, color="tab:orange", linestyle='--')
 
     for key, value in points_y2.items():
         ax2.annotate(text=key,
@@ -138,9 +139,9 @@ def curve_x_yy(x, y1, y2, points_y1: dict, points_y2: dict, lines_y1: list, line
         p_x2.append(value[0])
         p_y2.append(value[1])
 
-    ax2.set_ylabel(y2_label, color="tab:blue")
-    ax2.plot(x, y2, color="tab:blue", linestyle=':')
-    ax2.tick_params(axis='y', labelcolor="tab:blue")
+    ax2.set_ylabel(y2_label, color="tab:orange")
+    ax2.plot(x, y2, color="tab:orange", linestyle=':')
+    ax2.tick_params(axis='y', labelcolor="tab:orange")
 
     plt.title(title)
 
