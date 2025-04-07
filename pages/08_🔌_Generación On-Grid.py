@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import yaml
+import matplotlib.pyplot as plt
 
 from funtions import general, fun_app8
 
@@ -82,13 +83,22 @@ if 'dictDataOnGrid' not in st.session_state:
 
 st.markdown("# 🔌 Generación On-Grid")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📑 Información", "💾 Entrada de datos", "📝 Análisis de resultados",  "🌇 Visualización diaria"])
+tab1, tab2, tab3, tab4 = st.tabs(["📑 Información", "💾 Entrada de datos", "📝 Análisis de resultados",  "👨‍🏫 Visualización de resultados"])
 
 with tab1:
-    with st.expander("**Marco teórico**"):
-        st.markdown("Los sistemas híbridos combinan diferentes fuentes de energía renovable para maximizar la generación y asegurar un suministro constante y confiable. Al integrar tecnologías fotovoltaicas y eólicas, se puede aprovechar la energía del sol y del viento, compensando las limitaciones de cada una y proporcionando una solución más robusta y versátil. El sistema hibrido On-Grid está configurado de forma que se reduzca el consumo o que se puedan inyectar los excedentes a la red.")
-    with st.expander("**Ingreso de datos**"):
-        st.markdown("Ingreso de datos")
+    st.markdown("**Marco teórico**")
+    st.markdown("Los sistemas híbridos combinan diferentes fuentes de energía renovable para maximizar la generación y asegurar un suministro constante y confiable. Al integrar tecnologías fotovoltaicas y eólicas, se puede aprovechar la energía del sol y del viento, compensando las limitaciones de cada una y proporcionando una solución más robusta y versátil. El sistema hibrido On-Grid está configurado de forma que se reduzca el consumo o que se puedan inyectar los excedentes a la red. Para este sistema se usa un inversor AC/DC integrado a la salida del aerogenerador priorizando la compatibilidad con los inversores DC/AC On-Grid disponibles en el mercado.")
+
+    col1, col2, col3 = st.columns( [0.2, 0.6, 0.2])
+    with col1:
+        st.write("")
+    with col2:
+        st.image("images//app8_img2.png")
+    with col3:
+        st.write("")
+
+    st.markdown("**Recomendaciones**")
+    st.markdown("Antes de subir los archivos de los componentes, es necesario que consulte las fichas técnicas de cada componente del sistema. La potencia nominal del aerogenerador no debe superar la potencia máxima del inversor eólico, y el arreglo de paneles fotovoltaicos debe mantenerse dentro de los límites de potencia máxima del inversor fotovoltaico. Además, debe verificar que las tensiones de los inversores fotovoltaico y eólico coincidan con la del punto de conexión y que tengan el mismo número de fases.")
 
 with tab2:
     generationOptions = None
@@ -246,7 +256,7 @@ with tab2:
             df_download = st.download_button(
                 label="📄 Descargar **:blue[Archivo de resultado On-Grid] XLSX**",
                 data=bytesFileExcelResults,
-                file_name=general.nameFileHead(name="results_OnGrid.xlsx"),
+                file_name=general.nameFileHead(name="Results_OnGrid.xlsx"),
                 mime='xlsx')
             
         st.session_state["dictDataOnGrid"] = None
@@ -255,13 +265,14 @@ with tab3:
     st.session_state["dictDataOnGrid"] = None
 
     with st.container(border=True):
-        uploaderXlsx = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploaderXlsx')  
+        uploaderXlsx = st.file_uploader(label="**Cargar archivo :blue[Results_OffGrid] EXCEL**", type=["xlsx"], key='uploaderXlsx')  
         submitted = st.button("Aceptar")
 
         if submitted:
             if uploaderXlsx is not None:
                 try:
                     df_data = pd.read_excel(uploaderXlsx, sheet_name="Result")
+                    dict_params = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
                     timeInfo = general.getTimeData(df_data)
 
                     df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
@@ -269,7 +280,7 @@ with tab3:
                     df_dailyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "day", "OnGrid")
                     df_monthlyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "month", "OnGrid")
                     df_annualResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "year", "OnGrid")
-                    bytesFile = general.toExcelAnalysis(df_data, df_dailyResult, df_monthlyResult, df_annualResult)
+                    bytesFile = general.toExcelAnalysis(df_data, dict_params, df_dailyResult, df_monthlyResult, df_annualResult)
 
                     df_download = st.download_button(
                         label="💾 Descargar **:blue[Análisis] XLSX**",
@@ -284,9 +295,458 @@ with tab3:
 
 with tab4:
     st.session_state["dictDataOnGrid"] = None
+    uploaderAnalysisXlsx = None
 
     with st.container(border=True):
         uploaderAnalysisXlsx = st.file_uploader(label="**Cargar archivo :blue[Analysis_OnGrid] EXCEL**", type=["xlsx"], key="uploaderAnalysisXlsx")  
-        submittedDaily = st.button("Aceptar", key="submittedDaily")
+    
+    if uploaderAnalysisXlsx is not None:
+        nameFile = uploaderAnalysisXlsx.name
+        if nameFile.split(" ")[1].split(".")[0] == "Analysis_OnGrid":
+            df_data, dict_params = None, None
+            
+            try:
+                df_data = pd.read_excel(uploaderAnalysisXlsx, sheet_name="Data")
+                df_data["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_data["dates (Y-M-D hh:mm:ss)"])
+                df_dailyAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="DailyAnalysis")
+                df_monthlyAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="MonthlyAnalysis")
+                df_annualAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="AnnualAnalysis")
 
-    #Analysis_OnGrid
+                df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"])
+                df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"])
+                df_annualAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_annualAnalysis["dates (Y-M-D hh:mm:ss)"], format="%Y")
+
+            except:
+                st.error(f"**Error al cargar archivo :blue[{nameFile}]**", icon="🚨")
+
+            if df_data is not None:
+                timeInfo = general.getTimeData(df_data)
+                listTimeRanges = general.getListOfTimeRanges(deltaMinutes=timeInfo["deltaMinutes"])
+            
+                tab1, tab2, tab3, tab4 = st.tabs(["🕛 Flujos de potencia", "📅 Análisis diario", "📆 Análisis mensual", "🗓️ Análisis anual"])
+
+                with tab1:
+                    with st.form("analysisTime", border=True):
+                        st.image("images//app8_img2.png")
+
+                        with st.container(border=True):
+                            col1, col2, col3 = st.columns([0.4, 0.4, 0.2], vertical_alignment="bottom")
+
+                            with col1:
+                                analyzeDate = st.date_input(label="Seleccionar fecha", min_value=timeInfo["dateIni"], max_value=timeInfo["dateEnd"], value=timeInfo["dateIni"])
+                            with col2:
+                                optionTimeRange = st.selectbox(label="Seleccionar hora", options=listTimeRanges)
+                            with col3:
+                                submitted = st.form_submit_button("Aceptar")
+
+                        if submitted:
+                            analizeTime = general.getAnalizeTime(analyzeDate=analyzeDate, optionTimeRange=optionTimeRange)
+                            df_dataFilter = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == analizeTime]
+                            dictNode = general.getNodeParametersOnGrid(df_dataFilter=df_dataFilter)
+
+                            col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
+                            with col1:
+                                general.getNodeVisualization(dictNode=dictNode["node1"], nodeNum=1)
+                            with col2:
+                                general.getNodeVisualization(dictNode=dictNode["node2"], nodeNum=2)
+                            with col3:
+                                general.getNodeVisualization(dictNode=dictNode["node3"], nodeNum=3)
+                            with col4:
+                                general.getNodeVisualization(dictNode=dictNode["node4"], nodeNum=4)
+
+                            col1, col2, col3 = st.columns(3, vertical_alignment="top")
+
+                            with col1:
+                                general.getNodeVisualization(dictNode=dictNode["node5"], nodeNum=5)
+                            with col2:
+                                general.getNodeVisualization(dictNode=dictNode["node6"], nodeNum=6)
+                            with col3:
+                                general.getNodeVisualization(dictNode=dictNode["node7"], nodeNum=7)
+                            
+                with tab2:
+                    dateIni = df_dailyAnalysis.loc[0, "dates (Y-M-D hh:mm:ss)"]
+                    dateEnd = df_dailyAnalysis.loc[df_dailyAnalysis.index[-1], "dates (Y-M-D hh:mm:ss)"]
+
+                    with st.form("analysisDaily", border=True):
+
+                        with st.container(border=True):
+                            col1, col2 = st.columns([0.8, 0.2], vertical_alignment="bottom")
+
+                            with col1:
+                                analyzeDaily = st.date_input(label="Seleccionar fecha", min_value=dateIni, max_value=dateEnd, value=dateIni)
+                            with col2:
+                                submittedDaily = st.form_submit_button("Aceptar")
+
+                        if submittedDaily:
+                            analyzeDaily = general.getAnalizeTime(analyzeDate=analyzeDate, optionTimeRange="0:00:00")
+                            df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"] == analyzeDaily]
+                            df_DataDaily = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == analyzeDaily.date()]
+                            df_DataDaily = df_DataDaily.copy()
+                            df_DataDaily.loc[:, "Pgen(kW)"] = df_DataDaily.loc[:, "PinvAC_PV(kW)"] + df_DataDaily.loc[:, "PinvAC_AERO(kW)"]
+
+                            with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
+                                labels = ["Eauto(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
+                                sizes = [df_dailyAnalysisFilter.loc[df_dailyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+                                col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+                                    ax.pie(sizes,
+                                        labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+                                        autopct="%1.1f%%")
+
+                                    st.pyplot(fig, use_container_width=True)
+
+                            with st.expander("**Distribución de energía generada**", icon="📊"):
+                                labels = ["Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
+                                sizes = [df_dailyAnalysisFilter.loc[df_dailyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+                                col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+                                    ax.pie(sizes,
+                                        labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+                                        autopct="%1.1f%%")
+                                
+                                    st.pyplot(fig, use_container_width=True)
+
+                            with st.expander(f"**Curva de potencias para el día  :blue[{analyzeDaily.date()}]**", icon="📈"):
+                                x = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M')
+                                y1 = df_DataDaily["Pdem(kW)"]
+                                y2 = df_DataDaily["Load(kW)"]
+                                y3 = df_DataDaily["Pgen(kW)"]
+
+                                col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+
+                                    ax.plot(x, y1, label="Pdem(kW)")
+                                    ax.plot(x, y2, label="Load(kW)")
+                                    ax.plot(x, y3, label="Pgen(kW)")
+
+                                    ax.set_xticks(range(len(x)))
+                                    ax.set_xticklabels(x, rotation=90)
+                                    ax.set_xlabel("Hour")
+                                    ax.set_ylabel("Potencia (kW)")
+                                    ax.legend()
+                                    ax.grid()
+                                    
+                                    st.pyplot(fig, use_container_width=True)
+
+                            with st.expander(f"**Curva potencia generada :blue[{analyzeDaily.date()}]**", icon="📈"):
+                                x = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M')
+                                y1 = df_DataDaily["PinvAC_PV(kW)"]
+                                y2 = df_DataDaily["PinvAC_AERO(kW)"]
+                                y3 = df_DataDaily["Pgen(kW)"]
+
+                                col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+
+                                    ax.plot(x, y1, label="Pgen_PV(kW)")
+                                    ax.plot(x, y2, label="Pgen_AERO(kW)")
+                                    ax.plot(x, y3, label="Pgen(kW)", linestyle='--')
+
+                                    ax.set_xticks(range(len(x)))
+                                    ax.set_xticklabels(x, rotation=90)
+                                    ax.set_xlabel("Hour")
+                                    ax.set_ylabel("Potencia (kW)")
+                                    ax.set_ylim(bottom=0)
+                                    ax.legend()
+                                    ax.grid()
+                                        
+                                    st.pyplot(fig, use_container_width=True)
+    
+                            columnsPrint = df_dailyAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
+                            general.printData(dataframe=df_dailyAnalysisFilter, columns_print=columnsPrint)
+         
+                with tab3:
+                    listLabelsMonths = general.timeInfoMonthsGetLabels(timeInfoMonths=timeInfo["months"])
+                    optionYearRange = None
+                    flagSubmittedMonth = False
+
+                    with st.container(border=True):
+                        col1, col2 = st.columns([0.4, 0.6], vertical_alignment="center")
+
+                        with col1:
+                            optionYearRange = st.selectbox(label="Seleccionar año:", options=timeInfo["years"], index=None)
+
+                        with col2:
+                            if optionYearRange is not None:
+                                indexYear = timeInfo["years"].index(optionYearRange)
+
+                                with st.form("analysisMonth", border=False):
+                                    col1, col2 = st.columns([0.6, 0.4], vertical_alignment="bottom")
+
+                                    with col1:
+                                        optionMonthRange = st.selectbox(label="Seleccionar mes:", options=listLabelsMonths[indexYear], index=None)
+                                    with col2:
+                                        submitted = st.form_submit_button("Aceptar")
+
+                                    if submitted:
+                                        flagSubmittedMonth = True
+  
+                        if flagSubmittedMonth:
+                            monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
+                            df_monthlyAnalysisFilter = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
+
+                            df_DataMonthly = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
+                            df_DataMonthly = df_DataMonthly.copy()
+                            df_DataMonthly.loc[:, "Pgen(kW)"] = df_DataMonthly.loc[:, "PinvAC_PV(kW)"] + df_DataMonthly.loc[:, "PinvAC_AERO(kW)"]
+
+                            df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
+
+                            with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
+                                labels = ["Eauto(kWh/month)", "Exct1(kWh/month)", "Exct2(kWh/month)"]
+                                sizes = [df_monthlyAnalysisFilter.loc[df_monthlyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+                                col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+                                    ax.pie(sizes,
+                                        labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+                                        autopct="%1.1f%%")
+
+                                    st.pyplot(fig, use_container_width=True)
+
+                            with st.expander("**Distribución de energía generada**", icon="📊"):
+                                    labels = ["Egen_PV(kWh/month)", "Egen_AERO(kWh/month)"]
+                                    sizes = [df_monthlyAnalysisFilter.loc[df_monthlyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+                                    col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+                                    with col2:
+                                        fig, ax = plt.subplots()
+                                        ax.pie(sizes,
+                                            labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+                                            autopct="%1.1f%%")
+                                    
+                                        st.pyplot(fig, use_container_width=True)
+
+                            with st.expander(f"**Curva de energías :blue[{optionYearRange}-{optionMonthRange}]**", icon="📈"):
+                                x = df_dailyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d")
+                                y1 = df_dailyAnalysisFilter["Edem(kWh/day)"]
+                                y2 = df_dailyAnalysisFilter["Egen(kWh/day)"]
+                                y3 = df_dailyAnalysisFilter["Eload(kWh/day)"]
+
+                                col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+
+                                    ax.plot(x, y1, label="Edem(kWh/day)")
+                                    ax.plot(x, y2, label="Edem(kWh/day)")
+                                    ax.plot(x, y3, label="Eload(kWh/day)")
+
+                                    ax.set_xticks(range(len(x)))
+                                    ax.set_xticklabels(x, rotation=90)
+                                    ax.set_xlabel("Day")
+                                    ax.set_ylabel("Energy (kWh/day)")
+                                    ax.legend()
+                                    ax.grid()
+                                    
+                                    st.pyplot(fig, use_container_width=True)
+
+                            with st.expander(f"**Curva energía generada :blue[{optionYearRange}-{optionMonthRange}]**", icon="📈"):
+                                x = df_dailyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d")
+                                y1 = df_dailyAnalysisFilter["Egen_INVPV(kWh/day)"]
+                                y2 = df_dailyAnalysisFilter["Egen_INVAERO(kWh/day)"]
+                                y3 = df_dailyAnalysisFilter["Egen(kWh/day)"]
+
+                                col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+
+                                    ax.plot(x, y1, label="Egen_PV(kWh/day)")
+                                    ax.plot(x, y2, label="Egen_AERO(kWh/day)")
+                                    ax.plot(x, y3, label="Egen(kWh/day)", linestyle='--')
+
+                                    ax.set_xticks(range(len(x)))
+                                    ax.set_xticklabels(x, rotation=90)
+                                    ax.set_xlabel("Day")
+                                    ax.set_ylabel("Energy (kWh/day)")
+                                    ax.set_ylim(bottom=0)
+                                    ax.legend()
+                                    ax.grid()
+                                        
+                                    st.pyplot(fig, use_container_width=True)
+
+                            with st.expander(f"**Curva energía exportada :blue[{optionYearRange}-{optionMonthRange}]**", icon="📈"):
+                                x = df_dailyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d")
+                                y1 = df_dailyAnalysisFilter["Exct1(kWh/day)"]
+                                y2 = df_dailyAnalysisFilter["Exct2(kWh/day)"]
+                                y3 = df_dailyAnalysisFilter["Eexp(kWh/day)"]
+
+                                col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                                with col2:
+                                    fig, ax = plt.subplots()
+
+                                    ax.plot(x, y1, label="Exct1(kWh/day)")
+                                    ax.plot(x, y2, label="Exct2(kWh/day)")
+                                    ax.plot(x, y3, label="Eexp(kWh/day)", linestyle='--')
+
+                                    ax.set_xticks(range(len(x)))
+                                    ax.set_xticklabels(x, rotation=90)
+                                    ax.set_xlabel("Day")
+                                    ax.set_ylabel("Energy (kWh/day)")
+                                    ax.set_ylim(bottom=0)
+                                    ax.legend()
+                                    ax.grid()
+                                        
+                                    st.pyplot(fig, use_container_width=True)
+
+                            columnsPrint = df_monthlyAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
+                            general.printData(dataframe=df_monthlyAnalysisFilter, columns_print=columnsPrint)
+
+                with tab4:
+                    flagSubmittedYear = False
+                    listYears = timeInfo["years"]
+
+                    with st.form("analysisYear", border=True):
+                        col1, col2 = st.columns([0.6, 0.4], vertical_alignment="bottom")
+
+                        with col1:
+                            optionYearRange = st.selectbox(label="Seleccionar año:", options=listYears, index=None, key="optionYearRange")
+                        with col2:
+                            submitted = st.form_submit_button("Aceptar")
+
+                        if submitted:
+                            flagSubmittedYear = True
+
+                    if flagSubmittedYear:
+                        df_annualAnalysisFilter = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+                        df_monthlyAnalysisFilter = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+
+                        with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
+                            labels = ["Eauto(kWh/year)", "Exct1(kWh/year)", "Exct2(kWh/year)"]
+                            sizes = [df_annualAnalysisFilter.loc[df_annualAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+                            col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+                            with col2:
+                                fig, ax = plt.subplots()
+                                ax.pie(sizes,
+                                    labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+                                    autopct="%1.1f%%")
+
+                                st.pyplot(fig, use_container_width=True)
+
+                        with st.expander("**Distribución de energía generada**", icon="📊"):
+                            labels = ["Egen_PV(kWh/year)", "Egen_AERO(kWh/year)"]
+                            sizes = [df_annualAnalysisFilter.loc[df_annualAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+                            col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+                            with col2:
+                                fig, ax = plt.subplots()
+                                ax.pie(sizes,
+                                    labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+                                    autopct="%1.1f%%")
+                            
+                                st.pyplot(fig, use_container_width=True)
+
+                        with st.expander(f"**Curva de energías :blue[{optionYearRange}]**", icon="📈"):
+                            x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
+                            y1 = df_monthlyAnalysisFilter["Edem(kWh/month)"]
+                            y2 = df_monthlyAnalysisFilter["Egen(kWh/month)"]
+                            y3 = df_monthlyAnalysisFilter["Eload(kWh/month)"]
+
+                            col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                            with col2:
+                                fig, ax = plt.subplots()
+
+                                ax.plot(x, y1, label="Edem(kWh/month)")
+                                ax.plot(x, y2, label="Egen(kWh/month)")
+                                ax.plot(x, y3, label="Eload(kWh/month)")
+
+                                ax.set_xticks(range(len(x)))
+                                ax.set_xticklabels(x, rotation=90)
+                                ax.set_xlabel("Month")
+                                ax.set_ylabel("Energy (kWh/month)")
+                                ax.legend()
+                                ax.grid()
+                                
+                                st.pyplot(fig, use_container_width=True)
+
+                        with st.expander(f"**Curva energía generada :blue[{optionYearRange}]**", icon="📈"):
+                            x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
+                            y1 = df_monthlyAnalysisFilter["Egen_INVPV(kWh/month)"]
+                            y2 = df_monthlyAnalysisFilter["Egen_INVAERO(kWh/month)"]
+                            y3 = df_monthlyAnalysisFilter["Egen(kWh/month)"]
+
+                            col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                            with col2:
+                                fig, ax = plt.subplots()
+
+                                ax.plot(x, y1, label="Egen_PV(kWh/month)")
+                                ax.plot(x, y2, label="Egen_AERO(kWh/month)")
+                                ax.plot(x, y3, label="Egen(kWh/month)", linestyle='--')
+
+                                ax.set_xticks(range(len(x)))
+                                ax.set_xticklabels(x, rotation=90)
+                                ax.set_xlabel("Month")
+                                ax.set_ylabel("Energy (kWh/month)")
+                                ax.set_ylim(bottom=0)
+                                ax.legend()
+                                ax.grid()
+                                    
+                                st.pyplot(fig, use_container_width=True)
+                        
+                        with st.expander(f"**Curva energía exportada :blue[{optionYearRange}]**", icon="📈"):
+                            x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
+                            y1 = df_monthlyAnalysisFilter["Exct1(kWh/month)"]
+                            y2 = df_monthlyAnalysisFilter["Exct2(kWh/month)"]
+                            y3 = df_monthlyAnalysisFilter["Eexp(kWh/month)"]
+
+                            col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+                            with col2:
+                                fig, ax = plt.subplots()
+
+                                ax.plot(x, y1, label="Exct1(kWh/month)")
+                                ax.plot(x, y2, label="Exct2(kWh/month)")
+                                ax.plot(x, y3, label="Eexp(kWh/month)", linestyle='--')
+
+                                ax.set_xticks(range(len(x)))
+                                ax.set_xticklabels(x, rotation=90)
+                                ax.set_xlabel("Month")
+                                ax.set_ylabel("Energy (kWh/month)")
+                                ax.set_ylim(bottom=0)
+                                ax.legend()
+                                ax.grid()
+                                    
+                                st.pyplot(fig, use_container_width=True)
+
+                        columnsPrint = df_annualAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
+                        general.printData(dataframe=df_annualAnalysisFilter, columns_print=columnsPrint)
+
+
+
+
+
+
+                        
+
+                    
+
+
+
+                
+
+                
+
+
+
+
+        else:
+            st.error("**El archivo cargado no tiene un formato de nombre valido**", icon="🚨")
+

@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import yaml, io, calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from funtions import fun_app5, fun_app6, fun_app7, fun_app8, fun_app9
 
@@ -108,6 +108,8 @@ dictGoogleSheet = {
     "RC": st.secrets.GOOGLE_DRIVE["googleSheetRC"]
     }
 
+listMonths = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
+
 #%% funtions
 
 def changeUnitsK(K, Base):
@@ -139,16 +141,6 @@ def fromValueLabelGetKey(dict_in: dict, key_label: str, value_label: str) -> str
             return key
 
     return
-
-def toExcelResults(df: pd.DataFrame, dictionary: dict | None, df_sheetName: str, dict_sheetName: str | None) -> bytes:
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name=df_sheetName)
-        if dictionary is not None:
-            df_params = pd.DataFrame(dictionary, index=[0])
-            df_params.to_excel(writer, index=False, sheet_name=dict_sheetName)
-
-    return output.getvalue()
 
 def getLabelColumn(params: dict, key: str) -> str:
 
@@ -635,6 +627,8 @@ def initializeDataFrameColumns(df_grid: pd.DataFrame, generationType: str) -> pd
         df_grid["Iload(A)"] = 0.0
 
         df_grid["Pdem(kW)"] = 0.0
+        df_grid["Vdem(V)"] = 0.0
+        df_grid["Idem(A)"] = 0.0
 
     elif generationType == "OffGrid":
 
@@ -848,13 +842,25 @@ def getAnalysisInTime(df_data: pd.DataFrame, deltaMinutes: int, timeLapse: str, 
 
     return None
 
-def toExcelAnalysis(df_data: pd.DataFrame, df_daily: pd.DataFrame, df_monthly: pd.DataFrame, df_annual: pd.DataFrame):
+def toExcelResults(df: pd.DataFrame, dictionary: dict | None, df_sheetName: str, dict_sheetName: str | None) -> bytes:
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name=df_sheetName)
+        if dictionary is not None:
+            df_params = pd.DataFrame(dictionary, index=[0])
+            df_params.to_excel(writer, index=False, sheet_name=dict_sheetName)
 
+    return output.getvalue()
+
+def toExcelAnalysis(df_data: pd.DataFrame, dictionary: dict, df_daily: pd.DataFrame, df_monthly: pd.DataFrame, df_annual: pd.DataFrame):
     output = io.BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_data.to_excel(writer, index=False, sheet_name="Data")
 
+        if dictionary is not None:
+            df_params = pd.DataFrame(dictionary, index=[0])
+            df_params.to_excel(writer, index=False, sheet_name="Params")
         if df_daily is not None:
             df_daily.to_excel(writer, index=False, sheet_name="DailyAnalysis")
         if df_monthly is not None:
@@ -863,6 +869,92 @@ def toExcelAnalysis(df_data: pd.DataFrame, df_daily: pd.DataFrame, df_monthly: p
             df_annual.to_excel(writer, index=False, sheet_name="AnnualAnalysis")
 
     return output.getvalue()
+
+def uploadedXlsxSheetToDict(uploaderXlsx, sheet_name: str, dataKeyList: list) -> dict:
+
+    TOTAL_data = pd.read_excel(uploaderXlsx, sheet_name=sheet_name).to_dict(orient="records")[0]
+
+    return getFixFormatDictParams(TOTAL_data, dataKeyList)
+
+def totalDataToDictParams(uploaderAnalysisXlsx, dataKeyList) -> dict:
+
+    dict_params = uploadedXlsxSheetToDict(uploaderXlsx=uploaderAnalysisXlsx, sheet_name="Params", dataKeyList=dataKeyList)
+
+    return dict_params
+
+def getListOfTimeRanges(deltaMinutes: float) -> list:
+
+    listTimeRanges = []
+    timeDelta = timedelta(minutes=deltaMinutes)
+    time = timedelta(hours=0.0, minutes=0.0, seconds=0.0)
+
+    while time < timedelta(days=1.0):
+        listTimeRanges.append(str(time))
+        time = timeDelta + time
+
+    return listTimeRanges
+
+def getAnalizeTime(analyzeDate: datetime.date, optionTimeRange: str):
+
+    time = datetime.strptime(optionTimeRange, "%H:%M:%S").time()
+
+    return datetime.combine(analyzeDate, time)
+
+def getNodeParametersOnGrid(df_dataFilter: pd.DataFrame):
+
+    dictNodes = {
+        "node1": {
+            "Pn1 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], 6),
+            "Vn1 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], 6),
+            "In1 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], 6),
+        },
+        "node2": {
+            "Pn2 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], 6),
+            "Vn2 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], 6),
+            "In2 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], 6),
+        },
+        "node3": {
+            "Pn3 (kW)": round(df_dataFilter.iloc[0]["PinvAC_PV(kW)"], 6),
+            "Vn3 (V)": round(df_dataFilter.iloc[0]["VinvAC_PV(V)"], 6),
+            "In3 (A)": round(df_dataFilter.iloc[0]["IinvAC_PV(A)"], 6),
+        },
+        "node4": {
+            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Pdem(kW)"], 6),
+            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vdem(V)"], 6),
+            "In4 (A)": round(df_dataFilter.iloc[0]["Idem(A)"], 6),
+        },
+        "node5": {
+            "Pn5 (kW)": round(df_dataFilter.iloc[0]["Pgen_AERO(kW)"], 6),
+        },
+        "node6": {
+            "Pn6 (kW)": round(df_dataFilter.iloc[0]["PinvAC_AERO(kW)"], 6),
+            "Vn6 (V)": round(df_dataFilter.iloc[0]["VinvAC_AERO(V)"], 6),
+            "In6 (A)": round(df_dataFilter.iloc[0]["IinvAC_AERO(A)"], 6),
+        },
+        "node7": {
+            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Load(kW)"], 6),
+            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vload(V)"], 6),
+            "In4 (A)": round(df_dataFilter.iloc[0]["Iload(A)"], 6),
+        }      
+    }
+
+    return dictNodes
+
+def timeInfoMonthsGetLabels(timeInfoMonths: list) -> list:
+
+    listLabesMonths = []
+
+    for i in range(0,len(timeInfoMonths),1):
+        listAux = []
+        for j in range(0,len(timeInfoMonths[i]),1):
+            listAux.append(listMonths[j])
+        listLabesMonths.append(listAux)
+        
+    return listLabesMonths
+
+def fromMonthGetIndex(month):
+
+    return listMonths.index(month) + 1
 
 #%% funtions streamlit
 
@@ -964,4 +1056,26 @@ def getPrintParamsDataframe(dataframe: pd.DataFrame, params_label: list, dict_pa
             for index, row in dataframe.iterrows():
                 list_columns[index+1].markdown(colors_string[index+1].format(row[params_label[i]]))
                 
+    return
+
+def getNodeVisualization(dictNode: dict, nodeNum: int):
+
+    with st.container(border=True):
+        st.markdown(f"**:blue[Node {nodeNum}]**")
+        for key, value in dictNode.items():
+            st.caption(f"**{key}**: {value}")
+
+    return
+
+def printData(dataframe: pd.DataFrame, columns_print: list):
+
+    with st.container(border=True):
+
+        for i in range(0,len(columns_print),1):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"**:blue[{columns_print[i]}:]**")
+            with col2:
+                st.markdown(dataframe.loc[dataframe.index[0], columns_print[i]])
+
     return

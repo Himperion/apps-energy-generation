@@ -57,11 +57,9 @@ with tab1:
         with col3:
             st.write("")
 
-        st.markdown("**Vwind:** Velocidad del viento (m/s)")
-        st.markdown("**rho:** Densidad del aire (kg/m³)")
-        st.markdown("**Pgen:** Potencia generada (kW)")
-        st.markdown("**Vgen:** Tensión salida del aerogenerador (V)")
-        st.markdown("**Igen:** Corriente salida del aerogenerador (A)")
+        st.markdown("$v$: Velocidad del viento (m/s)")
+        st.markdown(r"$\rho$: Densidad del aire (kg/m³)")
+        st.markdown("*Pgen_aero:* Potencia generada (kW)")
 
     with st.expander("**Ingreso de datos**"):
         st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")

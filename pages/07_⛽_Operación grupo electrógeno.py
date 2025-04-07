@@ -71,15 +71,10 @@ with tab1:
         with col3:
             st.write("")
 
-        st.markdown(general.getLabelParams(dict_param=dict_params["Pnom"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["Voc"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["Vpc"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["phases"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["FP"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["fuel_type"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["C'100"]))
-        st.markdown(general.getLabelParams(dict_param=dict_params["C'0"]))
-
+        st.markdown("$load$: Potencia de la carga (kW)")
+        st.markdown("*Ia_gen*: Corriente de armadura del grupo electrógeno (A)")
+        st.markdown("*Vt_gen*: Tensión de salida del grupo electrógeno (V)")
+        st.markdown("*C*: Consumo (l/h)")
         
     with st.expander("**Ingreso de datos**"):
         st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")

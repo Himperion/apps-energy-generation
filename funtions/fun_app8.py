@@ -94,7 +94,10 @@ def generationOnGrid(df_data: pd.DataFrame,
 
     df_onGrid["Vload(V)"] = V_PCC
     df_onGrid["Iload(A)"] = (df_onGrid['Load(kW)']*1000)/(np.sqrt(numberPhases)*V_PCC)
+
     df_onGrid["Pdem(kW)"] = df_onGrid["Load(kW)"] - df_onGrid["PinvAC_PV(kW)"] - df_onGrid["PinvAC_AERO(kW)"]
+    df_onGrid["Vdem(V)"] = V_PCC
+    df_onGrid["Idem(A)"] = df_onGrid["Iload(A)"] - df_onGrid["IinvAC_PV(A)"] - df_onGrid["IinvAC_AERO(A)"]
 
     return df_onGrid
 
@@ -155,8 +158,8 @@ def getDataAnalysisOnGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLap
         f"Eimp(kWh/{timeLapse})": Eimp,
         f"Eexp(kWh/{timeLapse})": Eexp,
         f"Eauto(kWh/{timeLapse})": Egen - Eexp,
-        f"Exct1(kWh/{timeLapse}": Eexct1,
-        f"Exct2(kWh/{timeLapse}": Eexct2
+        f"Exct1(kWh/{timeLapse})": Eexct1,
+        f"Exct2(kWh/{timeLapse})": Eexct2
         }
 
     return dataAnalysis

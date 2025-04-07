@@ -49,20 +49,20 @@ tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "�
 with tab1:
     st.session_state['dictDataOffGrid'] = None
 
-    with st.expander("**Marco teórico**"):
-        st.markdown("Los sistemas de generación eólica Off-Grid son especialmente relevantes en áreas remotas donde no hay acceso a la red eléctrica. Los sistemas híbridos con baterías y grupos electrógenos (GE), añaden una capa extra de seguridad y continuidad en el suministro eléctrico. Cuando la generación combinada de las celdas solares y los aerogeneradores, junto con las baterías, no es suficiente para satisfacer la demanda energética, el grupo electrógeno actúa como respaldo. Este se enciende automáticamente para suplir la carga del usuario, mientras que el sistema de generación fotovoltaica y eólica continúa operando para recargar las baterías hasta alcanzar los niveles necesarios para reconectarse.")
+    st.markdown("**Marco teórico**")
+    st.markdown("Los sistemas de generación eólica Off-Grid son especialmente relevantes en áreas remotas donde no hay acceso a la red eléctrica. Los sistemas híbridos con baterías y grupos electrógenos (GE), añaden una capa extra de seguridad y continuidad en el suministro eléctrico. Cuando la generación combinada de las celdas solares y los aerogeneradores, junto con las baterías, no es suficiente para satisfacer la demanda energética, el grupo electrógeno actúa como respaldo. Este se enciende automáticamente para suplir la carga del usuario, mientras que el sistema de generación fotovoltaica y eólica continúa operando para recargar las baterías hasta alcanzar los niveles necesarios para reconectarse.")
 
-        col1, col2, col3 = st.columns( [0.05, 0.9, 0.05])
+    col1, col2, col3 = st.columns( [0.2, 0.6, 0.2])
+    with col1:
+        st.write("")
+    with col2:
+        st.image("images//app9_img1.png")
+    with col3:
+        st.write("")
 
-        with col1:
-            st.write("")
-        with col2:
-            st.image("images//app9_img1.png")
-        with col3:
-            st.write("")
+    st.markdown("**Recomendaciones**")
+    st.markdown("Antes de subir los archivos de los componentes, es necesario que consulte las fichas técnicas de cada uno. La potencia nominal del aerogenerador no debe superar los límites de potencia admitidos por el inversor y el regulador eólico. De igual forma, la potencia del arreglo de paneles fotovoltaicos debe mantenerse dentro de los límites establecidos para el inversor y el regulador fotovoltaico. Además, debe verificar que las tensiones de los reguladores de carga, tanto fotovoltaico como eólico, coincidan con la definida para su banco de baterías y, a su vez, con la tensión de entrada de los inversores. Los inversores deben tener tensiones y fases compatibles con la definida para el usuario. Por último, la potencia del grupo electrógeno debe seleccionarse en función de los puntos de mayor consumo, según la curva de demanda, considerando un margen de seguridad para evitar su sobredimensionamiento.")
 
-    with st.expander("**Ingreso de datos**"):
-        st.markdown("Ingreso de datos")
 
 with tab2:
     generationOptions = None
@@ -283,7 +283,7 @@ with tab2:
             df_download = st.download_button(
                 label="📄 Descargar **:blue[Archivo de resultado Off-Grid] XLSX**",
                 data=bytesFileExcelResults,
-                file_name=general.nameFileHead(name="results_OffGrid.xlsx"),
+                file_name=general.nameFileHead(name="Results_OffGrid.xlsx"),
                 mime='xlsx')
 
         st.session_state["dictDataOffGrid"] = None

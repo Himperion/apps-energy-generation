@@ -157,10 +157,8 @@ def print_data(dataframe: pd.DataFrame, columns_print: list):
 
         for i in range(0,len(columns_print),1):
             col1, col2 = st.columns(2)
-
             with col1:
                 st.markdown(f"**:blue[{columns_print[i]}:]**")
-
             with col2:
                 st.markdown(dataframe.loc[0, columns_print[i]])
 
