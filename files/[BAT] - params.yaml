@@ -22,7 +22,7 @@ I_max:
   unit: (A)
 I_min:
   data_type: float
-  description: "Corriente m\xE1xima de descarga"
+  description: "Corriente m\xEDxima de descarga"
   label: I_min
   number_input:
     format: '%.2f'

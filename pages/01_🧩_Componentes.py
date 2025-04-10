@@ -134,17 +134,18 @@ with tab2:
                 submitted = st.form_submit_button("Aceptar")
 
                 if submitted:
-                    st.session_state['component_dict'] = {
-                        "celltype": fun_app1.for_options_get_celltype(cell_type),
-                        "v_mp": Vmpp,
-                        "i_mp": Impp,
-                        "v_oc": Voc,
-                        "i_sc": Isc,
+                    
+                    st.session_state["component_dict"] = {
                         "alpha_sc": general.changeUnitsK(alpha_sc, Isc),
                         "beta_voc": general.changeUnitsK(beta_voc, Voc),
+                        "cells_in_series": cells_in_series,
+                        "celltype": fun_app1.for_options_get_celltype(cell_type),
                         "gamma_pmp": gamma_pmp,
-                        "cells_in_series": cells_in_series
-                        }
+                        "i_mp": Impp,
+                        "i_sc": Isc,
+                        "v_mp": Vmpp,
+                        "v_oc": Voc
+                    }
                     
                     st.session_state['component_description'] = ("PV", "Panel fotovoltaico")
 
@@ -178,17 +179,18 @@ with tab2:
 
                 if submitted:
                     submitted_general, submitted_BAT = True, True
-
-                    st.session_state['component_dict'] = {
-                            "bat_type" : bat_type, 
-                            "capacity" : capacity, 
-                            "V_max" : V_max, 
-                            "V_min" : V_min, 
-                            "I_max" : I_max,
-                            "I_min" : I_min,
-                            "bat_efficiency": efficiency,
-                            "DOD": DOD
-                            }
+                    
+                    st.session_state["component_dict"] = {
+                        "C": capacity,
+                        "DOD": DOD,
+                        "I_max": I_max,
+                        "I_min": I_min,
+                        "V_max": V_max,
+                        "V_min": V_min,
+                        "V_nom": V_nom,
+                        "bat_type": bat_type,
+                        "bat_efficiency": efficiency
+                    }
                     
                     st.session_state['component_description'] = ("BAT", "Batería")
 
@@ -364,18 +366,18 @@ with tab2:
 
                 if submitted:
                     submitted_general, submitted_GE = True, True
-
-                    st.session_state['component_dict'] = {
+                    
+                    st.session_state["component_dict"] = {
+                        "C0": C0,
+                        "C100": C100,
+                        "Combustible": Combustible,
+                        "FP": FP,
+                        "PE_fuel": typefuel_GE[Combustible]["PE"],
                         "Pnom": Pnom,
                         "Voc": Voc,
                         "Vpc": Vpc,
-                        "Fases": general.fromValueLabelGetKey(dict_phases, "label", Fases),
-                        "FP": FP,
-                        "Combustible": Combustible,
-                        "PE_fuel": typefuel_GE[Combustible]["PE"],
-                        "C100": C100,
-                        "C0": C0
-                        }
+                        "phases": general.fromValueLabelGetKey(dict_phases, "label", Fases)
+                    }
                     
                     st.session_state['component_description'] = ("GE", "Grupo electrógeno")
 

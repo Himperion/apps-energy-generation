@@ -2,6 +2,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime
 
 from funtions import general
 
@@ -205,6 +207,244 @@ def getBytesFileExcelProjectOnGrid(dictDataOnGrid: dict, dataKeyList: list):
     return TOTAL_data, bytesFileExcel            
 
 #%% funtions streamlit
+
+def pieChartVisualizationStreamlit(sizes: list, labels: list):
+    col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+
+    with col2:
+        fig, ax = plt.subplots()
+        ax.pie(sizes,
+            labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
+            autopct="%1.1f%%")
+        st.pyplot(fig, use_container_width=True)
+
+    return
+
+def plotVisualizationStreamlit(x, dict_y:dict, xlabel: str, ylabel: str, set_ylim0: bool):
+
+    col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
+
+    with col2:
+        fig, ax = plt.subplots()
+
+        ax.plot(x, dict_y["value"][0], label=dict_y["label"][0], linestyle=dict_y["linestyle"][0])
+        ax.plot(x, dict_y["value"][1], label=dict_y["label"][1], linestyle=dict_y["linestyle"][1])
+        ax.plot(x, dict_y["value"][2], label=dict_y["label"][2], linestyle=dict_y["linestyle"][2])
+
+        ax.set_xticks(range(len(x)))
+        ax.set_xticklabels(x, rotation=90)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        if set_ylim0:
+            ax.set_ylim(bottom=0)
+        ax.legend()
+        ax.grid()
+        
+        st.pyplot(fig, use_container_width=True)
+
+    return
+
+def displayInstantResults(df_data: pd.DataFrame, analyzeDate: datetime.date, optionTimeRange: str):
+
+    analizeTime = general.getAnalizeTime(analyzeDate=analyzeDate, optionTimeRange=optionTimeRange)
+    df_dataFilter = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == analizeTime]
+    dictNode = general.getNodeParametersOnGrid(df_dataFilter=df_dataFilter)
+
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
+    with col1:
+        general.getNodeVisualization(dictNode=dictNode["node1"], nodeNum=1)
+    with col2:
+        general.getNodeVisualization(dictNode=dictNode["node2"], nodeNum=2)
+    with col3:
+        general.getNodeVisualization(dictNode=dictNode["node3"], nodeNum=3)
+    with col4:
+        general.getNodeVisualization(dictNode=dictNode["node4"], nodeNum=4)
+
+    col1, col2, col3 = st.columns(3, vertical_alignment="top")
+
+    with col1:
+        general.getNodeVisualization(dictNode=dictNode["node5"], nodeNum=5)
+    with col2:
+        general.getNodeVisualization(dictNode=dictNode["node6"], nodeNum=6)
+    with col3:
+        general.getNodeVisualization(dictNode=dictNode["node7"], nodeNum=7)
+    
+    return
+
+def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, day):
+
+    df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == day]
+    df_DataDaily = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == day]
+    df_DataDaily = df_DataDaily.copy()
+    df_DataDaily.loc[:, "Pgen(kW)"] = df_DataDaily.loc[:, "PinvAC_PV(kW)"] + df_DataDaily.loc[:, "PinvAC_AERO(kW)"]
+
+    with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
+        labels = ["Eauto(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
+        sizes = [df_dailyAnalysisFilter.loc[df_dailyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+
+    with st.expander("**Distribución de energía generada**", icon="📊"):
+        labels = ["Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
+        sizes = [df_dailyAnalysisFilter.loc[df_dailyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+
+    with st.expander(f"**Curva de potencias para el día  :blue[{day}]**", icon="📈"):
+        x = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M')
+        dict_y = {
+            "value": [df_DataDaily["Pdem(kW)"], df_DataDaily["Load(kW)"], df_DataDaily["Pgen(kW)"]],
+            "label": ["Pdem(kW)", "Load(kW)", "Pgen(kW)"],
+            "linestyle": ["-", "-", "-"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Hour", ylabel="Power (kW)", set_ylim0=False)
+
+    with st.expander(f"**Curva potencia generada :blue[{day}]**", icon="📈"):
+        x = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M')
+        
+        dict_y = {
+            "value": [df_DataDaily["PinvAC_PV(kW)"], df_DataDaily["PinvAC_AERO(kW)"], df_DataDaily["Pgen(kW)"]],
+            "label": ["Pgen_PV(kW)", "Pgen_AERO(kW)", "Pgen(kW)"],
+            "linestyle": ["-", "-", "--"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Hour", ylabel="Power (kW)", set_ylim0=True)
+
+    columnsPrint = df_dailyAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
+    general.printData(dataframe=df_dailyAnalysisFilter, columns_print=columnsPrint)
+
+    return
+
+def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, df_monthlyAnalysis: pd.DataFrame, optionYearRange, optionMonthRange):
+
+    monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
+    df_monthlyAnalysisFilter = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
+
+    df_DataMonthly = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
+    df_DataMonthly = df_DataMonthly.copy()
+    df_DataMonthly.loc[:, "Pgen(kW)"] = df_DataMonthly.loc[:, "PinvAC_PV(kW)"] + df_DataMonthly.loc[:, "PinvAC_AERO(kW)"]
+
+    df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
+
+    with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
+        labels = ["Eauto(kWh/month)", "Exct1(kWh/month)", "Exct2(kWh/month)"]
+        sizes = [df_monthlyAnalysisFilter.loc[df_monthlyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+
+    with st.expander("**Distribución de energía generada**", icon="📊"):
+        labels = ["Egen_PV(kWh/month)", "Egen_AERO(kWh/month)"]
+        sizes = [df_monthlyAnalysisFilter.loc[df_monthlyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+
+    with st.expander(f"**Curva de energías :blue[{optionYearRange}-{optionMonthRange}]**", icon="📈"):
+        x = df_dailyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d")
+        dict_y = {
+            "value": [df_dailyAnalysisFilter["Edem(kWh/day)"],
+                      df_dailyAnalysisFilter["Egen(kWh/day)"],
+                      df_dailyAnalysisFilter["Eload(kWh/day)"]],
+            "label": ["Edem(kWh/day)", "Egen(kWh/day)", "Eload(kWh/day)"],
+            "linestyle": ["-", "-", "-"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Day", ylabel="Energy (kWh/day)", set_ylim0=False)
+
+    with st.expander(f"**Curva energía generada :blue[{optionYearRange}-{optionMonthRange}]**", icon="📈"):
+        x = df_dailyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d")
+
+        dict_y = {
+            "value": [df_dailyAnalysisFilter["Egen_INVPV(kWh/day)"],
+                      df_dailyAnalysisFilter["Egen_INVAERO(kWh/day)"],
+                      df_dailyAnalysisFilter["Egen(kWh/day)"]],
+            "label": ["Egen_PV(kWh/day)", "Egen_AERO(kWh/day)", "Egen(kWh/day)"],
+            "linestyle": ["-", "-", "--"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Day", ylabel="Energy (kWh/day)", set_ylim0=True)
+
+    with st.expander(f"**Curva energía exportada :blue[{optionYearRange}-{optionMonthRange}]**", icon="📈"):
+        x = df_dailyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d")
+
+        dict_y = {
+            "value": [df_dailyAnalysisFilter["Exct1(kWh/day)"],
+                      df_dailyAnalysisFilter["Exct2(kWh/day)"],
+                      df_dailyAnalysisFilter["Eexp(kWh/day)"]],
+            "label": ["Exct1(kWh/day)", "Exct2(kWh/day)", "Eexp(kWh/day)"],
+            "linestyle": ["-", "-", "--"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Day", ylabel="Energy (kWh/day)", set_ylim0=True)
+
+    columnsPrint = df_monthlyAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
+    general.printData(dataframe=df_monthlyAnalysisFilter, columns_print=columnsPrint)
+
+    return
+
+def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd.DataFrame, optionYearRange):
+    
+    df_annualAnalysisFilter = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+    df_monthlyAnalysisFilter = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+
+    with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
+        labels = ["Eauto(kWh/year)", "Exct1(kWh/year)", "Exct2(kWh/year)"]
+        sizes = [df_annualAnalysisFilter.loc[df_annualAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+
+    with st.expander("**Distribución de energía generada**", icon="📊"):
+        labels = ["Egen_PV(kWh/year)", "Egen_AERO(kWh/year)"]
+        sizes = [df_annualAnalysisFilter.loc[df_annualAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+
+        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+
+    with st.expander(f"**Curva de energías :blue[{optionYearRange}]**", icon="📈"):
+        x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
+        
+        dict_y = {
+            "value": [df_monthlyAnalysisFilter["Edem(kWh/month)"],
+                      df_monthlyAnalysisFilter["Egen(kWh/month)"],
+                      df_monthlyAnalysisFilter["Eload(kWh/month)"]],
+            "label": ["Edem(kWh/month)", "Egen(kWh/month)", "Eload(kWh/month)"],
+            "linestyle": ["-", "-", "-"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Month", ylabel="Energy (kWh/month)", set_ylim0=False)
+
+    with st.expander(f"**Curva energía generada :blue[{optionYearRange}]**", icon="📈"):
+        x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
+
+        dict_y = {
+            "value": [df_monthlyAnalysisFilter["Egen_INVPV(kWh/month)"],
+                      df_monthlyAnalysisFilter["Egen_INVAERO(kWh/month)"],
+                      df_monthlyAnalysisFilter["Egen(kWh/month)"]],
+            "label": ["Egen_PV(kWh/month)", "Egen_AERO(kWh/month)", "Egen(kWh/month)"],
+            "linestyle": ["-", "-", "--"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Month", ylabel="Energy (kWh/month)", set_ylim0=True)
+
+    with st.expander(f"**Curva energía exportada :blue[{optionYearRange}]**", icon="📈"):
+        x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
+        y1 = df_monthlyAnalysisFilter["Exct1(kWh/month)"]
+        y2 = df_monthlyAnalysisFilter["Exct2(kWh/month)"]
+        y3 = df_monthlyAnalysisFilter["Eexp(kWh/month)"]
+
+        dict_y = {
+            "value": [df_monthlyAnalysisFilter["Exct1(kWh/month)"],
+                      df_monthlyAnalysisFilter["Exct2(kWh/month)"],
+                      df_monthlyAnalysisFilter["Eexp(kWh/month)"]],
+            "label": ["Exct1(kWh/month)", "Exct2(kWh/month", "Eexp(kWh/month)"],
+            "linestyle": ["-", "-", "--"]
+        }
+
+        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Month", ylabel="Energy (kWh/month)", set_ylim0=True)
+
+    columnsPrint = df_annualAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
+    general.printData(dataframe=df_annualAnalysisFilter, columns_print=columnsPrint)
+
+    return
 
 
 
