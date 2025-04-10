@@ -57,24 +57,10 @@ showOutputPV = [f"{params_PV[elm]['label']}{params_PV[elm]['unit']}: {params_PV[
 
 selectDataEntryOptions = ["📝 Ingresar datos del proyecto",
                           "💾 Cargar archivo de proyecto XLSX",
-                          "💾 Cargar archivo de componentes YAML"]
+                          "💾 Cargar archivo de componentes YAML",
+                          "🖥️ Ingresar datos del proyecto con ayuda del banco de componentes"]
 
 #%% session state
-
-if 'check_DATA' not in st.session_state:
-    st.session_state['check_DATA'] = False
-
-if 'check_PV' not in st.session_state:
-    st.session_state['check_PV'] = False
-
-if 'check_INVPV' not in st.session_state:
-    st.session_state['check_INVPV'] = False
-
-if 'check_AERO' not in st.session_state:
-    st.session_state['check_AERO'] = False
-
-if 'check_INVAERO' not in st.session_state:
-    st.session_state['check_INVAERO'] = False
 
 if 'dictDataOnGrid' not in st.session_state:
     st.session_state['dictDataOnGrid'] = None
@@ -263,6 +249,7 @@ with tab2:
         
 with tab3:
     st.session_state["dictDataOnGrid"] = None
+    flagSubmittedAnalysis, uploaderXlsx = False, None
 
     with st.container(border=True):
         uploaderXlsx = st.file_uploader(label="**Cargar archivo :blue[Results_OffGrid] EXCEL**", type=["xlsx"], key='uploaderXlsx')  
@@ -270,28 +257,38 @@ with tab3:
 
         if submitted:
             if uploaderXlsx is not None:
-                try:
-                    df_data = pd.read_excel(uploaderXlsx, sheet_name="Result")
-                    dict_params = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
-                    timeInfo = general.getTimeData(df_data)
-
-                    df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
-
-                    df_dailyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "day", "OnGrid")
-                    df_monthlyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "month", "OnGrid")
-                    df_annualResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "year", "OnGrid")
-                    bytesFile = general.toExcelAnalysis(df_data, dict_params, df_dailyResult, df_monthlyResult, df_annualResult)
-
-                    df_download = st.download_button(
-                        label="💾 Descargar **:blue[Análisis] XLSX**",
-                        data=bytesFile,
-                        file_name=general.nameFileHead(name="Analysis_OnGrid.xlsx"),
-                        mime='xlsx')
-
-                except:
-                    st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+                flagSubmittedAnalysis = True
             else:
-                st.error("Cargar **Dataset generación Off-Grid**", icon="🚨")
+                st.warning("**Cargar archivo :blue[Results_OffGrid]**", icon="⚠️")
+
+    if flagSubmittedAnalysis:
+        nameFileXlsx = uploaderXlsx.name
+        if nameFileXlsx.split(" ")[1].split(".")[0] == "Results_OnGrid":
+            try:
+                df_data = pd.read_excel(uploaderXlsx, sheet_name="Result")
+                dict_params = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
+                timeInfo = general.getTimeData(df_data)
+
+                df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
+
+                df_dailyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "day", "OnGrid")
+                df_monthlyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "month", "OnGrid")
+                df_annualResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "year", "OnGrid")
+                bytesFile = general.toExcelAnalysis(df_data, dict_params, df_dailyResult, df_monthlyResult, df_annualResult)
+
+                st.download_button(
+                    label="💾 Descargar **:blue[Análisis] XLSX**",
+                    data=bytesFile,
+                    file_name=general.nameFileHead(name="Analysis_OnGrid.xlsx"),
+                    mime="xlsx",
+                    on_click="ignore"
+                    )
+
+            except:
+                st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
+        else:
+            st.error(f"**Nombre de archivo no valido :blue[{nameFileXlsx}]**", icon="🚨")
+
 
 with tab4:
     st.session_state["dictDataOnGrid"] = None
