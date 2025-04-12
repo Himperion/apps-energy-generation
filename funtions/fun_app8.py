@@ -30,8 +30,8 @@ dict_reportParams = {
 def getParametersINV_data(INV_data: dict) -> dict:
 
     if INV_data is not None:
-        INV_data['Iac_nom'] = round((INV_data['Pac_max']*1000)/(np.sqrt(dict_phases[INV_data['phases']]['Num'])*INV_data['Vac_nom']), 4)
-        INV_data['Rinv'] = round((INV_data['Vac_max'] - INV_data['Vac_nom'])/INV_data['Iac_nom'], 4)
+        INV_data['Iac_nom'] = round(float((INV_data['Pac_max']*1000)/(np.sqrt(dict_phases[INV_data['phases']]['Num'])*INV_data['Vac_nom'])), 4)
+        INV_data['Rinv'] = round(float((INV_data['Vac_max'] - INV_data['Vac_nom'])/INV_data['Iac_nom']), 4)
 
     return INV_data
 

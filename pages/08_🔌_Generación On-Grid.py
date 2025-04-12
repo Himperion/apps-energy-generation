@@ -153,11 +153,13 @@ with tab2:
                     uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
 
             elif projectDataEntry == selectDataEntryOptions[2]:
-                with st.container(border=True):
-                    uploadedXlsxDATA = st.file_uploader(label="📋 **Cargar archivo de datos de carga, temperatura de operación y potencial energetico del sitio EXCEL**", type=["xlsx"], key="uploadedXlsxDATA")
+                uploadedXlsxDATA, uploadedYamlCOMPONENTS = None, None
 
                 with st.container(border=True):
-                    uploadedYamlCOMPONENTS = st.file_uploader(label="💾 **Cargar archivo de componentes On-Grid: :blue[Components_OnGrid] YAML**", type=["yaml", "yml"])
+                    uploadedXlsxDATA = st.file_uploader(label="📋 **Cargar archivo de datos de carga, temperatura de operación y potencial energético del sitio EXCEL**", type=["xlsx"], key="uploadedXlsxDATA")
+
+                with st.container(border=True):
+                    uploadedYamlCOMPONENTS = st.file_uploader(label="💾 **Cargar archivo de componentes On-Grid: :blue[Components_OnGrid] YAML**", type=["yaml", "yml"], key="uploadedYamlCOMPONENTS")
         
             elif projectDataEntry == selectDataEntryOptions[3]:
                 selected_PV, selected_INVPV = None, None
@@ -185,7 +187,6 @@ with tab2:
                                 PVs = general.widgetNumberImput(dictParam=params_PV["PVs"], key="PVs", disabled=False)
                             with col2:
                                 PVp = general.widgetNumberImput(dictParam=params_PV["PVp"], key="PVp", disabled=False)
-                        
 
                         with st.container(border=True):
                             st.markdown(f"**:blue[{dict_components['INVPV']['label']}]**")
@@ -273,7 +274,21 @@ with tab2:
                     st.session_state["dictDataOnGrid"] = {**{"df_data": df_data}, **TOTAL_data}
 
                 elif projectDataEntry == selectDataEntryOptions[2]:
-                    st.text("Programar aca")
+                    df_data, dictDataOnGrid = None, {}
+
+                    if uploadedXlsxDATA is not None:
+                        df_data = pd.read_excel(uploadedXlsxDATA)
+                    else:
+                        st.warning("Cargar archivo **XLSX** (.xlsx)", icon="⚠️")
+
+                    if uploadedYamlCOMPONENTS is not None:
+                        dictDataOnGrid = yaml.safe_load(uploadedYamlCOMPONENTS)
+                    else:
+                        st.warning("Cargar archivo  de componentes OffGrid **YAML** (.yaml)", icon="⚠️")
+
+                    if len(dictDataOnGrid) > 0:
+                        st.session_state["dictDataOnGrid"] = {**{"df_data": df_data}, **dictDataOnGrid}
+
 
                 elif projectDataEntry == selectDataEntryOptions[3]:
                     if len(generationOptions) != 0:
@@ -318,8 +333,8 @@ with tab2:
 
                             validateComponents = general.getDictValidateComponent(validateEntries=validateEntries, generationType="OnGrid")
                             checkProject = general.getCheckValidateGeneration(**componentInTheProject, **validateComponents,
-                                                                            validateGE=None, validateBAT=None,
-                                                                            generationType="OnGrid")
+                                                                              validateGE=None, validateBAT=None,
+                                                                              generationType="OnGrid")
                             
                             if checkProject:
                                 numberPhases = general.getNumberPhases(INVPV_data=INVPV_data, INVAERO_data=INVAERO_data, GE_data=None)
@@ -343,7 +358,7 @@ with tab2:
                                 else:
                                     st.error("Incompatibilidad de conexión entre inversores", icon="🚨")
                         else:
-                            st.error(f"**Error en el archivo: :blue[{nameFileXlsxDATA}]**", icon="🚨")
+                            st.warning(f"**Debe ingresar archivo de datos de carga, temperatura de operación y potencial energético del sitio**", icon="⚠️")
                     else:
                         st.warning("**Debe ingresar por lo menos una opción de generación**", icon="⚠️")
 

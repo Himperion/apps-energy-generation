@@ -183,6 +183,8 @@ def selectedRowColumn(selected_row: pd.DataFrame, params: dict, key: str):
             output_value = str(value)
         elif params[key]["data_type"] == "list":
             output_value = fixDataTypeList(value)
+        else:
+            st.text(f" -- {key}: {value}")
     
     return output_value
 
