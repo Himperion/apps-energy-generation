@@ -4,8 +4,9 @@ import pandas as pd
 import numpy as np
 import yaml, io, calendar
 from datetime import datetime, timedelta
+from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode, StAggridTheme
 
-from funtions import fun_app5, fun_app6, fun_app7, fun_app8, fun_app9
+from funtions import fun_app1, fun_app5, fun_app6, fun_app7, fun_app8, fun_app9
 
 listGenerationOptions = ["Generación solar", "Generación eólica", "Respaldo grupo electrógeno"]
 
@@ -671,6 +672,11 @@ def initializeDataFrameColumns(df_grid: pd.DataFrame, generationType: str) -> pd
         df_grid["SOC(t)"] = 0.0
         df_grid["DOD(t)"] = 0.0
 
+        df_grid["Ia_GE(A)"] = 0.0
+        df_grid["Vt_GE(V)"] = 0.0
+        df_grid["Consumo_GE(l/h)"] = 0.0
+        df_grid["Eficiencia_GE(%)"] = 0.0
+        
     return df_grid
 
 def getAddUniqueColumnsOptionsData(TOTAL_data: dict, columnsOptionsData: dict):
@@ -956,6 +962,10 @@ def fromMonthGetIndex(month):
 
     return listMonths.index(month) + 1
 
+def getDictDataRow(selected_row: pd.DataFrame, key: str):
+
+    return fun_app1.get_dict_data(selected_row, key)
+
 #%% funtions streamlit
 
 def getWidgetNumberInput(label: str, disabled: bool, key: str, variable: dict):
@@ -1079,3 +1089,30 @@ def printData(dataframe: pd.DataFrame, columns_print: list):
                 st.markdown(dataframe.loc[dataframe.index[0], columns_print[i]])
 
     return
+
+def dataframe_AgGrid(dataframe: pd.DataFrame, height: int) -> pd.DataFrame:
+
+    gb = GridOptionsBuilder.from_dataframe(dataframe)
+    gb.configure_selection(selection_mode="single", use_checkbox=True)
+    gb.configure_side_bar()
+    gridOptions = gb.build()
+
+    data = AgGrid(dataframe,
+                  gridOptions=gridOptions,
+                  enable_enterprise_modules=True,
+                  allow_unsafe_jscode=True,
+                  update_mode=GridUpdateMode.SELECTION_CHANGED,
+                  columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
+                  height=height)
+    
+    """
+    custom_theme = (
+        StAggridTheme(base="balham").withParams({"fontSize": 16,
+                                                 "rowBorder": False,
+                                                 "backgroundColor": "#FFFFFF"}).withParts(['iconSetMaterial'])
+            )
+    """
+    
+
+
+    return data["selected_rows"]

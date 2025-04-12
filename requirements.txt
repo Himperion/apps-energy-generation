@@ -70,7 +70,7 @@ soupsieve==2.6
 st-annotated-text==4.0.2
 st-theme==1.2.3
 streamlit==1.44.1
-streamlit-aggrid==1.0.4.post3
+streamlit-aggrid==1.1.2
 streamlit-camera-input-live==0.2.0
 streamlit-card==1.0.2
 streamlit-embedcode==0.1.2

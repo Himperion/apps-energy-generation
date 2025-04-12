@@ -21,6 +21,8 @@ with open("files//[PV] - dict_replace.yaml", 'r') as archivo:
 with open("files//[AERO] - params.yaml", 'r') as archivo:
     params_AERO = yaml.safe_load(archivo)
 
+dir_components = "files//[DATA] - Components.xlsx"
+
 optionsColumnsUploadedDATA = {
     "Dates": ("dates (Y-M-D hh:mm:ss)"),
     "Geff" : ("Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)"),
@@ -93,17 +95,16 @@ with tab2:
         projectDataEntry = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                         index=None, placeholder="Selecciona una opción")
         
-        if projectDataEntry == selectDataEntryOptions[0]:
+        if projectDataEntry == selectDataEntryOptions[0] or projectDataEntry == selectDataEntryOptions[3]:
             uploadedYamlPV, uploadedYamlINV_PV = None, None
             uploadedYamlAERO, uploadedYamlINV_AERO = None, None
             uploadedXlsxDATA = None
             PVs, PVp, rho, V_PCC = None, None, None, None
 
-            generationOptions = st.multiselect(label="Opciones de generación eléctrica", options=listGenerationOptions, default=listGenerationOptions[0])
+            generationOptions = st.multiselect(label="Opciones de generación eléctrica", options=listGenerationOptions, default=None)
 
             with st.container(border=True):
-                st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial energetico del sitio:]**")
-                uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
+                uploadedXlsxDATA = st.file_uploader(label="📋 **Cargar archivo de datos de carga, temperatura de operación y potencial energetico del sitio EXCEL**", type=["xlsx"], key='uploadedYamlDATA')
 
                 if listGenerationOptions[1] in generationOptions:
                     rho = general.widgetNumberImput(dictParam=params_AERO["rho"], key="rho", disabled=False)
@@ -111,7 +112,6 @@ with tab2:
                     rho = None
                 
         with st.form("On-Grid", border=False):
-
             if projectDataEntry == selectDataEntryOptions[0]:
                 if listGenerationOptions[0] in generationOptions:
                     with st.container(border=True):
@@ -144,8 +144,7 @@ with tab2:
                             uploadedYamlINV_AERO = st.file_uploader(label="**Cargar archivo YAML**", type=["yaml", "yml"], key='uploadedYamlINV_AERO')
 
                 with st.container(border=True):
-                    st.markdown("⚡ **PCC (Punto de conexión común**")
-                    V_PCC = st.number_input(label="Tensión del punto de conexión común", value=127.0, placeholder="Ingrese un valor",
+                    V_PCC = st.number_input(label="⚡ **Tensión PCC (punto de conexión común)**", value=127.0, placeholder="Ingrese un valor",
                                             format="%0.1f", step=None, min_value=0.0, max_value=1000.0)
                     
             elif projectDataEntry == selectDataEntryOptions[1]:
@@ -153,11 +152,70 @@ with tab2:
                     st.markdown("💾 **:blue[Cargar archivo de proyecto On-Grid]**")
                     uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
 
+            elif projectDataEntry == selectDataEntryOptions[2]:
+                with st.container(border=True):
+                    uploadedXlsxDATA = st.file_uploader(label="📋 **Cargar archivo de datos de carga, temperatura de operación y potencial energetico del sitio EXCEL**", type=["xlsx"], key="uploadedXlsxDATA")
 
+                with st.container(border=True):
+                    uploadedYamlCOMPONENTS = st.file_uploader(label="💾 **Cargar archivo de componentes On-Grid: :blue[Components_OnGrid] YAML**", type=["yaml", "yml"])
+        
+            elif projectDataEntry == selectDataEntryOptions[3]:
+                selected_PV, selected_INVPV = None, None
+                selected_AERO, selected_INVAERO = None, None
+
+                if listGenerationOptions[0] in generationOptions:
+                    df_PV = general.getDataComponent(sheetLabel=dict_components["PV"]["sheet_label"], dir=dir_components, onLine=True)
+                    df_PV = df_PV.drop(columns=["datasheet"])
+                    df_INVPV = general.getDataComponent(sheetLabel=dict_components["INVPV"]["sheet_label"], dir=dir_components, onLine=True)
+                    df_INVPV = df_INVPV.drop(columns=["datasheet"])
+                    df_INVPV = df_INVPV[df_INVPV["grid_type"] == "On-Grid"]
+                    
+                    with st.container(border=True):
+                        st.markdown("☀️ **:blue[Generación de energía solar]**")
+
+                        with st.container(border=True):
+                            st.markdown(f"**:blue[{dict_components['PV']['label']}]**")
+                            selected_PV = general.dataframe_AgGrid(dataframe=df_PV, height=250)
+
+                        with st.container(border=True):
+                            st.markdown("🧑‍🔧 **:blue[Conexión de los módulos]**")
+                            col1, col2 = st.columns(2)
+
+                            with col1:
+                                PVs = general.widgetNumberImput(dictParam=params_PV["PVs"], key="PVs", disabled=False)
+                            with col2:
+                                PVp = general.widgetNumberImput(dictParam=params_PV["PVp"], key="PVp", disabled=False)
+                        
+
+                        with st.container(border=True):
+                            st.markdown(f"**:blue[{dict_components['INVPV']['label']}]**")
+                            selected_INVPV = general.dataframe_AgGrid(dataframe=df_INVPV, height=250)
+
+                if listGenerationOptions[1] in generationOptions:
+                    df_AERO = general.getDataComponent(sheetLabel=dict_components["AERO"]["sheet_label"], dir=dir_components, onLine=True)
+                    df_AERO = df_AERO.drop(columns=["datasheet"])
+                    df_INVAERO = general.getDataComponent(sheetLabel=dict_components["INVAERO"]["sheet_label"], dir=dir_components, onLine=True)
+                    df_INVAERO = df_INVAERO.drop(columns=["datasheet"])
+                    df_INVAERO = df_INVAERO[df_INVAERO["grid_type"] == "On-Grid"]
+                    
+                    with st.container(border=True):
+                        st.markdown("🌀 **:green[Generación de energía eólica]**")
+
+                        with st.container(border=True):
+                            st.markdown(f"**:green[{dict_components['AERO']['label']}]**")
+                            selected_AERO = general.dataframe_AgGrid(dataframe=df_AERO, height=250)
+
+                        with st.container(border=True):
+                            st.markdown(f"**:green[{dict_components['INVAERO']['label']}]**")
+                            selected_INVAERO = general.dataframe_AgGrid(dataframe=df_INVAERO, height=250)
+
+                with st.container(border=True):
+                    V_PCC = st.number_input(label="⚡ **Tensión PCC (punto de conexión común)**", value=127.0, placeholder="Ingrese un valor",
+                                            format="%0.1f", step=None, min_value=0.0, max_value=1000.0)
+                
             submitted = st.form_submit_button("Aceptar")
 
             if submitted:
-
                 if projectDataEntry == selectDataEntryOptions[0]:
                     checkProject, validateEntries = False, general.initializeDictValidateEntries(generationType="OnGrid")
                     componentInTheProject = general.getDictComponentInTheProject(generationOptions)
@@ -170,8 +228,7 @@ with tab2:
                         validateEntries["check_DATA"], df_data, columnsOptionsData = general.getDataValidation(uploadedXlsxDATA, componentInTheProject)
 
                         if len(generationOptions) != 0:
-                            PV_data, INVPV_data  = None, None
-                            AERO_data, INVAERO_data = None, None
+                            PV_data, INVPV_data, AERO_data, INVAERO_data  = None, None, None, None
 
                             if componentInTheProject["generationPV"]:       # Generación PV
                                 validateEntries, PV_data, INVPV_data = general.getDataOnGridValidation(uploadedYamlPV, uploadedYamlINV_PV, validateEntries, "PV")
@@ -215,7 +272,81 @@ with tab2:
 
                     st.session_state["dictDataOnGrid"] = {**{"df_data": df_data}, **TOTAL_data}
 
-                    
+                elif projectDataEntry == selectDataEntryOptions[2]:
+                    st.text("Programar aca")
+
+                elif projectDataEntry == selectDataEntryOptions[3]:
+                    if len(generationOptions) != 0:
+                        PV_data, INVPV_data, AERO_data, INVAERO_data  = None, None, None, None
+                        checkProject, validateEntries = False, general.initializeDictValidateEntries(generationType="OnGrid")
+                        componentInTheProject = general.getDictComponentInTheProject(generationOptions)
+                        
+                        if uploadedXlsxDATA is not None:
+                            nameFileXlsxDATA = uploadedXlsxDATA.name
+                            validateEntries["check_DATA"], df_data, columnsOptionsData = general.getDataValidation(uploadedXlsxDATA, componentInTheProject)
+
+                        if validateEntries["check_DATA"]:
+                            if componentInTheProject["generationPV"]:       # Generación PV
+                                if selected_PV is not None and selected_INVPV is not None:
+                                    selected_PV.reset_index(drop=True, inplace=True)
+                                    selected_INVPV.reset_index(drop=True, inplace=True)
+                                    
+                                    PV_data = general.getDictDataRow(selected_row=selected_PV, key="PV")
+                                    INVPV_data = general.getDictDataRow(selected_row=selected_INVPV, key="INVPV")
+
+                                    validateEntries["check_PV"], validateEntries["check_INVPV"] = True, True
+                                else:
+                                    if selected_PV is None:
+                                        st.warning(f"**Falta agregar componente: :blue[{dict_components['PV']['name']}]**", icon="⚠️")
+                                    if selected_INVPV is None:
+                                        st.warning(f"**Falta agregar componente: :blue[{dict_components['INVPV']['name']}]**", icon="⚠️")
+
+                            if componentInTheProject["generationAERO"]:     # Generación AERO
+                                if selected_AERO is not None and selected_INVAERO is not None:
+                                    selected_AERO.reset_index(drop=True, inplace=True)
+                                    selected_INVAERO.reset_index(drop=True, inplace=True)
+
+                                    AERO_data = general.getDictDataRow(selected_row=selected_AERO, key="AERO")
+                                    INVAERO_data = general.getDictDataRow(selected_row=selected_INVAERO, key="INVAERO")
+
+                                    validateEntries["check_AERO"], validateEntries["check_INVAERO"] = True, True
+                                else:
+                                    if selected_AERO is None:
+                                        st.warning(f"**Falta agregar componente: :blue[{dict_components['AERO']['name']}]**", icon="⚠️")
+                                    if selected_INVAERO is None:
+                                        st.warning(f"**Falta agregar componente: :blue[{dict_components['INVAERO']['name']}]**", icon="⚠️")
+
+                            validateComponents = general.getDictValidateComponent(validateEntries=validateEntries, generationType="OnGrid")
+                            checkProject = general.getCheckValidateGeneration(**componentInTheProject, **validateComponents,
+                                                                            validateGE=None, validateBAT=None,
+                                                                            generationType="OnGrid")
+                            
+                            if checkProject:
+                                numberPhases = general.getNumberPhases(INVPV_data=INVPV_data, INVAERO_data=INVAERO_data, GE_data=None)
+
+                                if numberPhases is not None:
+                                    st.session_state["dictDataOnGrid"] = {
+                                        "df_data": df_data,
+                                        "PV_data": PV_data,
+                                        "INVPV_data": fun_app8.getParametersINV_data(INVPV_data),
+                                        "AERO_data": AERO_data,
+                                        "INVAERO_data": fun_app8.getParametersINV_data(INVAERO_data),
+                                        "rho": rho,
+                                        "PVs": PVs,
+                                        "PVp": PVp,
+                                        "V_PCC": V_PCC,
+                                        "columnsOptionsData": columnsOptionsData,
+                                        "numberPhases": numberPhases,
+                                        "componentInTheProject": componentInTheProject,
+                                        "generationType": "OnGrid"
+                                        }
+                                else:
+                                    st.error("Incompatibilidad de conexión entre inversores", icon="🚨")
+                        else:
+                            st.error(f"**Error en el archivo: :blue[{nameFileXlsxDATA}]**", icon="🚨")
+                    else:
+                        st.warning("**Debe ingresar por lo menos una opción de generación**", icon="⚠️")
+
     if st.session_state["dictDataOnGrid"] is not None:
 
         df_onGrid = fun_app8.generationOnGrid(**st.session_state["dictDataOnGrid"])
@@ -228,14 +359,16 @@ with tab2:
             df_downloadXLSX = st.download_button(
                 label="💾 Descargar **:blue[Archivo de proyecto On-Grid] XLSX**",
                 data=bytesFileExcelProject,
-                file_name=general.nameFileHead(name="project_OnGrid.xlsx"),
-                mime="xlsx")
+                file_name=general.nameFileHead(name="Project_OnGrid.xlsx"),
+                mime="xlsx",
+                on_click="ignore")
             
             dict_downloadYAML = st.download_button(
                 label="💾 Descargar **:blue[Archivo de componentes del proyecto On-Grid] YAML**",
                 data=bytesFileYamlComponets,
-                file_name=general.nameFileHead(name="components_OnGrid.yaml"),
-                mime="text/yaml")
+                file_name=general.nameFileHead(name="Components_OnGrid.yaml"),
+                mime="text/yaml",
+                on_click="ignore")
             
         with st.container(border=True):
             st.markdown("**Archivos de resultados:**")
@@ -243,7 +376,8 @@ with tab2:
                 label="📄 Descargar **:blue[Archivo de resultado On-Grid] XLSX**",
                 data=bytesFileExcelResults,
                 file_name=general.nameFileHead(name="Results_OnGrid.xlsx"),
-                mime='xlsx')
+                mime='xlsx',
+                on_click="ignore")
             
         st.session_state["dictDataOnGrid"] = None
         
@@ -252,14 +386,14 @@ with tab3:
     flagSubmittedAnalysis, uploaderXlsx = False, None
 
     with st.container(border=True):
-        uploaderXlsx = st.file_uploader(label="**Cargar archivo :blue[Results_OffGrid] EXCEL**", type=["xlsx"], key='uploaderXlsx')  
+        uploaderXlsx = st.file_uploader(label="**Cargar archivo :blue[Results_OnGrid] EXCEL**", type=["xlsx"], key='uploaderXlsx')  
         submitted = st.button("Aceptar")
 
         if submitted:
             if uploaderXlsx is not None:
                 flagSubmittedAnalysis = True
             else:
-                st.warning("**Cargar archivo :blue[Results_OffGrid]**", icon="⚠️")
+                st.warning("**Cargar archivo :blue[Results_OnGrid]**", icon="⚠️")
 
     if flagSubmittedAnalysis:
         nameFileXlsx = uploaderXlsx.name
@@ -277,7 +411,7 @@ with tab3:
                 bytesFile = general.toExcelAnalysis(df_data, dict_params, df_dailyResult, df_monthlyResult, df_annualResult)
 
                 st.download_button(
-                    label="💾 Descargar **:blue[Análisis] XLSX**",
+                    label="💾 Descargar **:blue[Análisis On-Grid] XLSX**",
                     data=bytesFile,
                     file_name=general.nameFileHead(name="Analysis_OnGrid.xlsx"),
                     mime="xlsx",
@@ -288,7 +422,6 @@ with tab3:
                 st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
         else:
             st.error(f"**Nombre de archivo no valido :blue[{nameFileXlsx}]**", icon="🚨")
-
 
 with tab4:
     st.session_state["dictDataOnGrid"] = None

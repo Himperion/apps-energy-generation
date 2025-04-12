@@ -66,13 +66,11 @@ st.markdown("# 🧩 Componentes")
 tab1, tab2, tab3 = st.tabs(listTabs) 
 
 with tab1:
-    
     st.session_state['component_dict'] = None
     st.session_state['component_description'] = None
 
     st.markdown("Este aplicativo para hacer rápido y sencillo el ingreso de datos permite la inserción de componentes por medio de archivos **YAML**.")
     st.markdown(f"Puede crear sus propios archivos de componentes **YAML** en la pestaña de **:red[{listTabs[1]}]** o puede descargarlos desde una selección predeterminada desde la pestaña **:red[{listTabs[2]}]**.")
-
 
 with tab2:
     submitted_general, submitted_PV, submitted_AERO, submitted_GE, submitted_GE = False, False, False, False, False

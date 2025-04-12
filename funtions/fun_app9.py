@@ -338,7 +338,6 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
         df_grid.loc[index, "IbbDC_PV(A)"] = Ibb_PV
         df_grid.loc[index, "IbbDC_AERO(A)"] = Ibb_AERO
     
-
         df_grid.loc[index, "PrcDC_PV(kW)"] = n_RcPV*Pgen_PV
         df_grid.loc[index, "VrcDC_PV(V)"] = Vbb
         df_grid.loc[index, "IrcDC_PV(A)"] = IrcDC_PV
@@ -374,11 +373,11 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
 
         # Pruebas
         
-        df_grid.loc[index, "NodoTotal"] = PrcDC_PV + PrcDC_AERO - Pbb - PinvDC_PV - PinvDC_AERO
-        df_grid.loc[index, "Nodo1"] = PrcDC_PV - PinvDC_PV - Pbb_PV
-        df_grid.loc[index, "Nodo2"] = PrcDC_AERO - PinvDC_AERO - Pbb_AERO
-        df_grid.loc[index, "Nodo3"] = Ibb - (Ibb_PV + Ibb_AERO)
-        df_grid.loc[index, "Nodo4"] = (Pbb_PV + Pbb_AERO) - Pbb
+        #df_grid.loc[index, "NodoTotal"] = PrcDC_PV + PrcDC_AERO - Pbb - PinvDC_PV - PinvDC_AERO
+        #df_grid.loc[index, "Nodo1"] = PrcDC_PV - PinvDC_PV - Pbb_PV
+        #df_grid.loc[index, "Nodo2"] = PrcDC_AERO - PinvDC_AERO - Pbb_AERO
+        #df_grid.loc[index, "Nodo3"] = Ibb - (Ibb_PV + Ibb_AERO)
+        #df_grid.loc[index, "Nodo4"] = (Pbb_PV + Pbb_AERO) - Pbb
     
     return df_grid
 
@@ -541,6 +540,11 @@ def getDictCountSwLoad(df_timeLapse: pd.DataFrame) -> dict:
 def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLapse: str, date):
 
     dictCountSwLoad = getDictCountSwLoad(df_timeLapse)
+
+    list_dftimeLapseColumns = df_timeLapse.columns.to_list()
+
+    if not "Consumo_GE(l/h)" in list_dftimeLapseColumns:
+        df_timeLapse["Consumo_GE(l/h)"] = 0.0
 
     Ebb_absorbed = df_timeLapse.loc[df_timeLapse["Pbb(kW)"] > 0, "Pbb(kW)"].sum()*(deltaMinutes/60)
     Ebb_delivered = df_timeLapse.loc[df_timeLapse["Pbb(kW)"] < 0, "Pbb(kW)"].sum()*(deltaMinutes/60)*(-1)
