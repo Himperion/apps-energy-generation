@@ -289,7 +289,6 @@ with tab2:
                     if len(dictDataOnGrid) > 0:
                         st.session_state["dictDataOnGrid"] = {**{"df_data": df_data}, **dictDataOnGrid}
 
-
                 elif projectDataEntry == selectDataEntryOptions[3]:
                     if len(generationOptions) != 0:
                         PV_data, INVPV_data, AERO_data, INVAERO_data  = None, None, None, None

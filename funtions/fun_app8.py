@@ -3,7 +3,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import mplcursors
 from datetime import datetime
+import plotly.express as px
 
 from funtions import general
 
@@ -204,19 +206,83 @@ def getBytesFileExcelProjectOnGrid(dictDataOnGrid: dict, dataKeyList: list):
     bytesFileExcel = general.toExcelResults(df=dictDataOnGrid["df_data"], dictionary=TOTAL_data,
                                             df_sheetName="Data", dict_sheetName="Params")
 
-    return TOTAL_data, bytesFileExcel            
+    return TOTAL_data, bytesFileExcel
+
+def getSizesForPieChart(df: pd.DataFrame, list_params: list) -> list:
+
+    return [df.loc[df.index[0], list_params[i]] for i in range(0,len(list_params),1)]
+
+def fromParametersGetLabels(list_params: list):
+
+    dict_replace_param = {
+        "Eauto": "Autoconsumo",
+        "Eexp": "Exportación",
+        "Eimp": "Importación",
+        "Exct1": "Excedentes tipo 1",
+        "Exct2": "Excedentes tipo 2",
+        "Egen_INVPV": "Fotovoltaica",
+        "Egen_INVAERO": "Eólica"
+    }
+
+    dict_replace_date = {
+        "day": "día"
+    }
+
+    list_out = list_params.copy()
+
+    for i in range(0,len(list_params),1):
+        for key, value in dict_replace_param.items():
+            if key in list_params[i]: 
+                list_out[i] = list_params[i].replace(key, value)
+
+    for i in range(0,len(list_out),1):
+        for key, value in dict_replace_date.items():
+            if key in list_out[i]: 
+                list_out[i] = list_out[i].replace(key, value)
+
+    for i in range(0,len(list_out),1):
+        if list_out[i].count("(") == 1 and list_out[i].count(")"):
+            list_out[i] = list_out[i].replace("(", " (")
+
+    return list_out
+
+def get_df_plot(df: pd.DataFrame, time_info: dict, params_info: dict):
+
+    dict_plot ={
+        **{time_info["name"]: df["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])},
+        **{value["label"]: df[key] for key, value in params_info.items()}
+    }
+
+    df_plot = pd.DataFrame(dict_plot)
+    df_long = df_plot.melt(id_vars=time_info["name"], var_name="Serie", value_name="Value")
+
+    return df_long
+
+def get_color_discrete_map(params_info: dict):
+
+    return {params_info[key]["label"]: params_info[key]["color"] for key in params_info}
+
 
 #%% funtions streamlit
 
-def pieChartVisualizationStreamlit(sizes: list, labels: list):
-    col1, col2, col3 = st.columns([0.15, 0.7, 0.15], vertical_alignment="bottom")
+def pieChartVisualizationStreamlit(sizes: list, labels: list, legend_title: str, colors: list, pull: list):
+    
+    fig = px.pie(
+        names=labels,
+        values=sizes
+        )
 
-    with col2:
-        fig, ax = plt.subplots()
-        ax.pie(sizes,
-            labels=[f"{labels[i][:labels[i].find('(')]}\n{round(sizes[i], 3)} {labels[i][labels[i].find('('):]}" for i in range(0,len(labels),1)],
-            autopct="%1.1f%%")
-        st.pyplot(fig, use_container_width=True)
+    fig.update_traces(
+        hovertemplate="%{label}: %{value:.2f} (%{percent})",
+        marker=dict(colors=colors),
+        pull=pull
+        )
+    fig.update_layout(
+        legend_title_text=legend_title,
+        legend=dict(orientation="h")
+        )
+
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     return
 
@@ -277,28 +343,184 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
     df_DataDaily = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == day]
     df_DataDaily = df_DataDaily.copy()
     df_DataDaily.loc[:, "Pgen(kW)"] = df_DataDaily.loc[:, "PinvAC_PV(kW)"] + df_DataDaily.loc[:, "PinvAC_AERO(kW)"]
+    
+    with st.expander("**Generación diaria**", icon="🍰"):
+    
+        col1, col2 = st.columns([0.5, 0.5])
 
-    with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
-        labels = ["Eauto(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
-        sizes = [df_dailyAnalysisFilter.loc[df_dailyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+        with col1:
+            list_params = ["Eauto(kWh/day)", "Eexp(kWh/day)"]
+            sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+            labels = fromParametersGetLabels(list_params)
+            legend_title = "Tipo de generación"
+            colors = ["magenta", "gold"]
+            pull = [0.1, 0]
 
-        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            
 
-    with st.expander("**Distribución de energía generada**", icon="📊"):
-        labels = ["Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
-        sizes = [df_dailyAnalysisFilter.loc[df_dailyAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+        with col2:
+            list_params = ["Eauto(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
+            sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+            labels = fromParametersGetLabels(list_params)
+            legend_title = "Tipo de generación"
+            colors = ["magenta", "turquoise", "violet"]
+            pull = [0.1, 0, 0]
 
-        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
+            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+        
+    with st.expander("**Atención de la carga**", icon="🍰"):
+        list_params = ["Eimp(kWh/day)", "Eauto(kWh/day)"]
+        sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+        labels = fromParametersGetLabels(list_params)
+        legend_title = "Tipo de atención"
+        colors = ["purple", "magenta"]
+        pull = [0.1, 0, 0]
 
-    with st.expander(f"**Curva de potencias para el día  :blue[{day}]**", icon="📈"):
-        x = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M')
-        dict_y = {
-            "value": [df_DataDaily["Pdem(kW)"], df_DataDaily["Load(kW)"], df_DataDaily["Pgen(kW)"]],
-            "label": ["Pdem(kW)", "Load(kW)", "Pgen(kW)"],
-            "linestyle": ["-", "-", "-"]
+        pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+    with st.expander(f"**Interacción entre demanda y generación - :blue[{day}]**", icon="📊"):
+
+        time_info ={
+            "name": "Hora",
+            "label": "Hora del día",
+            "strftime": "%H:%M"
+        }
+        params_info ={
+            "Pgen(kW)": {"label": "Generación (kW)", "color": "turquoise"},
+            "Load(kW)": {"label": "Demanda de la carga (kW)", "color": "teal"}
         }
 
-        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Hour", ylabel="Power (kW)", set_ylim0=False)
+        value_label, serie_label = "Potencia (kW)", "Tipo de interacción"
+
+        df_long = get_df_plot(df_DataDaily, time_info, params_info)
+
+
+        fig = px.bar(
+            df_long,
+            x=time_info["name"], y="Value", color="Serie", barmode="group",
+            labels={
+                time_info["name"]: time_info["label"],
+                "Value": value_label,
+                "Serie": serie_label
+            },
+            color_discrete_map=get_color_discrete_map(params_info),
+            hover_data={
+                "Value": ":.3",
+                time_info["name"]: True,
+                "Serie": True
+            }
+        )
+
+        fig.update_layout(xaxis_tickangle=-90,
+                          legend=dict(orientation="h",
+                                      y=10,
+                                      yanchor="bottom"))
+        
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    with st.expander(f"**Producción diaria - :blue[{day}]**", icon="📊"):
+        df_plot = pd.DataFrame({
+            "Hora": df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M'),
+            "Fotovoltaica (kW)": df_DataDaily["PinvAC_PV(kW)"],
+            "Eólica (kW)": df_DataDaily["PinvAC_AERO(kW)"]
+        })
+
+        df_long = df_plot.melt(id_vars="Hora", var_name="Serie", value_name="Value")
+
+        tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
+
+        with tab1:
+            list_params = ["Egen_INVPV(kWh/day)", "Egen_INVAERO(kWh/day)"]
+            sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+            labels = fromParametersGetLabels(list_params)
+            legend_title = "Tipo de fuente de generación"
+            colors=["royalblue", "green"]
+            pull = [0.1, 0]
+
+            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+        with tab2:
+            fig = px.bar(
+                df_long,
+                x="Hora", y="Value", color="Serie", barmode="group",
+                labels={
+                    "Hora": "Hora del día",
+                    "Value": "Potencia (kW)",
+                    "Serie": "Tipo de fuente de generación"
+                },
+                color_discrete_map={
+                    "Fotovoltaica (kW)": "royalblue",
+                    "Eólica (kW)": "green"
+                },
+                hover_data={
+                    "Value": ":.3",
+                    "Hora": True,
+                    "Serie": True
+                }
+            )
+
+            fig.update_layout(xaxis_tickangle=-90)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    with st.expander(f"**Demanda diaria - :blue[{day}]**", icon="📊"):
+        df_plot = pd.DataFrame({
+            "Hora": df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M'),
+            "Pdem(kW)": df_DataDaily["Pdem(kW)"]
+        })
+
+        df_plot["Exportación (kW)"], df_plot["Importación (kW)"] = 0.0, 0.0
+        df_plot.loc[df_plot["Pdem(kW)"] < 0.0, "Exportación (kW)"] = df_plot["Pdem(kW)"]
+        df_plot.loc[df_plot["Pdem(kW)"] > 0.0, "Importación (kW)"] = df_plot["Pdem(kW)"]
+        df_plot.drop(columns=["Pdem(kW)"], inplace=True)
+        df_long = df_plot.melt(id_vars="Hora", var_name="Serie", value_name="Value")
+
+        tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
+
+        with tab1:
+            col1, col2 = st.columns([0.5, 0.5])
+            with col1:
+                list_params = ["Eimp(kWh/day)", "Eexp(kWh/day)"]
+                sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+                labels = fromParametersGetLabels(list_params)
+                legend_title = "Tipo de demanda"
+                colors = ["red", "orange"]
+                pull = [0.1, 0]
+
+                pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+            with col2:
+                list_params = ["Eimp(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
+                sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+                labels = fromParametersGetLabels(list_params)
+                legend_title = "Tipo de demanda"
+                colors = ["red", "gold", "olive"]
+                pull = [0.1, 0, 0]
+
+                pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+        with tab2:
+            fig = px.bar(
+                df_long,
+                x="Hora", y="Value", color="Serie", barmode="relative",
+                labels={
+                    "Hora": "Hora del día",
+                    "Value": "Potencia (kW)",
+                    "Serie": "Tipo de demanda"
+                },
+                color_discrete_map={
+                    "Exportación (kW)": "red",
+                    "Importación (kW)": "orange"
+                },
+                hover_data={
+                    "Value": ":.3",
+                    "Hora": True,
+                    "Serie": True
+                }
+            )
+
+            fig.update_layout(xaxis_tickangle=-90)
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
     with st.expander(f"**Curva potencia generada :blue[{day}]**", icon="📈"):
         x = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime('%H:%M')
