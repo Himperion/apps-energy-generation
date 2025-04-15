@@ -229,7 +229,8 @@ def fromParametersGetLabels(list_params: list):
 
     dict_replace_date = {
         "(kWh/day)": " (kWh/día)",
-        "(kWh/month)": " (kWh/mes)"
+        "(kWh/month)": " (kWh/mes)",
+        "(kWh/year)": " (kWh/año)"
     }
 
     list_out = list_params.copy()
@@ -370,6 +371,17 @@ def displayInstantResults(df_data: pd.DataFrame, analyzeDate: datetime.date, opt
     
     return
 
+def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
+
+    columnsPrint = df_current.drop(list_drop, axis=1).columns.tolist()
+    columnsPrintRename = fromParametersGetLabels(list_params=columnsPrint)
+    dict_replace = {columnsPrint[i]: columnsPrintRename[i] for i in range(0,len(columnsPrint),1)}
+    df_current = df_current.rename(columns=dict_replace)
+
+    general.printDataFloat(dataframe=df_current, columns_print=columnsPrintRename, round_int=3)
+
+    return
+
 def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, day):
 
     df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == day]
@@ -508,31 +520,18 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
         plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", "Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
-    columnsPrint = df_dailyAnalysisFilter.drop(list_drop, axis=1).columns.tolist()
-    columnsPrintRename = fromParametersGetLabels(list_params=columnsPrint)
-    dict_replace = {columnsPrint[i]: columnsPrintRename[i] for i in range(0,len(columnsPrint),1)}
-    df_dailyAnalysisFilter = df_dailyAnalysisFilter.rename(columns=dict_replace)
-
-    general.printDataFloat(dataframe=df_dailyAnalysisFilter, columns_print=columnsPrintRename, round_int=3)
+    printDataFloatResult(df_dailyAnalysisFilter, list_drop)
 
     return
 
-def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, df_monthlyAnalysis: pd.DataFrame, optionYearRange, optionMonthRange):
+def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalysis: list, time_info: dict, value_label: str):
 
-    monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
-    df_monthlyAnalysisFilter = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
-    df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
-
-    timeAnalysis = ["month", "day"]
-    time_info = {"name": "Día", "label": "Día del mes", "strftime": "%d"}
-    value_label = "Energía (kWh/día)"
-
-    with st.expander("**Generación mensual**", icon="🍰"):
+    with st.expander(f"**Generación {time_info['description']}**", icon="🍰"):
         col1, col2 = st.columns([0.5, 0.5])
         
         with col1:
             list_params = [f"Eauto(kWh/{timeAnalysis[0]})", f"Eexp(kWh/{timeAnalysis[0]})"]
-            sizes = getSizesForPieChart(df=df_monthlyAnalysisFilter, list_params=list_params)
+            sizes = getSizesForPieChart(df=df_current, list_params=list_params)
             labels = fromParametersGetLabels(list_params)
             legend_title = "Generación:"
             colors = ["magenta", "gold"]
@@ -542,7 +541,7 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
 
         with col2:
             list_params = [f"Eauto(kWh/{timeAnalysis[0]})", f"Exct1(kWh/{timeAnalysis[0]})", f"Exct2(kWh/{timeAnalysis[0]})"]
-            sizes = getSizesForPieChart(df=df_monthlyAnalysisFilter, list_params=list_params)
+            sizes = getSizesForPieChart(df=df_current, list_params=list_params)
             labels = fromParametersGetLabels(list_params)
             legend_title = "Generación:"
             colors = ["magenta", "turquoise", "violet"]
@@ -552,15 +551,15 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
 
     with st.expander("**Atención de la carga**", icon="🍰"):
         list_params = [f"Eimp(kWh/{timeAnalysis[0]})", f"Eauto(kWh/{timeAnalysis[0]})"]
-        sizes = getSizesForPieChart(df=df_monthlyAnalysisFilter, list_params=list_params)
+        sizes = getSizesForPieChart(df=df_current, list_params=list_params)
         labels = fromParametersGetLabels(list_params)
         legend_title = "Atención:"
         colors = ["purple", "magenta"]
-        pull = [0.1, 0, 0]
+        pull = [0, 0, 0]
 
         pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
-    with st.expander(f"**Interacción entre demanda y generación**", icon="📊"):
+    with st.expander("**Interacción entre demanda y generación**", icon="📊"):
 
         params_info ={
             f"Egen(kWh/{timeAnalysis[-1]})": {"label": "Generación", "color": "turquoise"},
@@ -569,14 +568,14 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
 
         serie_label = "Interacción:"
 
-        plotVisualizationPxStreamlit(df_dailyAnalysisFilter, time_info, params_info, value_label, serie_label)
+        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
-    with st.expander(f"**Producción mensual**", icon="📊"):
+    with st.expander(f"**Producción {time_info['description']}**", icon="📊"):
         tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
         
         with tab1:
             list_params = [f"Egen_INVPV(kWh/{timeAnalysis[0]})", f"Egen_INVAERO(kWh/{timeAnalysis[0]})"]
-            sizes = getSizesForPieChart(df=df_monthlyAnalysisFilter, list_params=list_params)
+            sizes = getSizesForPieChart(df=df_current, list_params=list_params)
             labels = fromParametersGetLabels(list_params)
             legend_title = "Fuente de generación:"
             colors=["royalblue", "green"]
@@ -591,16 +590,16 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
                 }
             serie_label = "Fuente de generación:"
 
-            plotVisualizationPxStreamlit(df_dailyAnalysisFilter, time_info, params_info, value_label, serie_label)
+            plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
-    with st.expander(f"**Demanda mensual**", icon="📊"):
+    with st.expander(f"**Demanda {time_info['description']}**", icon="📊"):
         tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
 
         with tab1:
             col1, col2 = st.columns([0.5, 0.5])
             with col1:
                 list_params = [f"Eimp(kWh/{timeAnalysis[0]})", f"Eexp(kWh/{timeAnalysis[0]})"]
-                sizes = getSizesForPieChart(df=df_monthlyAnalysisFilter, list_params=list_params)
+                sizes = getSizesForPieChart(df=df_current, list_params=list_params)
                 labels = fromParametersGetLabels(list_params)
                 legend_title = "Demanda:"
                 colors = ["purple", "gold"]
@@ -610,7 +609,7 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
 
             with col2:
                 list_params = [f"Eimp(kWh/{timeAnalysis[0]})", f"Exct1(kWh/{timeAnalysis[0]})", f"Exct2(kWh/{timeAnalysis[0]})"]
-                sizes = getSizesForPieChart(df=df_monthlyAnalysisFilter, list_params=list_params)
+                sizes = getSizesForPieChart(df=df_current, list_params=list_params)
                 labels = fromParametersGetLabels(list_params)
                 legend_title = "Demanda:"
                 colors = ["purple", "turquoise", "violet"]
@@ -626,9 +625,9 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
             
             serie_label = "Demanda:"
 
-            plotVisualizationPxStreamlit(df_dailyAnalysisFilter, time_info, params_info, value_label, serie_label)
+            plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
-    with st.expander(f"**Generación mensual - Uso**", icon="📊"):
+    with st.expander(f"**Generación {time_info['description']} - Uso**", icon="📊"):
         
         params_info ={
             f"Eexp(kWh/{timeAnalysis[-1]})": {"label": "Excedentes", "color": "indigo"},
@@ -636,9 +635,9 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
             }
         serie_label = "Uso:"
 
-        plotVisualizationPxStreamlit(df_dailyAnalysisFilter, time_info, params_info, value_label, serie_label)
+        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
-    with st.expander(f"**Atención de la carga**", icon="📊"):
+    with st.expander("**Atención de la carga**", icon="📊"):
         
         params_info ={
             f"Eimp(kWh/{timeAnalysis[-1]})": {"label": "Importación", "color": "purple"},
@@ -646,78 +645,36 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
             }
         serie_label ="Atención:"
 
-        plotVisualizationPxStreamlit(df_dailyAnalysisFilter, time_info, params_info, value_label, serie_label)
+        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", f"Egen_PV(kWh/{timeAnalysis[0]})", f"Egen_AERO(kWh/{timeAnalysis[0]})"]
-    columnsPrint = df_monthlyAnalysisFilter.drop(list_drop, axis=1).columns.tolist()
-    columnsPrintRename = fromParametersGetLabels(list_params=columnsPrint)
-    dict_replace = {columnsPrint[i]: columnsPrintRename[i] for i in range(0,len(columnsPrint),1)}
-    df_monthlyAnalysisFilter = df_monthlyAnalysisFilter.rename(columns=dict_replace)
+    printDataFloatResult(df_current, list_drop)
 
-    general.printDataFloat(dataframe=df_monthlyAnalysisFilter, columns_print=columnsPrintRename, round_int=3)
+    return
+
+def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, df_monthlyAnalysis: pd.DataFrame, optionYearRange, optionMonthRange):
+
+    monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
+    df_current = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
+    df_previus = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
+
+    timeAnalysis = ["month", "day"]
+    time_info = {"name": "Día", "label": "Día del mes", "strftime": "%d", "description": "mensual"}
+    value_label = "Energía (kWh/día)"
+
+    displayResult(df_current, df_previus, timeAnalysis, time_info, value_label)
 
     return
 
 def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd.DataFrame, optionYearRange):
     
-    df_annualAnalysisFilter = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
-    df_monthlyAnalysisFilter = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+    df_current = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+    df_previus = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
 
-    with st.expander("**Distribución de energía generada en autoconsumo y excedentes**", icon="📊"):
-        labels = ["Eauto(kWh/year)", "Exct1(kWh/year)", "Exct2(kWh/year)"]
-        sizes = [df_annualAnalysisFilter.loc[df_annualAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
+    timeAnalysis = ["year", "month"]
+    time_info = {"name": "Mes", "label": "Mes del año", "strftime": "%m", "description": "mensual"}
+    value_label = "Energía (kWh/mes)"
 
-        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
-
-    with st.expander("**Distribución de energía generada**", icon="📊"):
-        labels = ["Egen_PV(kWh/year)", "Egen_AERO(kWh/year)"]
-        sizes = [df_annualAnalysisFilter.loc[df_annualAnalysisFilter.index[0], labels[i]] for i in range(0,len(labels),1)]
-
-        pieChartVisualizationStreamlit(sizes=sizes, labels=labels)
-
-    with st.expander(f"**Curva de energías :blue[{optionYearRange}]**", icon="📈"):
-        x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
-        
-        dict_y = {
-            "value": [df_monthlyAnalysisFilter["Edem(kWh/month)"],
-                      df_monthlyAnalysisFilter["Egen(kWh/month)"],
-                      df_monthlyAnalysisFilter["Eload(kWh/month)"]],
-            "label": ["Edem(kWh/month)", "Egen(kWh/month)", "Eload(kWh/month)"],
-            "linestyle": ["-", "-", "-"]
-        }
-
-        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Month", ylabel="Energy (kWh/month)", set_ylim0=False)
-
-    with st.expander(f"**Curva energía generada :blue[{optionYearRange}]**", icon="📈"):
-        x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
-
-        dict_y = {
-            "value": [df_monthlyAnalysisFilter["Egen_INVPV(kWh/month)"],
-                      df_monthlyAnalysisFilter["Egen_INVAERO(kWh/month)"],
-                      df_monthlyAnalysisFilter["Egen(kWh/month)"]],
-            "label": ["Egen_PV(kWh/month)", "Egen_AERO(kWh/month)", "Egen(kWh/month)"],
-            "linestyle": ["-", "-", "--"]
-        }
-
-        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Month", ylabel="Energy (kWh/month)", set_ylim0=True)
-
-    with st.expander(f"**Curva energía exportada :blue[{optionYearRange}]**", icon="📈"):
-        x = df_monthlyAnalysisFilter["dates (Y-M-D hh:mm:ss)"].dt.strftime("%m")
-        y1 = df_monthlyAnalysisFilter["Exct1(kWh/month)"]
-        y2 = df_monthlyAnalysisFilter["Exct2(kWh/month)"]
-        y3 = df_monthlyAnalysisFilter["Eexp(kWh/month)"]
-
-        dict_y = {
-            "value": [df_monthlyAnalysisFilter["Exct1(kWh/month)"],
-                      df_monthlyAnalysisFilter["Exct2(kWh/month)"],
-                      df_monthlyAnalysisFilter["Eexp(kWh/month)"]],
-            "label": ["Exct1(kWh/month)", "Exct2(kWh/month", "Eexp(kWh/month)"],
-            "linestyle": ["-", "-", "--"]
-        }
-
-        plotVisualizationStreamlit(x, dict_y=dict_y, xlabel="Month", ylabel="Energy (kWh/month)", set_ylim0=True)
-
-    columnsPrint = df_annualAnalysisFilter.drop("dates (Y-M-D hh:mm:ss)", axis=1).columns.tolist()
-    general.printData(dataframe=df_annualAnalysisFilter, columns_print=columnsPrint)
+    displayResult(df_current, df_previus, timeAnalysis, time_info, value_label)
 
     return

@@ -44,7 +44,7 @@ if 'dictDataOffGrid' not in st.session_state:
 
 st.markdown("# 🪫 Generación Off-Grid")
 
-tab1, tab2, tab3 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "📝 Análisis de resultados"])
+tab1, tab2, tab3, tab4 = st.tabs(["📑 Marco teórico", "💾 Entrada de datos", "📝 Análisis de resultados", "👨‍🏫 Visualización de resultados"])
 
 with tab1:
     st.session_state['dictDataOffGrid'] = None
@@ -62,7 +62,6 @@ with tab1:
 
     st.markdown("**Recomendaciones**")
     st.markdown("Antes de subir los archivos de los componentes, es necesario que consulte las fichas técnicas de cada uno. La potencia nominal del aerogenerador no debe superar los límites de potencia admitidos por el inversor y el regulador eólico. De igual forma, la potencia del arreglo de paneles fotovoltaicos debe mantenerse dentro de los límites establecidos para el inversor y el regulador fotovoltaico. Además, debe verificar que las tensiones de los reguladores de carga, tanto fotovoltaico como eólico, coincidan con la definida para su banco de baterías y, a su vez, con la tensión de entrada de los inversores. Los inversores deben tener tensiones y fases compatibles con la definida para el usuario. Por último, la potencia del grupo electrógeno debe seleccionarse en función de los puntos de mayor consumo, según la curva de demanda, considerando un margen de seguridad para evitar su sobredimensionamiento.")
-
 
 with tab2:
     generationOptions = None
@@ -332,6 +331,48 @@ with tab3:
                 st.error("Error al cargar archivo **EXCEL** (.xlsx)", icon="🚨")
         else:
             st.error(f"**Nombre de archivo no valido :blue[{nameFileXlsx}]**", icon="🚨")
+
+with tab4:
+    st.session_state["dictDataOffGrid"] = None
+    uploaderAnalysisXlsx = None
+
+    with st.container(border=True):
+        uploaderAnalysisXlsx = st.file_uploader(label="**Cargar archivo :blue[Analysis_OffGrid] EXCEL**", type=["xlsx"], key="uploaderAnalysisXlsx")
+
+    if uploaderAnalysisXlsx is not None:
+        nameFileXlsx = uploaderAnalysisXlsx.name
+        if nameFileXlsx.split(" ")[1].split(".")[0] == "Analysis_OffGrid":
+            df_data, df_dailyAnalysis, df_monthlyAnalysis, df_annualAnalysis = None, None, None, None
+            sheetNamesXls, timeInfo = [], None
+
+            try:
+                xls = pd.ExcelFile(uploaderAnalysisXlsx)
+                sheetNamesXls = xls.sheet_names
+                if "Data" in sheetNamesXls:
+                    df_data = pd.read_excel(uploaderAnalysisXlsx, sheet_name="Data")
+                    df_data["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_data["dates (Y-M-D hh:mm:ss)"])
+                if "DailyAnalysis" in sheetNamesXls:
+                    df_dailyAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="DailyAnalysis")
+                    df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"])
+                if "MonthlyAnalysis" in sheetNamesXls:
+                    df_monthlyAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="MonthlyAnalysis")
+                    df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"])
+                if "AnnualAnalysis" in sheetNamesXls:
+                    df_annualAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="AnnualAnalysis")
+                    df_annualAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_annualAnalysis["dates (Y-M-D hh:mm:ss)"], format="%Y")
+            except:
+                st.error(f"**Error al cargar archivo :blue[{nameFileXlsx}]**", icon="🚨")
+
+            if df_data is not None:
+                timeInfo = general.getTimeData(df_data)
+
+                st.text(timeInfo)
+
+
+  
+    
+
+    st.text("Ajaaaaaaaaaa")
 
 
         
