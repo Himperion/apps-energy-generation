@@ -1092,6 +1092,19 @@ def printData(dataframe: pd.DataFrame, columns_print: list):
 
     return
 
+def printDataFloat(dataframe: pd.DataFrame, columns_print: list, round_int: int):
+
+    with st.container(border=True):
+
+        for i in range(0,len(columns_print),1):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"**:blue[{columns_print[i]}:]**")
+            with col2:
+                st.markdown(round(float(dataframe.loc[dataframe.index[0], columns_print[i]]), round_int))
+
+    return
+
 def dataframe_AgGrid(dataframe: pd.DataFrame, height: int) -> pd.DataFrame:
 
     gb = GridOptionsBuilder.from_dataframe(dataframe)
