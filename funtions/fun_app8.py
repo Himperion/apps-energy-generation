@@ -222,9 +222,9 @@ def fromParametersGetLabels(list_params: list):
         "Exct2": "Excedentes tipo 2",
         "Egen_INVPV": "Generación fotovoltaica",
         "Egen_INVAERO": "Generación Eólica",
-        "Egen": "Generación",
-        "Eload": "Carga",
-        "Edem": "Demandada"
+        "Egen": "Generación total",
+        "Eload": "Demanda de la carga",
+        "Edem": "Demanda neta a la red"
     }
 
     dict_replace_date = {
@@ -274,7 +274,6 @@ def pieChartVisualizationStreamlit(sizes: list, labels: list, legend_title: str,
         names=labels,
         values=sizes
         )
-
     fig.update_traces(
         hovertemplate="%{label}<br>Valor: %{value:.3f}<br>Porcentaje: %{percent:.2%}<extra></extra>",
         marker=dict(colors=colors),
@@ -286,18 +285,23 @@ def pieChartVisualizationStreamlit(sizes: list, labels: list, legend_title: str,
         legend_title_text=legend_title,
         legend=dict(orientation="h")
         )
+    config ={
+        "displayModeBar": True,
+        "displaylogo": False,
+        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud"]
+    }
 
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig, use_container_width=True, config=config)
 
     return
 
-def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info: dict, value_label: str, serie_label: str):
+def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info: dict, value_label: str, serie_label: str, barmode="overlay", opacity=0.8):
 
     df_long = get_df_plot(df, time_info, params_info)
 
     fig = px.bar(
         df_long,
-        x=time_info["name"], y="Value", color="Serie", barmode="group",
+        x=time_info["name"], y="Value", color="Serie", barmode=barmode, opacity=opacity,
         labels={
             time_info["name"]: time_info["label"],
             "Value": value_label,
@@ -310,13 +314,18 @@ def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info:
             "Serie": True
         }
     )
-
     fig.update_layout(xaxis_tickangle=-90,
                         legend=dict(orientation="h",
                                     y=10,
                                     yanchor="bottom"))
+    config ={
+        "displayModeBar": True,
+        "displaylogo": False,
+        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud",
+                                   "zoomIn", "zoomOut", "lasso2d", "select2d"]
+    }
     
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig, use_container_width=True, config=config)
 
     return
 
@@ -429,15 +438,16 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
         labels = fromParametersGetLabels(list_params)
         legend_title = "Atención:"
         colors = ["purple", "magenta"]
-        pull = [0.1, 0, 0]
+        pull = [0, 0, 0]
 
         pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
     with st.expander(f"**Interacción entre demanda y generación**", icon="📊"):
 
         params_info ={
-            "Pgen(kW)": {"label": "Generación", "color": "turquoise"},
-            "Load(kW)": {"label": "Demanda de la carga", "color": "teal"}
+            "Load(kW)": {"label": "Demanda de la carga", "color": "teal"},
+            "Pgen(kW)": {"label": "Generación total", "color": "turquoise"}
+            
         }
         serie_label = "Interacción:"
 
@@ -517,7 +527,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
             }
         serie_label = "Atención:"
 
-        plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
+        plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", "Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
     printDataFloatResult(df_dailyAnalysisFilter, list_drop)
@@ -562,10 +572,10 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
     with st.expander("**Interacción entre demanda y generación**", icon="📊"):
 
         params_info ={
-            f"Egen(kWh/{timeAnalysis[-1]})": {"label": "Generación", "color": "turquoise"},
-            f"Eload(kWh/{timeAnalysis[-1]})": {"label": "Demanda de la carga", "color": "teal"}
+            f"Eload(kWh/{timeAnalysis[-1]})": {"label": "Demanda de la carga", "color": "teal"},
+            f"Egen(kWh/{timeAnalysis[-1]})": {"label": "Generación", "color": "turquoise"}
+            
         }
-
         serie_label = "Interacción:"
 
         plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
@@ -625,7 +635,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
             
             serie_label = "Demanda:"
 
-            plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+            plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
 
     with st.expander(f"**Generación {time_info['description']} - Uso**", icon="📊"):
         
@@ -635,7 +645,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
             }
         serie_label = "Uso:"
 
-        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label, barmode="overlay", opacity=0.8)
 
     with st.expander("**Atención de la carga**", icon="📊"):
         
