@@ -682,7 +682,8 @@ def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_da
     image = Image.open(f"images/{img_name}.png").convert("RGBA")
     draw = ImageDraw.Draw(image)
 
-    font = ImageFont.truetype("arial.ttf", 14)
+    font = ImageFont.truetype("font/Cabin-VariableFont_wdth,wght.ttf", 14)
+    #font = ImageFont.truetype("arial.ttf", 14)
 
     if select_param == "P":
         color, color_caption = (0, 128, 0, 255), "green"
