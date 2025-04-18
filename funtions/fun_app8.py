@@ -2,8 +2,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import mplcursors
 from datetime import datetime
 import plotly.express as px
 
@@ -329,34 +327,10 @@ def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info:
 
     return
 
-def plotVisualizationStreamlit(x, dict_y:dict, xlabel: str, ylabel: str, set_ylim0: bool):
+def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time):
 
-    col1, col2, col3 = st.columns([0.1, 0.8, 0.1], vertical_alignment="bottom")
-
-    with col2:
-        fig, ax = plt.subplots()
-
-        ax.plot(x, dict_y["value"][0], label=dict_y["label"][0], linestyle=dict_y["linestyle"][0])
-        ax.plot(x, dict_y["value"][1], label=dict_y["label"][1], linestyle=dict_y["linestyle"][1])
-        ax.plot(x, dict_y["value"][2], label=dict_y["label"][2], linestyle=dict_y["linestyle"][2])
-
-        ax.set_xticks(range(len(x)))
-        ax.set_xticklabels(x, rotation=90)
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
-        if set_ylim0:
-            ax.set_ylim(bottom=0)
-        ax.legend()
-        ax.grid()
-        
-        st.pyplot(fig, use_container_width=True)
-
-    return
-
-def displayInstantResults(df_data: pd.DataFrame, analyzeDate: datetime.date, optionTimeRange: str):
-
-    analizeTime = general.getAnalizeTime(analyzeDate=analyzeDate, optionTimeRange=optionTimeRange)
-    df_dataFilter = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == analizeTime]
+    pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
+    df_dataFilter = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime]
     dictNode = general.getNodeParametersOnGrid(df_dataFilter=df_dataFilter)
 
     col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
@@ -682,7 +656,7 @@ def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd
     df_previus = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
 
     timeAnalysis = ["year", "month"]
-    time_info = {"name": "Mes", "label": "Mes del año", "strftime": "%m", "description": "mensual"}
+    time_info = {"name": "Mes", "label": "Mes del año", "strftime": "%m", "description": "anual"}
     value_label = "Energía (kWh/mes)"
 
     displayResult(df_current, df_previus, timeAnalysis, time_info, value_label)

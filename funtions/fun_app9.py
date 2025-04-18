@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import yaml, io, warnings
 from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont
 
 from funtions import general
 
@@ -78,9 +79,6 @@ dict_phases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-#%% equations
-
-
 #%% funtions general
 
 def getGlobalVariablesPV():
@@ -126,7 +124,6 @@ def getInverterParameters(INV_data: dict, numberPhases: int, Sb: float, Vb: floa
         n_InvCOMP = INV_data["efficiency_max"]/100
     else:
         VocPU, VnomPU, PnomPU, InomPU, RinvPU, n_InvCOMP = 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-
 
     return VocPU, VnomPU, PnomPU, InomPU, RinvPU, n_InvCOMP
 
@@ -285,7 +282,6 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
             PinvDC_AERO = 0.0
 
         # Potencia del banco de baterías Pbb
-        #Pbb = (PrcDC_PV + PrcDC_AERO) - (PinvDC_PV + PinvDC_AERO)
         Pbb_PV = PrcDC_PV - PinvDC_PV
         Pbb_AERO = PrcDC_AERO - PinvDC_AERO
         Pbb = Pbb_PV + Pbb_AERO
@@ -573,6 +569,86 @@ def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLa
 
     return dataAnalysis
 
+def dfAddNodeInformation(df: pd.DataFrame, numberPhases: int, generationPV: bool, generationAERO: bool) -> pd.DataFrame:
+
+    df.loc[:, "PbbDC_PV(kW)"] = (df.loc[:, "Vbb(V)"]*df.loc[:, "IbbDC_PV(A)"])/1000
+    df.loc[:, "PbbDC_AERO(kW)"] = (df.loc[:, "Vbb(V)"]*df.loc[:, "IbbDC_AERO(A)"])/1000
+    df.loc[:, "Igen_AERO(A)"] = (df.loc[:, "Pgen_AERO(kW)"]*1000)/df.loc[:, "Vbb(V)"]
+
+    df.loc[:, "Pn11(kW)"] = df.loc[:, "PinvAC_PV(kW)"] + df.loc[:, "PinvAC_AERO(kW)"]
+    df.loc[:, "Pn12(kW)"] = (np.sqrt(numberPhases)*df.loc[:, "Vt_GE(V)"]*df.loc[:, "Ia_GE(A)"])/1000
+
+    if generationPV and not generationAERO:
+        df.loc[:, "Vn11(V)"] = df.loc[:, "VinvAC_PV(V)"]
+    elif not generationPV and generationAERO:
+        df.loc[:, "Vn11(V)"] = df.loc[:, "VinvAC_AERO(V)"]
+    else:
+        df.loc[:, "Vn11(V)"] = df.loc[:, "VinvAC_PV(V)"]
+
+    df.loc[:, "In11(A)"] = (df.loc[:, "Pn11(kW)"]*1000)/(np.sqrt(numberPhases)*df.loc[:, "Vn11(V)"])
+
+    return df
+
+def getDictNodePositionAndPath(nodesPosition: dict, generationPV: bool, generationAERO: bool, generationGE: bool):
+
+    if generationPV and not generationAERO and not generationGE:        # PV
+        key = "PV"
+    elif not generationPV and generationAERO and not generationGE:      # AERO
+       key = "AERO"
+    elif generationPV and not generationAERO and generationGE:          # PV-GE
+        key = "PV-GE"
+    elif not generationPV and generationAERO and generationGE:          # AERO-GE
+        key ="AERO-GE"
+    elif generationPV and generationAERO and not generationGE:          # PV-AERO
+        key ="PV-AERO"
+    elif generationPV and generationAERO and generationGE:              # PV-AERO-GE
+        key ="PV-AERO-GE"
+
+    dict_position = nodesPosition[key]
+    img_name = f"app9_img1({key})"
+
+    return dict_position, img_name
+
+def getNodeParametersOffGrid(df_datatime: pd.DataFrame, PARAMS_data: dict):
+
+    round_decimal = 3
+    generationPV = PARAMS_data["componentInTheProject"]["generationPV"]
+    generationAERO = PARAMS_data["componentInTheProject"]["generationAERO"]
+    generationGE = PARAMS_data["componentInTheProject"]["generationGE"]
+    numberPhases = PARAMS_data["numberPhases"]
+
+    df_datatime = dfAddNodeInformation(df_datatime, numberPhases, generationPV, generationAERO)
+
+    with open("files//[OffGrid] - nodes_labelsColumns.yaml", 'r') as archivo:
+        nodesLabelsColumns = yaml.safe_load(archivo)
+
+    with open("files//[OffGrid] - nodes_position.yaml", 'r') as archivo:
+        nodesPosition = yaml.safe_load(archivo)
+
+    dict_position, img_name = getDictNodePositionAndPath(nodesPosition, generationPV, generationAERO, generationGE)
+
+    dictNodes = {}
+    for key in dict_position:
+        position = tuple(dict_position[key])
+        listLabelColumns = nodesLabelsColumns[key]
+        num_node = int(key.split("node")[1])
+
+        dictNodes[key] = general.getDictNodeParams(df_datatime, listLabelColumns, round_decimal, num_node, position)
+    
+    return dictNodes, img_name
+
+def getKeyValueParam(select_param: str, num_node: int) -> str:
+
+    if select_param == "P":
+        keyValue = f"Pn{num_node} (kW)"
+    elif select_param == "V":
+        keyValue = f"Vn{num_node} (V)"
+    else:
+        keyValue = f"In{num_node} (A)"
+
+    return keyValue
+
+
 #%% funtions streamlit
 
 def get_widget_number_input(label: str, disabled: bool, key: str, variable: dict):
@@ -594,3 +670,106 @@ def getCompValidationBattery(check_RCCOMP: bool, RCCOMP_data: dict, BAT_data: di
             st.error("**Regulador de carga**", icon="🚨")
         
     return outCheck
+
+def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, select_param: str):
+
+    
+    pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
+    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
+
+    dictNode, img_name = getNodeParametersOffGrid(df_datatime, PARAMS_data)
+
+    image = Image.open(f"images/{img_name}.png").convert("RGBA")
+    draw = ImageDraw.Draw(image)
+
+    font = ImageFont.truetype("arial.ttf", 14)
+
+    if select_param == "P":
+        color, color_caption = (0, 128, 0, 255), "green"
+    elif select_param == "V":
+        color, color_caption = (0, 0, 255, 255), "blue"
+    else:
+        color, color_caption = (255, 0, 0, 255), "red"
+
+    for key, value in dictNode.items():
+        position = (value["position"][0]-20, value["position"][1]-20)
+        text = str(value["value"][getKeyValueParam(select_param, value["num_node"])])
+
+        draw.text(position, text, font=font, fill=color)
+
+    # Agregar información de G, Toper, Tamb, SOC(t)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    st.image(buffer, caption=f":{color_caption}[**{select_param}:** {pf_datetime}]", use_container_width=True)
+
+        
+
+        
+
+        
+    
+
+    """
+    listNodeKeys = [key for key in dictNode]
+
+    image = Image.open(r"images/app9_img1(blank).png").convert("RGBA")
+    draw = ImageDraw.Draw(image)
+
+    font = ImageFont.truetype("arial.ttf", 14)
+    color = (0, 0, 255, 255)
+
+    for i in range(0,len(listNodeKeys),1):
+        key = listNodeKeys[i]
+        text = str(dictNode[key][f"Pn{i+1} (kW)"])
+        position = (dictPositionNode[key][0]-20, dictPositionNode[key][1]-20)
+
+        draw.text(position, text, font=font, fill=color)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    st.image(buffer, caption="Imagen con texto agregado", use_container_width=True)
+    """    
+
+    """
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
+    with col1:
+        general.getNodeVisualization(dictNode=dictNode["node1"], nodeNum=1)
+    with col2:
+        general.getNodeVisualization(dictNode=dictNode["node2"], nodeNum=2)
+    with col3:
+        general.getNodeVisualization(dictNode=dictNode["node3"], nodeNum=3)
+    with col4:
+        general.getNodeVisualization(dictNode=dictNode["node4"], nodeNum=4)
+
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
+    with col1:
+        general.getNodeVisualization(dictNode=dictNode["node5"], nodeNum=5)
+    with col2:
+        general.getNodeVisualization(dictNode=dictNode["node6"], nodeNum=6)
+    with col3:
+        general.getNodeVisualization(dictNode=dictNode["node7"], nodeNum=7)
+    with col4:
+        general.getNodeVisualization(dictNode=dictNode["node8"], nodeNum=8)
+
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
+    with col1:
+        general.getNodeVisualization(dictNode=dictNode["node9"], nodeNum=9)
+    with col2:
+        general.getNodeVisualization(dictNode=dictNode["node10"], nodeNum=10)
+    with col3:
+        general.getNodeVisualization(dictNode=dictNode["node11"], nodeNum=11)
+    with col4:
+        general.getNodeVisualization(dictNode=dictNode["node12"], nodeNum=12)
+
+    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
+    with col1:
+        general.getNodeVisualization(dictNode=dictNode["node13"], nodeNum=13)
+    """
+    
+
+    return

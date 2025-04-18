@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import yaml
+from datetime import datetime
 
 from funtions import general, fun_app9
 
@@ -343,36 +344,59 @@ with tab4:
         nameFileXlsx = uploaderAnalysisXlsx.name
         if nameFileXlsx.split(" ")[1].split(".")[0] == "Analysis_OffGrid":
             df_data, df_dailyAnalysis, df_monthlyAnalysis, df_annualAnalysis = None, None, None, None
-            sheetNamesXls, timeInfo = [], None
+            sheetNamesXls, PARAMS_data, timeInfo = [], None, None
 
             try:
                 xls = pd.ExcelFile(uploaderAnalysisXlsx)
                 sheetNamesXls = xls.sheet_names
                 if "Data" in sheetNamesXls:
-                    df_data = pd.read_excel(uploaderAnalysisXlsx, sheet_name="Data")
+                    df_data = pd.read_excel(xls, sheet_name="Data")
                     df_data["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_data["dates (Y-M-D hh:mm:ss)"])
                 if "DailyAnalysis" in sheetNamesXls:
-                    df_dailyAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="DailyAnalysis")
+                    df_dailyAnalysis = pd.read_excel(xls, sheet_name="DailyAnalysis")
                     df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"])
                 if "MonthlyAnalysis" in sheetNamesXls:
-                    df_monthlyAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="MonthlyAnalysis")
+                    df_monthlyAnalysis = pd.read_excel(xls, sheet_name="MonthlyAnalysis")
                     df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"])
                 if "AnnualAnalysis" in sheetNamesXls:
-                    df_annualAnalysis = pd.read_excel(uploaderAnalysisXlsx, sheet_name="AnnualAnalysis")
+                    df_annualAnalysis = pd.read_excel(xls, sheet_name="AnnualAnalysis")
                     df_annualAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_annualAnalysis["dates (Y-M-D hh:mm:ss)"], format="%Y")
+                if "Params" in sheetNamesXls:
+                    PARAMS_data = pd.read_excel(xls, sheet_name="Params").to_dict(orient="records")[0]
+                    PARAMS_data = general.getFixFormatDictParams(PARAMS_data, dataKeyList)
             except:
                 st.error(f"**Error al cargar archivo :blue[{nameFileXlsx}]**", icon="🚨")
 
             if df_data is not None:
                 timeInfo = general.getTimeData(df_data)
 
-                st.text(timeInfo)
+            if timeInfo is not None and PARAMS_data is not None:
+                listTimeRanges = general.getListOfTimeRanges(deltaMinutes=timeInfo["deltaMinutes"])
+
+                tab1, tab2, tab3, tab4 = st.tabs(["🕛 Flujos de potencia", "📅 Análisis diario", "📆 Análisis mensual", "🗓️ Análisis anual"])
+
+                with tab1:
+                    with st.form("analysisTime", border=True):
+                        col1, col2, col3, col4 = st.columns(4, vertical_alignment="bottom")
+
+                        with col1:
+                            pf_date = st.date_input(label="Seleccionar fecha", min_value=timeInfo["dateIni"], max_value=timeInfo["dateEnd"], value=timeInfo["dateIni"])     # datetime.date
+                        with col2:
+                            pf_time = st.selectbox(label="Seleccionar hora", options=listTimeRanges)
+                        with col3:
+                            select_param = st.selectbox(label="Seleccionar parámetro", options=["P", "V", "I"])
+                        with col4:
+                            submitted = st.form_submit_button("Aceptar")
+
+                        if submitted:
+                            pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()     # datetime.time
 
 
-  
-    
+                            with st.container(border=True):
+                                fun_app9.displayInstantResultsOffGrid(df_data, PARAMS_data, pf_date, pf_time, select_param)
 
-    st.text("Ajaaaaaaaaaa")
+
+                        
 
 
         

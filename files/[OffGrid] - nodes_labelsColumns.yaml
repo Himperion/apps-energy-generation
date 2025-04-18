@@ -1,0 +1,52 @@
+node1:
+- Pgen_PV(kW)
+- Vmpp_PV(V)
+- Impp_PV(A)
+node10:
+- PinvAC_AERO(kW)
+- VinvAC_AERO(V)
+- IinvAC_AERO(A)
+node11:
+- Pn11(kW)
+- Vn11(V)
+- In11(A)
+node12:
+- Pn12(kW)
+- Vt_GE(V)
+- Ia_GE(A)
+node13:
+- Pbb(kW)
+- Vbb(V)
+- Ibb(A)
+node2:
+- PrcDC_PV(kW)
+- VrcDC_PV(V)
+- IrcDC_PV(A)
+node3:
+- PbbDC_PV(kW)
+- Vbb(V)
+- IbbDC_PV(A)
+node4:
+- PinvDC_PV(kW)
+- VinvDC_PV(V)
+- IinvDC_PV(A)
+node5:
+- PinvAC_PV(kW)
+- VinvAC_PV(V)
+- IinvAC_PV(A)
+node6:
+- Pgen_AERO(kW)
+- Vbb(V)
+- Igen_AERO(A)
+node7:
+- PrcDC_AERO(kW)
+- VrcDC_AERO(V)
+- IrcDC_AERO(A)
+node8:
+- PbbDC_AERO(kW)
+- Vbb(V)
+- IbbDC_AERO(A)
+node9:
+- PinvDC_AERO(kW)
+- VinvDC_AERO(V)
+- IinvDC_AERO(A)

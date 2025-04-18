@@ -678,7 +678,7 @@ def initializeDataFrameColumns(df_grid: pd.DataFrame, generationType: str) -> pd
         df_grid["Vt_GE(V)"] = 0.0
         df_grid["Consumo_GE(l/h)"] = 0.0
         df_grid["Eficiencia_GE(%)"] = 0.0
-        
+
     return df_grid
 
 def getAddUniqueColumnsOptionsData(TOTAL_data: dict, columnsOptionsData: dict):
@@ -902,51 +902,70 @@ def getListOfTimeRanges(deltaMinutes: float) -> list:
 
     return listTimeRanges
 
-def getAnalizeTime(analyzeDate: datetime.date, optionTimeRange: str):
+def getAnalizeTime(data_date: datetime.date, data_time: datetime.time):
 
-    time = datetime.strptime(optionTimeRange, "%H:%M:%S").time()
-
-    return datetime.combine(analyzeDate, time)
+    return datetime.combine(data_date, data_time)
 
 def getNodeParametersOnGrid(df_dataFilter: pd.DataFrame):
 
+    round_decimal = 3
+
     dictNodes = {
         "node1": {
-            "Pn1 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], 6),
-            "Vn1 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], 6),
-            "In1 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], 6),
+            "Pn1 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], round_decimal),
+            "Vn1 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], round_decimal),
+            "In1 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], round_decimal),
         },
         "node2": {
-            "Pn2 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], 6),
-            "Vn2 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], 6),
-            "In2 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], 6),
+            "Pn2 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], round_decimal),
+            "Vn2 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], round_decimal),
+            "In2 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], round_decimal),
         },
         "node3": {
-            "Pn3 (kW)": round(df_dataFilter.iloc[0]["PinvAC_PV(kW)"], 6),
-            "Vn3 (V)": round(df_dataFilter.iloc[0]["VinvAC_PV(V)"], 6),
-            "In3 (A)": round(df_dataFilter.iloc[0]["IinvAC_PV(A)"], 6),
+            "Pn3 (kW)": round(df_dataFilter.iloc[0]["PinvAC_PV(kW)"], round_decimal),
+            "Vn3 (V)": round(df_dataFilter.iloc[0]["VinvAC_PV(V)"], round_decimal),
+            "In3 (A)": round(df_dataFilter.iloc[0]["IinvAC_PV(A)"], round_decimal),
         },
         "node4": {
-            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Pdem(kW)"], 6),
-            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vdem(V)"], 6),
-            "In4 (A)": round(df_dataFilter.iloc[0]["Idem(A)"], 6),
+            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Pdem(kW)"], round_decimal),
+            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vdem(V)"], round_decimal),
+            "In4 (A)": round(df_dataFilter.iloc[0]["Idem(A)"], round_decimal),
         },
         "node5": {
-            "Pn5 (kW)": round(df_dataFilter.iloc[0]["Pgen_AERO(kW)"], 6),
+            "Pn5 (kW)": round(df_dataFilter.iloc[0]["Pgen_AERO(kW)"], round_decimal),
         },
         "node6": {
-            "Pn6 (kW)": round(df_dataFilter.iloc[0]["PinvAC_AERO(kW)"], 6),
-            "Vn6 (V)": round(df_dataFilter.iloc[0]["VinvAC_AERO(V)"], 6),
-            "In6 (A)": round(df_dataFilter.iloc[0]["IinvAC_AERO(A)"], 6),
+            "Pn6 (kW)": round(df_dataFilter.iloc[0]["PinvAC_AERO(kW)"], round_decimal),
+            "Vn6 (V)": round(df_dataFilter.iloc[0]["VinvAC_AERO(V)"], round_decimal),
+            "In6 (A)": round(df_dataFilter.iloc[0]["IinvAC_AERO(A)"], round_decimal),
         },
         "node7": {
-            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Load(kW)"], 6),
-            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vload(V)"], 6),
-            "In4 (A)": round(df_dataFilter.iloc[0]["Iload(A)"], 6),
+            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Load(kW)"], round_decimal),
+            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vload(V)"], round_decimal),
+            "In4 (A)": round(df_dataFilter.iloc[0]["Iload(A)"], round_decimal),
         }      
     }
 
     return dictNodes
+
+def getDictNodeValue(df: pd.DataFrame, listLabelColumns: list, round_decimal: int, num_node: int) -> dict:
+
+    nodeX = {
+        f"Pn{num_node} (kW)": round(df.iloc[0][listLabelColumns[0]], round_decimal),
+        f"Vn{num_node} (V)": round(df.iloc[0][listLabelColumns[1]], round_decimal),
+        f"In{num_node} (A)": round(df.iloc[0][listLabelColumns[2]], round_decimal)
+    }
+
+    return nodeX
+
+def getDictNodeParams(df: pd.DataFrame, listLabelColumns: list, round_decimal: int, num_node: int, position: tuple) -> dict:
+
+    dictNode = {}
+    dictNode["value"] = getDictNodeValue(df, listLabelColumns, round_decimal, num_node)
+    dictNode["position"] = position
+    dictNode["num_node"] = num_node
+
+    return dictNode
 
 def timeInfoMonthsGetLabels(timeInfoMonths: list) -> list:
 
