@@ -2,6 +2,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
 import yaml, io, warnings
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
@@ -248,8 +250,16 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
 
         # condición sobreCarga (Limitar la generación al igualarla a la demanda)
         if SOC_t_1 >= SOC_max and (n_RcPV*Pgen_PV + n_RcAERO*Pgen_AERO) >= (PinvDC_PV + PinvDC_AERO) and swLoad_t_1 == 1:
-            PrcDC_PV = PinvDC_PV
-            PrcDC_AERO = PinvDC_AERO
+            if n_RcPV*Pgen_PV >= PinvDC_PV and n_RcAERO*Pgen_AERO >= PinvDC_AERO:
+                PrcDC_PV = PinvDC_PV
+                PrcDC_AERO = PinvDC_AERO
+            elif n_RcPV*Pgen_PV >= PinvDC_PV and not n_RcAERO*Pgen_AERO >= PinvDC_AERO:      # Faltante AERO
+                PrcDC_PV = PinvDC_PV + (PinvDC_AERO - n_RcAERO*Pgen_AERO)
+                PrcDC_AERO = n_RcAERO*Pgen_AERO
+            elif not n_RcPV*Pgen_PV >= PinvDC_PV and n_RcAERO*Pgen_AERO >= PinvDC_AERO:      # Faltante PV
+                PrcDC_PV = n_RcPV*Pgen_PV
+                PrcDC_AERO = PinvDC_AERO + (PinvDC_PV - n_RcPV*Pgen_PV)
+
             conSC = True
         else:
             PrcDC_PV = n_RcPV*Pgen_PV
@@ -322,8 +332,9 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
         Iload = Iload_PU*Ib
 
         # Parametros DC
-        IrcDC_PV = (n_RcPV*Pgen_PV*1000)/Vbb
-        IrcDC_AERO = (n_RcPV*Pgen_PV*1000)/Vbb
+
+        IrcDC_PV = (PrcDC_PV*1000)/Vbb
+        IrcDC_AERO = (PrcDC_AERO*1000)/Vbb
         IinvDC_PV = (PinvDC_PV*1000)/Vbb
         IinvDC_AERO = (PinvDC_AERO*1000)/Vbb
 
@@ -331,14 +342,18 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
         df_grid.loc[index, "Pbb(kW)"] = Pbb
         df_grid.loc[index, "Vbb(V)"] = Vbb
         df_grid.loc[index, "Ibb(A)"] = Ibb
+
+        df_grid.loc[index, "Pbb_PV(kW)"] = Pbb_PV
         df_grid.loc[index, "IbbDC_PV(A)"] = Ibb_PV
+
+        df_grid.loc[index, "Pbb_AERO(kW)"] = Pbb_AERO
         df_grid.loc[index, "IbbDC_AERO(A)"] = Ibb_AERO
     
-        df_grid.loc[index, "PrcDC_PV(kW)"] = n_RcPV*Pgen_PV
+        df_grid.loc[index, "PrcDC_PV(kW)"] = PrcDC_PV
         df_grid.loc[index, "VrcDC_PV(V)"] = Vbb
         df_grid.loc[index, "IrcDC_PV(A)"] = IrcDC_PV
 
-        df_grid.loc[index, "PrcDC_AERO(kW)"] = n_RcPV*Pgen_AERO
+        df_grid.loc[index, "PrcDC_AERO(kW)"] = PrcDC_AERO
         df_grid.loc[index, "VrcDC_AERO(V)"] = Vbb
         df_grid.loc[index, "IrcDC_AERO(A)"] = IrcDC_AERO
         
@@ -569,18 +584,15 @@ def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLa
 
     return dataAnalysis
 
-def dfAddNodeInformation(df: pd.DataFrame, numberPhases: int, generationPV: bool, generationAERO: bool) -> pd.DataFrame:
+def dfAddNodeInformation(df: pd.DataFrame, numberPhases: int, label_systems: str) -> pd.DataFrame:
 
-    df.loc[:, "PbbDC_PV(kW)"] = (df.loc[:, "Vbb(V)"]*df.loc[:, "IbbDC_PV(A)"])/1000
-    df.loc[:, "PbbDC_AERO(kW)"] = (df.loc[:, "Vbb(V)"]*df.loc[:, "IbbDC_AERO(A)"])/1000
     df.loc[:, "Igen_AERO(A)"] = (df.loc[:, "Pgen_AERO(kW)"]*1000)/df.loc[:, "Vbb(V)"]
-
     df.loc[:, "Pn11(kW)"] = df.loc[:, "PinvAC_PV(kW)"] + df.loc[:, "PinvAC_AERO(kW)"]
     df.loc[:, "Pn12(kW)"] = (np.sqrt(numberPhases)*df.loc[:, "Vt_GE(V)"]*df.loc[:, "Ia_GE(A)"])/1000
 
-    if generationPV and not generationAERO:
+    if label_systems == "PV" or label_systems == "PV-GE":
         df.loc[:, "Vn11(V)"] = df.loc[:, "VinvAC_PV(V)"]
-    elif not generationPV and generationAERO:
+    elif label_systems == "AERO" or label_systems == "AERO-GE":
         df.loc[:, "Vn11(V)"] = df.loc[:, "VinvAC_AERO(V)"]
     else:
         df.loc[:, "Vn11(V)"] = df.loc[:, "VinvAC_PV(V)"]
@@ -589,43 +601,18 @@ def dfAddNodeInformation(df: pd.DataFrame, numberPhases: int, generationPV: bool
 
     return df
 
-def getDictNodePositionAndPath(nodesPosition: dict, generationPV: bool, generationAERO: bool, generationGE: bool):
+def getNodeParametersOffGrid(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str):
 
-    if generationPV and not generationAERO and not generationGE:        # PV
-        key = "PV"
-    elif not generationPV and generationAERO and not generationGE:      # AERO
-       key = "AERO"
-    elif generationPV and not generationAERO and generationGE:          # PV-GE
-        key = "PV-GE"
-    elif not generationPV and generationAERO and generationGE:          # AERO-GE
-        key ="AERO-GE"
-    elif generationPV and generationAERO and not generationGE:          # PV-AERO
-        key ="PV-AERO"
-    elif generationPV and generationAERO and generationGE:              # PV-AERO-GE
-        key ="PV-AERO-GE"
+    df_datatime = dfAddNodeInformation(df_datatime, numberPhases, label_systems)
 
-    dict_position = nodesPosition[key]
-    img_name = f"app9_img1({key})"
-
-    return dict_position, img_name
-
-def getNodeParametersOffGrid(df_datatime: pd.DataFrame, PARAMS_data: dict):
-
-    round_decimal = 3
-    generationPV = PARAMS_data["componentInTheProject"]["generationPV"]
-    generationAERO = PARAMS_data["componentInTheProject"]["generationAERO"]
-    generationGE = PARAMS_data["componentInTheProject"]["generationGE"]
-    numberPhases = PARAMS_data["numberPhases"]
-
-    df_datatime = dfAddNodeInformation(df_datatime, numberPhases, generationPV, generationAERO)
-
-    with open("files//[OffGrid] - nodes_labelsColumns.yaml", 'r') as archivo:
+    with open("files//[OffGrid] - nodes_labelsColumns.yaml", "r") as archivo:
         nodesLabelsColumns = yaml.safe_load(archivo)
 
-    with open("files//[OffGrid] - nodes_position.yaml", 'r') as archivo:
+    with open("files//[OffGrid] - nodes_position.yaml", "r") as archivo:
         nodesPosition = yaml.safe_load(archivo)
 
-    dict_position, img_name = getDictNodePositionAndPath(nodesPosition, generationPV, generationAERO, generationGE)
+    dict_position = nodesPosition[label_systems]
+    img_name = f"app9_img1({label_systems})"
 
     dictNodes = {}
     for key in dict_position:
@@ -648,6 +635,51 @@ def getKeyValueParam(select_param: str, num_node: int) -> str:
 
     return keyValue
 
+def dictPositionInfoAddValues(df: pd.DataFrame, dictPositionInfoSystem: dict, columnsOptionsData: dict, round_decimal: int):
+
+    for key, value in dictPositionInfoSystem.items():
+        dictAux = {"position": value}
+
+        if key == "Geff":
+            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["PV"]["Geff"]]), round_decimal)
+            dictAux["label"] = "Irradiancia (W/m²)"
+        elif key == "Toper":
+            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["PV"]["Toper"]]), round_decimal)
+            dictAux["label"] = "Temperatura de operación del panel (°C)"
+        elif key == "Vwind":
+            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["AERO"]["Vwind"]]), round_decimal)
+            dictAux["label"] = "Velocidad del viento (m/s)"
+        elif key == "Consumo_GE":
+            dictAux["value"] = round(float(df.iloc[0]["Consumo_GE(l/h)"]), round_decimal)
+            dictAux["label"] = "Consumo (l/h)"
+        elif key == "SOC":
+            dictAux["value"] = round(float(df.iloc[0]["SOC(t)"]), round_decimal)
+            dictAux["label"] = "SOC"
+        elif key == "conSD":
+            dictAux["value"] = str(df.iloc[0]["conSD(t)"])
+            dictAux["label"] = "Sobredescarga"
+        elif key == "conSC":
+            dictAux["value"] = str(df.iloc[0]["conSC(t)"])
+            dictAux["label"] = "Sobrecarga"
+        elif key == "swLoad":
+            dictAux["value"] = int(df.iloc[0]["swLoad(t)"])
+            dictAux["label"] = "SW"
+
+        # Continuar
+        
+
+        dictPositionInfoSystem[key] = dictAux
+
+    return dictPositionInfoSystem
+
+def getSOCparams(RCPV_data: dict, RCAERO_data: dict, label_systems: str):
+
+    if label_systems == "PV" or label_systems == "PV-GE" or label_systems == "PV-AERO" or label_systems == "PV-AERO-GE":
+        SOC_conx, SOC_max, SOC_min = RCPV_data["SOC_conx"], RCPV_data["SOC_max"], RCPV_data["SOC_min"]
+    else:
+        SOC_conx, SOC_max, SOC_min = RCAERO_data["SOC_conx"], RCAERO_data["SOC_max"], RCAERO_data["SOC_min"]
+
+    return SOC_conx, SOC_max, SOC_min
 
 #%% funtions streamlit
 
@@ -671,47 +703,77 @@ def getCompValidationBattery(check_RCCOMP: bool, RCCOMP_data: dict, BAT_data: di
         
     return outCheck
 
-def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, select_param: str):
+def addInformationSystemImage(img_name: str, dictNode: dict, dictInfo: dict, select_param: str):
 
-    
-    pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
-    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
-
-    dictNode, img_name = getNodeParametersOffGrid(df_datatime, PARAMS_data)
+    dictColor = {
+        "P": (0, 128, 0, 255),      # green
+        "V": (0, 0, 255, 255),      # blue
+        "I": (255, 0, 0, 255)       # red
+    }
 
     image = Image.open(f"images/{img_name}.png").convert("RGBA")
     draw = ImageDraw.Draw(image)
-
     font = ImageFont.truetype("font/Cabin-VariableFont_wdth,wght.ttf", 14)
-    #font = ImageFont.truetype("arial.ttf", 14)
-
-    if select_param == "P":
-        color, color_caption = (0, 128, 0, 255), "green"
-    elif select_param == "V":
-        color, color_caption = (0, 0, 255, 255), "blue"
-    else:
-        color, color_caption = (255, 0, 0, 255), "red"
 
     for key, value in dictNode.items():
         position = (value["position"][0]-20, value["position"][1]-20)
         text = str(value["value"][getKeyValueParam(select_param, value["num_node"])])
 
-        draw.text(position, text, font=font, fill=color)
+        draw.text(position, text, font=font, fill=dictColor[select_param])
 
-    # Agregar información de G, Toper, Tamb, SOC(t)
+    for key, value in dictInfo.items():
+        position = (value["position"][0], value["position"][1])
+        text = f"{value['label']}: {value['value']}"
+
+        draw.text(position, text, font=font, fill=(0, 0, 0, 255))
 
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     buffer.seek(0)
 
-    st.image(buffer, caption=f":{color_caption}[**{select_param}:** {pf_datetime}]", use_container_width=True)
+    st.image(buffer, use_container_width=True)
 
-        
+    return
 
-        
+def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, label_systems: str):
 
-        
+    numberPhases, round_decimal = PARAMS_data["numberPhases"], 4
+
+    dictPositionInfo = {}
+    dictPositionInfo["PV"] = {
+        "Geff": [5, 135],
+        "Toper": [5, 150],
+        "SOC": [223, 344],
+        "conSD": [223, 359],
+        "conSC": [223, 374],
+        "swLoad": [1058, 132]
+    }
+    dictPositionInfo["PV-AERO-GE"] = {
+        "Geff": [5, 120],
+        "Toper": [5, 135],
+        "Vwind": [5, 350],
+        "Consumo_GE": [990, 290],
+        "SOC": [196, 280],
+        "conSD": [196, 295],
+        "conSC": [196, 310],
+        "swLoad": [880, 270]
+        }
     
+    pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
+    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
+
+    dictNode, img_name = getNodeParametersOffGrid(df_datatime, numberPhases, round_decimal, label_systems)
+    dictInfo = dictPositionInfoAddValues(df_datatime, dictPositionInfo[label_systems], PARAMS_data["columnsOptionsData"], round_decimal)
+
+    tab1, tab2, tab3 = st.tabs(["💡 Potencia (kW)", "🔋 Tensión (V)", "🔌 Corriente (A)"])
+
+    with tab1:
+        addInformationSystemImage(img_name, dictNode, dictInfo, "P")
+    with tab2:
+        addInformationSystemImage(img_name, dictNode, dictInfo, "V")
+    with tab3:
+        addInformationSystemImage(img_name, dictNode, dictInfo, "I")
+
 
     """
     listNodeKeys = [key for key in dictNode]
@@ -771,6 +833,67 @@ def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_da
     with col1:
         general.getNodeVisualization(dictNode=dictNode["node13"], nodeNum=13)
     """
+
+    return
+
+def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, label_systems: str):
+
+    df_analysis = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
+    df_dataDaily = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
+
+    st.dataframe(df_analysis)
+
     
+
+    df_dataDaily = df_dataDaily.copy()
+    df_dataDaily["time"] = df_dataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime("%H:%M")
+
+
+    st.dataframe(df_dataDaily)
+
+    
+
+
+    SOC_conx, SOC_max, SOC_min = getSOCparams(RCPV_data=PARAMS_data["RCPV_data"],
+                                              RCAERO_data=PARAMS_data["RCAERO_data"],
+                                              label_systems=label_systems)
+    
+
+    st.text(SOC_conx)
+    st.text(SOC_max)
+    st.text(SOC_min)
+
+
+    for key, value in PARAMS_data.items():
+        st.text(f"{key}: {value}")
+
+
+    fig = px.bar(df_dataDaily, x="time", y="SOC(t)", title="SOC")
+
+    fig = go.Figure(fig)
+
+    fig.add_shape(
+        type='line',
+        xref="paper",
+        x0=0, x1=1,
+        y0=SOC_min, y1=SOC_min,   # Coordenadas del eje y (valor de la línea)
+        line=dict(color='red', dash='dash'),
+        name="SOC_min"
+        )
+    
+    fig.add_shape(
+        type='line',
+        xref="paper",
+        x0=0, x1=1,
+        y0=SOC_max, y1=SOC_max,
+        line=dict(color='green', dash='dash'),
+        name="SOC_max"
+        )
+    
+    fig.add_annotation(x=0, y=SOC_min, text="SOC_min", showarrow=False, yshift=10, font=dict(color='red'))
+    fig.add_annotation(x=0, y=SOC_max, text="SOC_max", showarrow=False, yshift=10, font=dict(color='green'))
+    
+
+    st.plotly_chart(fig, use_container_width=True)
 
     return

@@ -151,17 +151,16 @@ with tab2:
 
             elif projectDataEntry == selectDataEntryOptions[1]:
                 with st.container(border=True):
-                    st.markdown("💾 **:blue[Cargar archivo de proyecto Off-Grid]**")
-                    uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
+                    uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo :blue[Project_OffGrid] XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
 
             elif projectDataEntry == selectDataEntryOptions[2]:
-                with st.container(border=True):
-                    st.markdown("📋 **:blue[Datos de carga, temperatura de operación y potencial energetico del sitio:]**")
-                    uploadedXlsxDATA = st.file_uploader(label="**Cargar archivo EXCEL**", type=["xlsx"], key="uploadedXlsxDATA")
+                uploadedXlsxDATA, uploadedYamlCOMPONENTS = None, None
 
                 with st.container(border=True):
-                    st.markdown("💾 **:blue[Cargar archivo de componentes Off-Grid]**")
-                    uploadedYamlCOMPONENTS = st.file_uploader(label="Subir archivo de componentes YAML", type=["yaml", "yml"])
+                    uploadedXlsxDATA = st.file_uploader(label="📋 **Cargar archivo de datos de carga, temperatura de operación y potencial energético del sitio EXCEL**", type=["xlsx"], key="uploadedXlsxDATA")
+
+                with st.container(border=True):
+                    uploadedYamlCOMPONENTS = st.file_uploader(label="💾 **Cargar archivo de componentes Off-Grid: :blue[Components_OffGrid] YAML**", type=["yaml", "yml"])
         
             submitted = st.form_submit_button("Aceptar")
 
@@ -246,7 +245,7 @@ with tab2:
                     st.session_state["dictDataOffGrid"] = {**{"df_data": df_data}, **TOTAL_data}
 
                 elif projectDataEntry == selectDataEntryOptions[2]:
-                    df_data, dictDataOffGrid = None, None
+                    df_data, dictDataOffGrid = None, {}
 
                     if uploadedXlsxDATA is not None:
                         df_data = pd.read_excel(uploadedXlsxDATA)
@@ -257,6 +256,9 @@ with tab2:
                         dictDataOffGrid = yaml.safe_load(uploadedYamlCOMPONENTS)
                     else:
                         st.warning("Cargar archivo  de componentes OffGrid **YAML** (.yaml)", icon="⚠️")
+
+                    if len(dictDataOffGrid) > 0:
+                        st.session_state["dictDataOffGrid"] = {**{"df_data": df_data}, **dictDataOffGrid}
 
     if st.session_state["dictDataOffGrid"] is not None:
 
@@ -271,14 +273,16 @@ with tab2:
             df_downloadXLSX = st.download_button(
                 label="💾 Descargar **:blue[Archivo de proyecto Off-Grid] XLSX**",
                 data=bytesFileExcelProject,
-                file_name=general.nameFileHead(name="project_OffGrid.xlsx"),
-                mime="xlsx")
+                file_name=general.nameFileHead(name="Project_OffGrid.xlsx"),
+                mime="xlsx",
+                on_click="ignore")
             
             dict_downloadYAML = st.download_button(
                 label="💾 Descargar **:blue[Archivo de componentes del proyecto Off-Grid] YAML**",
                 data=bytesFileYamlComponets,
-                file_name=general.nameFileHead(name="components_OffGrid.yaml"),
-                mime="text/yaml")
+                file_name=general.nameFileHead(name="Components_OffGrid.yaml"),
+                mime="text/yaml",
+                on_click="ignore")
             
         with st.container(border=True):
             st.markdown("**Archivos de resultados:**")
@@ -287,7 +291,8 @@ with tab2:
                 label="📄 Descargar **:blue[Archivo de resultado Off-Grid] XLSX**",
                 data=bytesFileExcelResults,
                 file_name=general.nameFileHead(name="Results_OffGrid.xlsx"),
-                mime='xlsx')
+                mime='xlsx',
+                on_click="ignore")
 
         st.session_state["dictDataOffGrid"] = None
 
@@ -372,29 +377,46 @@ with tab4:
 
             if timeInfo is not None and PARAMS_data is not None:
                 listTimeRanges = general.getListOfTimeRanges(deltaMinutes=timeInfo["deltaMinutes"])
+                label_systems = general.getGenerationSystemsNotationLabel(**PARAMS_data["componentInTheProject"])
 
                 tab1, tab2, tab3, tab4 = st.tabs(["🕛 Flujos de potencia", "📅 Análisis diario", "📆 Análisis mensual", "🗓️ Análisis anual"])
 
                 with tab1:
                     with st.form("analysisTime", border=True):
-                        col1, col2, col3, col4 = st.columns(4, vertical_alignment="bottom")
+                        col1, col2, col3 = st.columns(3, vertical_alignment="bottom")
 
                         with col1:
                             pf_date = st.date_input(label="Seleccionar fecha", min_value=timeInfo["dateIni"], max_value=timeInfo["dateEnd"], value=timeInfo["dateIni"])     # datetime.date
                         with col2:
                             pf_time = st.selectbox(label="Seleccionar hora", options=listTimeRanges)
                         with col3:
-                            select_param = st.selectbox(label="Seleccionar parámetro", options=["P", "V", "I"])
-                        with col4:
                             submitted = st.form_submit_button("Aceptar")
 
                         if submitted:
                             pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()     # datetime.time
 
-
                             with st.container(border=True):
-                                fun_app9.displayInstantResultsOffGrid(df_data, PARAMS_data, pf_date, pf_time, select_param)
+                                fun_app9.displayInstantResultsOffGrid(df_data, PARAMS_data, pf_date, pf_time, label_systems)
+                
+                with tab2:
+                    if df_dailyAnalysis is not None:
+                        dateIni = df_dailyAnalysis.loc[0, "dates (Y-M-D hh:mm:ss)"]
+                        dateEnd = df_dailyAnalysis.loc[df_dailyAnalysis.index[-1], "dates (Y-M-D hh:mm:ss)"]
 
+                        with st.form("analysisDaily", border=True):
+                            with st.container(border=True):
+                                col1, col2 = st.columns([0.8, 0.2], vertical_alignment="bottom")
+
+                                with col1:
+                                    pf_date = st.date_input(label="Seleccionar fecha", min_value=dateIni, max_value=dateEnd, value=dateIni)
+                                with col2:
+                                    submittedDaily = st.form_submit_button("Aceptar")
+
+                            if submittedDaily:
+                                fun_app9.displayDailyResults(df_data, df_dailyAnalysis, PARAMS_data, pf_date, label_systems)
+
+        else:
+            st.error(f"**Nombre de archivo no valido :blue[{nameFileXlsx}]**", icon="🚨")
                             
                             
 

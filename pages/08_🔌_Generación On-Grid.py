@@ -59,7 +59,7 @@ showOutputPV = [f"{params_PV[elm]['label']}{params_PV[elm]['unit']}: {params_PV[
 selectDataEntryOptions = ["📝 Ingresar datos del proyecto",
                           "💾 Cargar archivo de proyecto XLSX",
                           "💾 Cargar archivo de componentes YAML",
-                          "🖥️ Ingresar datos del proyecto con ayuda del banco de componentes"]
+                          "🖥️ Ingresar datos del proyecto con el banco de componentes"]
 
 #%% session state
 
@@ -148,8 +148,7 @@ with tab2:
                     
             elif projectDataEntry == selectDataEntryOptions[1]:
                 with st.container(border=True):
-                    st.markdown("💾 **:blue[Cargar archivo de proyecto On-Grid]**")
-                    uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
+                    uploadedXlsxPROJECT = st.file_uploader(label="**Cargar archivo :blue[Project_OnGrid] XLSX**", type=["xlsx"], key="uploadedXlsxPROJECT")
 
             elif projectDataEntry == selectDataEntryOptions[2]:
                 uploadedXlsxDATA, uploadedYamlCOMPONENTS = None, None
@@ -369,6 +368,7 @@ with tab2:
 
         with st.container(border=True):
             st.markdown("**Archivos de opciones de ingreso de datos:**")
+            
             df_downloadXLSX = st.download_button(
                 label="💾 Descargar **:blue[Archivo de proyecto On-Grid] XLSX**",
                 data=bytesFileExcelProject,
@@ -385,6 +385,7 @@ with tab2:
             
         with st.container(border=True):
             st.markdown("**Archivos de resultados:**")
+
             df_download = st.download_button(
                 label="📄 Descargar **:blue[Archivo de resultado On-Grid] XLSX**",
                 data=bytesFileExcelResults,

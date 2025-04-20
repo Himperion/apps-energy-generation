@@ -23,7 +23,7 @@ node2:
 - VrcDC_PV(V)
 - IrcDC_PV(A)
 node3:
-- PbbDC_PV(kW)
+- Pbb_PV(kW)
 - Vbb(V)
 - IbbDC_PV(A)
 node4:
@@ -43,7 +43,7 @@ node7:
 - VrcDC_AERO(V)
 - IrcDC_AERO(A)
 node8:
-- PbbDC_AERO(kW)
+- Pbb_AERO(kW)
 - Vbb(V)
 - IbbDC_AERO(A)
 node9:

@@ -638,7 +638,11 @@ def initializeDataFrameColumns(df_grid: pd.DataFrame, generationType: str) -> pd
         df_grid["Pbb(kW)"] = 0.0
         df_grid["Vbb(V)"] = 0.0
         df_grid["Ibb(A)"] = 0.0
+
+        df_grid["Pbb_PV(kW)"] = 0.0
         df_grid["IbbDC_PV(A)"] = 0.0
+
+        df_grid["Pbb_AERO(kW)"] = 0.0
         df_grid["IbbDC_AERO(A)"] = 0.0
         
         df_grid["PrcDC_PV(kW)"] = 0.0
@@ -947,6 +951,23 @@ def getNodeParametersOnGrid(df_dataFilter: pd.DataFrame):
     }
 
     return dictNodes
+
+def getGenerationSystemsNotationLabel(generationPV: bool, generationAERO: bool, generationGE: bool):
+
+    if generationPV and not generationAERO and not generationGE:        # PV
+        key = "PV"
+    elif not generationPV and generationAERO and not generationGE:      # AERO
+       key = "AERO"
+    elif generationPV and not generationAERO and generationGE:          # PV-GE
+        key = "PV-GE"
+    elif not generationPV and generationAERO and generationGE:          # AERO-GE
+        key ="AERO-GE"
+    elif generationPV and generationAERO and not generationGE:          # PV-AERO
+        key ="PV-AERO"
+    elif generationPV and generationAERO and generationGE:              # PV-AERO-GE
+        key ="PV-AERO-GE"
+
+    return key
 
 def getDictNodeValue(df: pd.DataFrame, listLabelColumns: list, round_decimal: int, num_node: int) -> dict:
 
