@@ -1043,18 +1043,23 @@ def fromParametersGetLabels(list_params: list):
         "Egen": "Generación total",
         "Eload": "Demanda de la carga",
         "Edem": "Demanda neta a la red",
-        "ErcDC_PV": "Fotovoltaica",
-        "ErcDC_AERO": "Eólica",
-        "Egen_PV": "Fotovoltaica",
-        "Egen_AERO": "Eólica",
-        "Eload_OffGrid": "Fotovoltaica/eólica/banco de baterías",
-        "Eload_GE": "Grupo electrógeno",
-        "Eload_OffLine": "Carga desconectada",
-        "conNORMAL": "Normal",
-        "conSD": "Sobredescarga",
-        "conSC": "Sobrecarga",
-        "Ebb_absorbed": "Absorbida",
-        "Ebb_delivered": "Entregada"
+        "ErcDC_PV": "Generación Fotovoltaica",
+        "ErcDC_AERO": "Generación Eólica",
+        "Egen_PV": "Generación Fotovoltaica",
+        "Egen_AERO": "Generación Eólica",
+        "Eload_OffGrid": "Demanda suplida por el conjunto fotovoltaica/eólica/banco de baterías",
+        "Eload_GE": "Demanda suplida por el  grupo electrógeno",
+        "Eload_OffLine": "Demanda de la carga no atendida",
+        "conNORMAL": "Normalidad del banco de baterías",
+        "conSD": "Sobredescarga del banco de baterías",
+        "conSC": "Sobrecarga del banco de baterías",
+        "Ebb": "Energía neta del banco de baterías",
+        "Ebb_absorbed": "Energía absorbida por el  banco de baterías",
+        "Ebb_delivered": "Energía entregada por el banco de baterías",
+        "swLoad_1": "SW=1",
+        "swLoad_2": "SW=2",
+        "swLoad_3": "SW=3",
+        "Consumo_GE": "Consumo de combustible del grupo electrógeno"
     }
 
     dict_replace_date = {
@@ -1064,6 +1069,9 @@ def fromParametersGetLabels(list_params: list):
         "(h/day)": " (h/día)",
         "(h/month)": " (h/mes)",
         "(h/year)": " (h/año)",
+        "(l/day)": " (L/día)",
+        "(l/month)": " (L/mes)",
+        "(l/year)": " (L/año)",
     }
 
     list_out = list_params.copy()
@@ -1212,7 +1220,7 @@ def printDataFloat(dataframe: pd.DataFrame, columns_print: list, round_int: int)
     with st.container(border=True):
 
         for i in range(0,len(columns_print),1):
-            col1, col2 = st.columns(2)
+            col1, col2 = st.columns([0.8, 0.2])
             with col1:
                 st.markdown(f"**:blue[{columns_print[i]}:]**")
             with col2:
@@ -1296,5 +1304,16 @@ def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info:
     }
     
     st.plotly_chart(fig, use_container_width=True, config=config)
+
+    return
+
+def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
+
+    columnsPrint = df_current.drop(list_drop, axis=1).columns.tolist()
+    columnsPrintRename = fromParametersGetLabels(list_params=columnsPrint)
+    dict_replace = {columnsPrint[i]: columnsPrintRename[i] for i in range(0,len(columnsPrint),1)}
+    df_current = df_current.rename(columns=dict_replace)
+
+    printDataFloat(dataframe=df_current, columns_print=columnsPrintRename, round_int=3)
 
     return

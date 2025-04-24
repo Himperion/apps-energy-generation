@@ -236,17 +236,6 @@ def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: dat
     
     return
 
-def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
-
-    columnsPrint = df_current.drop(list_drop, axis=1).columns.tolist()
-    columnsPrintRename = general.fromParametersGetLabels(list_params=columnsPrint)
-    dict_replace = {columnsPrint[i]: columnsPrintRename[i] for i in range(0,len(columnsPrint),1)}
-    df_current = df_current.rename(columns=dict_replace)
-
-    general.printDataFloat(dataframe=df_current, columns_print=columnsPrintRename, round_int=3)
-
-    return
-
 def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, day):
 
     time_info ={"name": "Hora", "label": "Hora del día", "strftime": "%H:%M"}
@@ -387,7 +376,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
         general.plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", "Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
-    printDataFloatResult(df_dailyAnalysisFilter, list_drop)
+    general.printDataFloatResult(df_dailyAnalysisFilter, list_drop)
 
     return
 
@@ -515,7 +504,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
         general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", f"Egen_PV(kWh/{timeAnalysis[0]})", f"Egen_AERO(kWh/{timeAnalysis[0]})"]
-    printDataFloatResult(df_current, list_drop)
+    general.printDataFloatResult(df_current, list_drop)
 
     return
 

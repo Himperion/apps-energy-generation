@@ -1081,17 +1081,17 @@ def displayResultCurrent(df_current: pd.DataFrame, time_info: dict, timeLapse: s
 
     columnsCurrent = df_current.columns.to_list()
 
-    with st.expander(f"**Producción {time_info['description_current']}**", icon="🍰"):
+    with st.expander(f"**Generación {time_info['description_current']}**", icon="🍰"):
         if f"ErcDC_PV(kWh/{timeLapse})" in columnsCurrent and f"ErcDC_AERO(kWh/{timeLapse})" in columnsCurrent:
-            list_params = [f"ErcDC_PV(kWh/{timeLapse})", f"ErcDC_AERO(kWh/{timeLapse})"]
+            list_params = [f"ErcDC_PV(kWh/{timeLapse})", f"ErcDC_AERO(kWh/{timeLapse})", f"Eload_GE(kWh/{timeLapse})"]
         else:
-            list_params = [f"Egen_PV(kWh/{timeLapse})", f"Egen_AERO(kWh/{timeLapse})"]
+            list_params = [f"Egen_PV(kWh/{timeLapse})", f"Egen_AERO(kWh/{timeLapse})", f"Eload_GE(kWh/{timeLapse})"]
 
         sizes = general.getSizesForPieChart(df=df_current, list_params=list_params)
         labels = general.fromParametersGetLabels(list_params)
-        legend_title = "Fuente de generación:"
-        colors=["royalblue", "green"]
-        pull = [0.1, 0]
+        legend_title = "Fuente:"
+        colors=["royalblue", "green", "orange"]
+        pull = [0, 0, 0]
 
         general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
@@ -1112,7 +1112,7 @@ def displayResultCurrent(df_current: pd.DataFrame, time_info: dict, timeLapse: s
             list_params = [f"Ebb_absorbed(kWh/{timeLapse})", f"Ebb_delivered(kWh/{timeLapse})"]
             sizes = general.getSizesForPieChart(df=df_current, list_params=list_params)
             labels = general.fromParametersGetLabels(list_params)
-            legend_title = "Energía:"
+            legend_title = "Comportamiento:"
             colors = ["navy", "orange"]
             pull = [0, 0]
 
@@ -1146,11 +1146,11 @@ def displayResultPrevius(df_previus: pd.DataFrame, time_info: dict, value_label:
     with st.expander(f"**Atención {time_info['description_previus']} de la carga**", icon="📊"):
         
         params_info ={
-            f"Eload_OffLine(kWh/{timeLapse})": {"label": "Demanda de la carga desatendida", "color": "maroon"},
-            f"Eload_OffGrid(kWh/{timeLapse})": {"label": "Atención fotovoltaica/eólica/banco de baterías", "color": "purple"},
-            f"Eload_GE(kWh/{timeLapse})": {"label": "Atención grupo electrógeno", "color": "orange"}
+            f"Eload_OffLine(kWh/{timeLapse})": {"label": "Carga no atendida", "color": "maroon"},
+            f"Eload_OffGrid(kWh/{timeLapse})": {"label": "Suplida por el conjunto fotovoltaica/eólica/banco de baterías", "color": "purple"},
+            f"Eload_GE(kWh/{timeLapse})": {"label": "Suplida por el  grupo electrógeno", "color": "orange"}
             }
-        serie_label = "Descripción:"
+        serie_label = "Demanda:"
 
         general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
@@ -1171,12 +1171,10 @@ def displayDailyResults(df_data, df_dailyAnalysis, PARAMS_data, pf_date, label_s
     displayResultCurrent(df_current, time_info, timeLapse_current)
     displayResultDatatime(df_datatime, PARAMS_data, {"name": "date", "label": "Fecha"}, label_systems, xrsv)
 
-    
+    list_drop = ["dates (Y-M-D hh:mm:ss)", f"Egen_PV(kWh/{timeLapse_current})", f"Egen_AERO(kWh/{timeLapse_current})",
+                 f"Egen_INVPV(kWh/{timeLapse_current})", f"Egen_INVAERO(kWh/{timeLapse_current})"]
 
-
-
-
-    
+    general.printDataFloatResult(df_current, list_drop)
 
     return
 
@@ -1200,7 +1198,10 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
     displayResultDatatime(df_datatime, PARAMS_data, {"name": "date", "label": "Fecha"}, label_systems, xrsv)
     displayResultPrevius(df_previus, time_info, previus_label, timeLapse["previus"])
 
-    
+    list_drop = ["dates (Y-M-D hh:mm:ss)", f"Egen_PV(kWh/{timeLapse['current']})", f"Egen_AERO(kWh/{timeLapse['current']})",
+                 f"Egen_INVPV(kWh/{timeLapse['current']})", f"Egen_INVAERO(kWh/{timeLapse['current']})"]
+
+    general.printDataFloatResult(df_current, list_drop)
 
     return
 
@@ -1217,9 +1218,13 @@ def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd
     df_previus = df_previus.copy()
     df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
 
-
     displayResultCurrent(df_current, time_info, timeLapse["current"])
     displayResultPrevius(df_previus, time_info, previus_label, timeLapse["previus"])
+
+    list_drop = ["dates (Y-M-D hh:mm:ss)", f"Egen_PV(kWh/{timeLapse['current']})", f"Egen_AERO(kWh/{timeLapse['current']})",
+                 f"Egen_INVPV(kWh/{timeLapse['current']})", f"Egen_INVAERO(kWh/{timeLapse['current']})"]
+
+    general.printDataFloatResult(df_current, list_drop)
 
 
     return
