@@ -643,9 +643,14 @@ def getKeyValueParam(select_param: str, num_node: int) -> str:
 
     return keyValue
 
-def dictPositionInfoAddValues(df: pd.DataFrame, dictPositionInfoSystem: dict, columnsOptionsData: dict, round_decimal: int):
+def dictPositionInfoAddValues(df: pd.DataFrame, label_systems: str, columnsOptionsData: dict, round_decimal: int):
 
-    for key, value in dictPositionInfoSystem.items():
+    with open("files//[OffGrid] - auxiliary_position.yaml", "r") as archivo:
+        auxiliaryPositionInfo = yaml.safe_load(archivo)
+
+    dict_info = auxiliaryPositionInfo[label_systems]
+
+    for key, value in dict_info.items():
         dictAux = {"position": value}
 
         if key == "Geff":
@@ -675,10 +680,9 @@ def dictPositionInfoAddValues(df: pd.DataFrame, dictPositionInfoSystem: dict, co
 
         # Continuar
         
+        dict_info[key] = dictAux
 
-        dictPositionInfoSystem[key] = dictAux
-
-    return dictPositionInfoSystem
+    return dict_info
 
 def getSOCparams(RCPV_data: dict, RCAERO_data: dict, label_systems: str):
 
@@ -767,31 +771,11 @@ def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_da
 
     numberPhases, round_decimal = PARAMS_data["numberPhases"], 4
 
-    dictPositionInfo = {}
-    dictPositionInfo["PV"] = {
-        "Geff": [5, 135],
-        "Toper": [5, 150],
-        "SOC": [223, 344],
-        "conSD": [223, 359],
-        "conSC": [223, 374],
-        "swLoad": [1058, 132]
-    }
-    dictPositionInfo["PV-AERO-GE"] = {
-        "Geff": [5, 120],
-        "Toper": [5, 135],
-        "Vwind": [5, 350],
-        "Consumo_GE": [990, 290],
-        "SOC": [196, 280],
-        "conSD": [196, 295],
-        "conSC": [196, 310],
-        "swLoad": [880, 270]
-        }
-    
     pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
     df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
 
     dictNode, img_name = getNodeParametersOffGrid(df_datatime, numberPhases, round_decimal, label_systems)
-    dictInfo = dictPositionInfoAddValues(df_datatime, dictPositionInfo[label_systems], PARAMS_data["columnsOptionsData"], round_decimal)
+    dictInfo = dictPositionInfoAddValues(df_datatime, label_systems, PARAMS_data["columnsOptionsData"], round_decimal)
 
     tab1, tab2, tab3 = st.tabs(["💡 Potencia (kW)", "🔋 Tensión (V)", "🔌 Corriente (A)"])
 
@@ -801,66 +785,6 @@ def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_da
         addInformationSystemImage(img_name, dictNode, dictInfo, "V")
     with tab3:
         addInformationSystemImage(img_name, dictNode, dictInfo, "I")
-
-
-    """
-    listNodeKeys = [key for key in dictNode]
-
-    image = Image.open(r"images/app9_img1(blank).png").convert("RGBA")
-    draw = ImageDraw.Draw(image)
-
-    font = ImageFont.truetype("arial.ttf", 14)
-    color = (0, 0, 255, 255)
-
-    for i in range(0,len(listNodeKeys),1):
-        key = listNodeKeys[i]
-        text = str(dictNode[key][f"Pn{i+1} (kW)"])
-        position = (dictPositionNode[key][0]-20, dictPositionNode[key][1]-20)
-
-        draw.text(position, text, font=font, fill=color)
-
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-
-    st.image(buffer, caption="Imagen con texto agregado", use_container_width=True)
-    """    
-
-    """
-    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
-    with col1:
-        general.getNodeVisualization(dictNode=dictNode["node1"], nodeNum=1)
-    with col2:
-        general.getNodeVisualization(dictNode=dictNode["node2"], nodeNum=2)
-    with col3:
-        general.getNodeVisualization(dictNode=dictNode["node3"], nodeNum=3)
-    with col4:
-        general.getNodeVisualization(dictNode=dictNode["node4"], nodeNum=4)
-
-    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
-    with col1:
-        general.getNodeVisualization(dictNode=dictNode["node5"], nodeNum=5)
-    with col2:
-        general.getNodeVisualization(dictNode=dictNode["node6"], nodeNum=6)
-    with col3:
-        general.getNodeVisualization(dictNode=dictNode["node7"], nodeNum=7)
-    with col4:
-        general.getNodeVisualization(dictNode=dictNode["node8"], nodeNum=8)
-
-    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
-    with col1:
-        general.getNodeVisualization(dictNode=dictNode["node9"], nodeNum=9)
-    with col2:
-        general.getNodeVisualization(dictNode=dictNode["node10"], nodeNum=10)
-    with col3:
-        general.getNodeVisualization(dictNode=dictNode["node11"], nodeNum=11)
-    with col4:
-        general.getNodeVisualization(dictNode=dictNode["node12"], nodeNum=12)
-
-    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
-    with col1:
-        general.getNodeVisualization(dictNode=dictNode["node13"], nodeNum=13)
-    """
 
     return
 

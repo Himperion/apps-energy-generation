@@ -1,0 +1,123 @@
+AERO:
+  SOC:
+  - 220
+  - 321
+  Vwind:
+  - 11
+  - 135
+  conSC:
+  - 220
+  - 351
+  conSD:
+  - 220
+  - 336
+  swLoad:
+  - 962
+  - 130
+AERO-GE:
+  Consumo_GE:
+  - 1094
+  - 156
+  SOC:
+  - 220
+  - 321
+  Vwind:
+  - 11
+  - 135
+  conSC:
+  - 220
+  - 351
+  conSD:
+  - 220
+  - 336
+  swLoad:
+  - 962
+  - 130
+PV:
+  Geff:
+  - 5
+  - 135
+  SOC:
+  - 223
+  - 344
+  Toper:
+  - 5
+  - 150
+  conSC:
+  - 223
+  - 374
+  conSD:
+  - 223
+  - 359
+  swLoad:
+  - 1058
+  - 132
+PV-AERO:
+  Geff:
+  - 5
+  - 120
+  SOC:
+  - 196
+  - 280
+  Toper:
+  - 5
+  - 135
+  Vwind:
+  - 5
+  - 350
+  conSC:
+  - 196
+  - 310
+  conSD:
+  - 196
+  - 295
+  swLoad:
+  - 880
+  - 270
+PV-AERO-GE:
+  Consumo_GE:
+  - 990
+  - 290
+  Geff:
+  - 5
+  - 120
+  SOC:
+  - 196
+  - 280
+  Toper:
+  - 5
+  - 135
+  Vwind:
+  - 5
+  - 350
+  conSC:
+  - 196
+  - 310
+  conSD:
+  - 196
+  - 295
+  swLoad:
+  - 880
+  - 270
+PV-GE:
+  Consumo_GE:
+  - 1072
+  - 143
+  Geff:
+  - 11
+  - 121
+  SOC:
+  - 201
+  - 306
+  Toper:
+  - 11
+  - 136
+  conSC:
+  - 201
+  - 336
+  conSD:
+  - 201
+  - 321
+  swLoad:
+  - 940
+  - 116
