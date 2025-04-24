@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import yaml, io, calendar
+import plotly.express as px
 from datetime import datetime, timedelta
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode, StAggridTheme
 
@@ -671,6 +672,7 @@ def initializeDataFrameColumns(df_grid: pd.DataFrame, generationType: str) -> pd
         
         df_grid["conSD(t)"] = False
         df_grid["conSC(t)"] = False
+        df_grid["conNORMAL(t)"] = False
         df_grid["swLoad(t)"] = 1
 
         df_grid["deltaEbb(kWh)"] = 0.0
@@ -1008,6 +1010,79 @@ def getDictDataRow(selected_row: pd.DataFrame, key: str):
 
     return fun_app1.get_dict_data(selected_row, key)
 
+def get_df_plot(df: pd.DataFrame, time_info: dict, params_info: dict):
+
+    dict_plot ={
+        **{time_info["name"]: df[time_info["name"]]},
+        **{value["label"]: df[key] for key, value in params_info.items()}
+    }
+
+    df_plot = pd.DataFrame(dict_plot)
+    df_long = df_plot.melt(id_vars=time_info["name"], var_name="Serie", value_name="Value")
+
+    return df_long
+
+def get_color_discrete_map(params_info: dict):
+
+    return {params_info[key]["label"]: params_info[key]["color"] for key in params_info}
+
+def getSizesForPieChart(df: pd.DataFrame, list_params: list) -> list:
+
+    return [df.loc[df.index[0], list_params[i]] for i in range(0,len(list_params),1)]
+
+def fromParametersGetLabels(list_params: list):
+
+    dict_replace_param = {
+        "Eauto": "Autoconsumo",
+        "Eexp": "Exportación",
+        "Eimp": "Importación",
+        "Exct1": "Excedentes tipo 1",
+        "Exct2": "Excedentes tipo 2",
+        "Egen_INVPV": "Generación fotovoltaica",
+        "Egen_INVAERO": "Generación Eólica",
+        "Egen": "Generación total",
+        "Eload": "Demanda de la carga",
+        "Edem": "Demanda neta a la red",
+        "ErcDC_PV": "Fotovoltaica",
+        "ErcDC_AERO": "Eólica",
+        "Egen_PV": "Fotovoltaica",
+        "Egen_AERO": "Eólica",
+        "Eload_OffGrid": "Fotovoltaica/eólica/banco de baterías",
+        "Eload_GE": "Grupo electrógeno",
+        "Eload_OffLine": "Carga desconectada",
+        "conNORMAL": "Normal",
+        "conSD": "Sobredescarga",
+        "conSC": "Sobrecarga",
+        "Ebb_absorbed": "Absorbida",
+        "Ebb_delivered": "Entregada"
+    }
+
+    dict_replace_date = {
+        "(kWh/day)": " (kWh/día)",
+        "(kWh/month)": " (kWh/mes)",
+        "(kWh/year)": " (kWh/año)",
+        "(h/day)": " (h/día)",
+        "(h/month)": " (h/mes)",
+        "(h/year)": " (h/año)",
+    }
+
+    list_out = list_params.copy()
+
+    for i in range(0,len(list_params),1):
+        if list_params[i].count("(") == 1 and list_params[i].count(")"):
+            stringAux = list_params[i].split("(")[0]
+            if stringAux in dict_replace_param:
+                list_out[i] = list_params[i].replace(stringAux, dict_replace_param[stringAux])
+    
+    for i in range(0,len(list_out),1):
+        if list_out[i].count("(") == 1 and list_out[i].count(")"):
+            if list_out[i].find("(") > 0:
+                stringAux = list_out[i][list_out[i].find("("):list_out[i].find(")")+1]
+                if stringAux in dict_replace_date:
+                    list_out[i] = list_out[i].replace(stringAux, dict_replace_date[stringAux])
+
+    return list_out
+
 #%% funtions streamlit
 
 def getWidgetNumberInput(label: str, disabled: bool, key: str, variable: dict):
@@ -1159,15 +1234,67 @@ def dataframe_AgGrid(dataframe: pd.DataFrame, height: int) -> pd.DataFrame:
                   update_mode=GridUpdateMode.SELECTION_CHANGED,
                   columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS,
                   height=height)
-    
-    """
-    custom_theme = (
-        StAggridTheme(base="balham").withParams({"fontSize": 16,
-                                                 "rowBorder": False,
-                                                 "backgroundColor": "#FFFFFF"}).withParts(['iconSetMaterial'])
-            )
-    """
-    
-
 
     return data["selected_rows"]
+
+def pieChartVisualizationStreamlit(sizes: list, labels: list, legend_title: str, colors: list, pull: list):
+    
+    fig = px.pie(
+        names=labels,
+        values=sizes
+        )
+    fig.update_traces(
+        hovertemplate="%{label}<br>Valor: %{value:.3f}<br>Porcentaje: %{percent:.2%}<extra></extra>",
+        marker=dict(colors=colors),
+        texttemplate="%{percent:.2%}",
+        textposition="inside",
+        pull=pull
+        )
+    fig.update_layout(
+        legend_title_text=legend_title,
+        legend=dict(orientation="h")
+        )
+    config ={
+        "displayModeBar": True,
+        "displaylogo": False,
+        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud"]
+    }
+
+    st.plotly_chart(fig, use_container_width=True, config=config)
+
+    return
+
+def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info: dict, value_label: str, serie_label: str, barmode="overlay", opacity=0.8):
+
+    df_long = get_df_plot(df, time_info, params_info)
+
+    fig = px.bar(
+        df_long,
+        x=time_info["name"], y="Value", color="Serie", barmode=barmode, opacity=opacity,
+        labels={
+            time_info["name"]: time_info["label"],
+            "Value": value_label,
+            "Serie": serie_label
+        },
+        color_discrete_map=get_color_discrete_map(params_info),
+        hover_data={
+            "Value": ":.3",
+            time_info["name"]: True,
+            "Serie": True
+        }
+    )
+    fig.update_layout(xaxis_tickangle=-90,
+                      legend=dict(orientation="h",
+                                  y=10,
+                                  yanchor="bottom"))
+    
+    config ={
+        "displayModeBar": True,
+        "displaylogo": False,
+        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud",
+                                   "zoomIn", "zoomOut", "lasso2d", "select2d"]
+    }
+    
+    st.plotly_chart(fig, use_container_width=True, config=config)
+
+    return

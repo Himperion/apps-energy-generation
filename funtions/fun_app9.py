@@ -375,6 +375,7 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
         
         df_grid.loc[index, "conSD(t)"] = conSD
         df_grid.loc[index, "conSC(t)"] = conSC
+        df_grid.loc[index, "conNORMAL(t)"] = not conSD and not conSC
         df_grid.loc[index, "swLoad(t)"] = swLoad
 
         df_grid.loc[index, "deltaEbb(kWh)"] = deltaEbb
@@ -556,11 +557,14 @@ def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLa
 
     if not "Consumo_GE(l/h)" in list_dftimeLapseColumns:
         df_timeLapse["Consumo_GE(l/h)"] = 0.0
+    if not "conNORMAL(t)" in list_dftimeLapseColumns:
+        df_timeLapse["conNORMAL(t)"] = (~df_timeLapse["conSD(t)"]) & (~df_timeLapse["conSC(t)"])
 
     Ebb_absorbed = df_timeLapse.loc[df_timeLapse["Pbb(kW)"] > 0, "Pbb(kW)"].sum()*(deltaMinutes/60)
     Ebb_delivered = df_timeLapse.loc[df_timeLapse["Pbb(kW)"] < 0, "Pbb(kW)"].sum()*(deltaMinutes/60)*(-1)
+    Eload_OffGrid = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 1, "Load(kW)"].sum()*(deltaMinutes/60)
+    Eload_OffLine = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 2, "Load(kW)"].sum()*(deltaMinutes/60)
     Eload_GE = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 3, "Load(kW)"].sum()*(deltaMinutes/60)
-    Eload_OffGrid = df_timeLapse.loc[df_timeLapse["swLoad(t)"] != 3, "Load(kW)"].sum()*(deltaMinutes/60)
 
     dataAnalysis = {
         f"dates (Y-M-D hh:mm:ss)": date,
@@ -569,13 +573,17 @@ def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLa
         f"Egen_AERO(kWh/{timeLapse})": df_timeLapse["Pgen_AERO(kW)"].sum()*(deltaMinutes/60),
         f"Egen_INVPV(kWh/{timeLapse})": df_timeLapse["PinvAC_PV(kW)"].sum()*(deltaMinutes/60),
         f"Egen_INVAERO(kWh/{timeLapse})": df_timeLapse["PinvAC_AERO(kW)"].sum()*(deltaMinutes/60),
+        f"ErcDC_PV(kWh/{timeLapse})": df_timeLapse["PrcDC_PV(kW)"].sum()*(deltaMinutes/60),
+        f"ErcDC_AERO(kWh/{timeLapse})": df_timeLapse["PrcDC_AERO(kW)"].sum()*(deltaMinutes/60),
         f"Ebb(kWh/{timeLapse})": df_timeLapse["Pbb(kW)"].sum()*(deltaMinutes/60),
         f"Ebb_absorbed(kWh/{timeLapse})": Ebb_absorbed,
         f"Ebb_delivered(kWh/{timeLapse})": Ebb_delivered,
-        f"Eload_GE(kWh/{timeLapse})": Eload_GE,
         f"Eload_OffGrid(kWh/{timeLapse})": Eload_OffGrid,
+        f"Eload_OffLine(kWh/{timeLapse})": Eload_OffLine,
+        f"Eload_GE(kWh/{timeLapse})": Eload_GE,
         f"conSD(h/{timeLapse})": df_timeLapse["conSD(t)"].sum()*(deltaMinutes/60),
         f"conSC(h/{timeLapse})": df_timeLapse["conSC(t)"].sum()*(deltaMinutes/60),
+        f"conNORMAL(h/{timeLapse})": df_timeLapse["conNORMAL(t)"].sum()*(deltaMinutes/60),
         f"swLoad_1(h/{timeLapse})": dictCountSwLoad["swLoad_1"]*(deltaMinutes/60),
         f"swLoad_2(h/{timeLapse})": dictCountSwLoad["swLoad_2"]*(deltaMinutes/60),
         f"swLoad_3(h/{timeLapse})": dictCountSwLoad["swLoad_3"]*(deltaMinutes/60),
@@ -679,7 +687,27 @@ def getSOCparams(RCPV_data: dict, RCAERO_data: dict, label_systems: str):
     else:
         SOC_conx, SOC_max, SOC_min = RCAERO_data["SOC_conx"], RCAERO_data["SOC_max"], RCAERO_data["SOC_min"]
 
-    return SOC_conx, SOC_max, SOC_min
+    return {"SOC_conx": SOC_conx, "SOC_max": SOC_max, "SOC_min": SOC_min}
+
+def getParamsDfTime(df: pd.DataFrame) -> pd.DataFrame:
+
+    df = df.copy()
+    df["date"] = df["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d/%m/%y %H:%M")
+
+    df["PgenGE(kW)"] = 0.0
+    df.loc[df["swLoad(t)"] == 3, "PgenGE(kW)"] = df["Load(kW)"]
+    
+    df["bb_condition"] = 0
+    df.loc[df["conSD(t)"], "bb_condition"] = 1
+    df.loc[df["conSC(t)"], "bb_condition"] = 2
+
+    df["PrcDC_TOTAL(kW)"] = df["PrcDC_PV(kW)"] + df["PrcDC_AERO(kW)"]
+    df["PinvDC_TOTAL(kW)"] = df["PinvDC_PV(kW)"] + df["PinvDC_AERO(kW)"]
+    df["PinvAC_TOTAL(kW)"] = df["PinvAC_PV(kW)"] + df["PinvAC_AERO(kW)"]
+
+    df = df.reset_index(drop=True)
+
+    return df
 
 #%% funtions streamlit
 
@@ -836,53 +864,119 @@ def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_da
 
     return
 
-def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, label_systems: str):
-
-    df_analysis = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
-    df_dataDaily = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
-
-    st.dataframe(df_analysis)
-
+def getPowerCurveWithConditionOverTime(df: pd.DataFrame, time_info: dict, params_info: dict, condition: dict, condition_label: str, value_label: str, serie_label: str, config: dict, ignore_key: int, xrsv: bool):
     
-
-    df_dataDaily = df_dataDaily.copy()
-    df_dataDaily["time"] = df_dataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime("%H:%M")
-
-
-    st.dataframe(df_dataDaily)
-
+    df_long = general.get_df_plot(df, time_info, params_info)
     
-
-
-    SOC_conx, SOC_max, SOC_min = getSOCparams(RCPV_data=PARAMS_data["RCPV_data"],
-                                              RCAERO_data=PARAMS_data["RCAERO_data"],
-                                              label_systems=label_systems)
+    fig = px.line(
+        df_long, x=time_info["name"], y="Value", color="Serie",
+        labels={
+            time_info["name"]: time_info["label"],
+            "Value": value_label,
+            "Serie": serie_label
+            }, 
+        color_discrete_map=general.get_color_discrete_map(params_info),
+        hover_data={
+            "Value": ":.3",
+            time_info["name"]: True,
+            "Serie": True
+            }
+        )
     
-
-    st.text(SOC_conx)
-    st.text(SOC_max)
-    st.text(SOC_min)
-
-
-    for key, value in PARAMS_data.items():
-        st.text(f"{key}: {value}")
-
-
-    fig = px.bar(df_dataDaily, x="time", y="SOC(t)", title="SOC")
-
     fig = go.Figure(fig)
 
+    for i, row in df.iterrows():
+        if row[condition_label] != ignore_key:
+            fig.add_shape(
+                type="rect",
+                xref="x",
+                yref='paper',
+                x0= df.loc[i - 1, time_info["name"]] if i > 0 else None,
+                x1= df.loc[i, time_info["name"]],
+                y0=0,
+                y1=1,
+                fillcolor=condition[row[condition_label]]["color"],
+                opacity=0.8,
+                layer="below",
+                line_width=0
+                )
+        
+    for key, value in condition.items():
+        if key != ignore_key:
+            fig.add_trace(go.Bar(
+                x=[None],
+                y=[None],
+                marker=dict(color=value["color"]),
+                name=f"{value['label']}",
+                showlegend=True))
+    
+    fig.update_layout(xaxis_tickangle=-90, legend=dict(orientation="h", y=10, yanchor="bottom"),
+                      xaxis_rangeslider_visible=xrsv,
+                      yaxis=dict(showgrid=False))
+
+    st.plotly_chart(fig, use_container_width=True, config=config)
+
+    return
+
+def getStateOfChargeGraphOverTime(df: pd.DataFrame, time_info: dict, conditionBB: dict, SOC_conx: float, SOC_max: float, SOC_min: float, config: dict, ignore_key: int, xrsv: bool):
+
+    fig = px.line(df, x=time_info["name"], y="SOC(t)", markers=False,
+                  labels={
+                      time_info["name"]: time_info["label"],
+                      "SOC(t)": "SOC"
+                      },
+                  hover_data={
+                      "SOC(t)": ":.3",
+                      time_info["name"]: True
+                      })
+    
+    fig = go.Figure(fig)
+
+    for i, row in df.iterrows():
+        if row["bb_condition"] != ignore_key:
+            fig.add_shape(
+                type="rect",
+                xref="x",
+                yref='paper',
+                x0= df.loc[i - 1, time_info["name"]] if i > 0 else None,
+                x1= df.loc[i, time_info["name"]],
+                y0=0,
+                y1=1,
+                fillcolor=conditionBB[row["bb_condition"]]["color"],
+                opacity=0.8,
+                layer="below",
+                line_width=0
+                )
+        
+    for key, value in conditionBB.items():
+        if key != ignore_key:
+            fig.add_trace(go.Bar(
+                x=[None],
+                y=[None],
+                marker=dict(color=value["color"]),
+                name=f"{value['label']}",
+                showlegend=True))
+
     fig.add_shape(
-        type='line',
+        type="line",
         xref="paper",
         x0=0, x1=1,
-        y0=SOC_min, y1=SOC_min,   # Coordenadas del eje y (valor de la línea)
+        y0=SOC_min, y1=SOC_min,
         line=dict(color='red', dash='dash'),
         name="SOC_min"
         )
     
     fig.add_shape(
-        type='line',
+        type="line",
+        xref="paper",
+        x0=0, x1=1,
+        y0=SOC_conx, y1=SOC_conx,
+        line=dict(color="orange", dash='dash'),
+        name="SOC_conx"
+        )
+    
+    fig.add_shape(
+        type="line",
         xref="paper",
         x0=0, x1=1,
         y0=SOC_max, y1=SOC_max,
@@ -890,10 +984,242 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, P
         name="SOC_max"
         )
     
-    fig.add_annotation(x=0, y=SOC_min, text="SOC_min", showarrow=False, yshift=10, font=dict(color='red'))
-    fig.add_annotation(x=0, y=SOC_max, text="SOC_max", showarrow=False, yshift=10, font=dict(color='green'))
+    fig.add_annotation(x=0, y=SOC_min, text="SOC_min", showarrow=False, yshift=10, font=dict(color="red"))
+    fig.add_annotation(x=0, y=SOC_conx, text="SOC_conx", showarrow=False, yshift=10, font=dict(color="orange"))
+    fig.add_annotation(x=0, y=SOC_max, text="SOC_max", showarrow=False, yshift=10, font=dict(color="green"))
+    
+    fig.update_layout(xaxis_tickangle=-90, legend=dict(title="Condición:", orientation="h", y=10, yanchor="bottom"),
+                      xaxis_rangeslider_visible=xrsv,
+                      yaxis=dict(showgrid=False))
+    
+    st.plotly_chart(fig, use_container_width=True, config=config)
+
+    return
+
+def displayResultDatatime(df_datatime, PARAMS_data, time_info, label_systems, xrsv):
+
+    SOC_params = getSOCparams(RCPV_data=PARAMS_data["RCPV_data"],
+                              RCAERO_data=PARAMS_data["RCAERO_data"],
+                              label_systems=label_systems)
+    
+    conditionSW = {
+        1: {"color": "rgba(240, 240, 240, 0.3)", "label": "SW1"},
+        2: {"color": "rgba(0, 255, 0, 0.3)", "label": "SW2"},
+        3: {"color": "rgba(0, 0, 255, 0.3)", "label": "SW3"}
+    }
+    
+    conditionBB = {
+        0: {"color": "rgba(64, 224, 208, 0.4)", "label": "Normal"},
+        1: {"color": "rgba(238, 130, 238, 0.4)", "label": "Sobredescarga"},
+        2: {"color": "rgba(255, 215, 0, 0.4)", "label": "Sobrecarga"},
+    }
+    
+    config ={
+        "displayModeBar": True,
+        "displaylogo": False,
+        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian",
+                                   "sendDataToCloud", "zoomIn", "zoomOut", "lasso2d", "select2d",
+                                   "autoscale", "resetScale2d"]
+    }
+
+    with st.expander("**Estado de carga del banco de baterías (SOC)**", icon="📊"):
+    
+        getStateOfChargeGraphOverTime(df=df_datatime,
+                                      time_info=time_info,
+                                      conditionBB=conditionBB,
+                                      config=config,
+                                      ignore_key=0,
+                                      xrsv=xrsv,
+                                      **SOC_params)
+        
+        
+    with st.expander("**Nodo AC**", icon="📊"):
+    
+        params_info ={
+            "Load(kW)": {"label": "Demanda de la carga", "color": "teal"},
+            "PgenGE(kW)": {"label": "Generación grupo electrógeno", "color": "turquoise"},
+            "PinvAC_TOTAL(kW)": {"label": "Generación total", "color": "magenta"}
+            }
+        
+        value_label, serie_label, condition_label = "Potencia (kW)", "", "swLoad(t)"
+
+        getPowerCurveWithConditionOverTime(df=df_datatime,
+                                           time_info=time_info,
+                                           params_info=params_info,
+                                           condition=conditionSW,
+                                           condition_label=condition_label,
+                                           value_label=value_label,
+                                           serie_label=serie_label,
+                                           config=config,
+                                           ignore_key=1,
+                                           xrsv=xrsv)
+        
+    with st.expander("**Nodo DC**", icon="📊"):
+
+        params_info ={
+            "PrcDC_TOTAL(kW)": {"label": "Generación", "color": "cyan"},
+            "Pbb(kW)": {"label": "Potencia del banco de baterías", "color": "orange"},
+            "PinvDC_TOTAL(kW)": {"label": "Demanda de la carga", "color": "magenta"}
+            }
+        
+        value_label, serie_label, condition_label = "Potencia (kW)", "", "bb_condition" 
+
+        getPowerCurveWithConditionOverTime(df=df_datatime,
+                                           time_info=time_info,
+                                           params_info=params_info,
+                                           condition=conditionBB,
+                                           condition_label=condition_label,
+                                           value_label=value_label,
+                                           serie_label=serie_label,
+                                           config=config,
+                                           ignore_key=0,
+                                           xrsv=xrsv)
+
+    return
+
+def displayResultCurrent(df_current: pd.DataFrame, time_info: dict, timeLapse: str):
+
+    columnsCurrent = df_current.columns.to_list()
+
+    with st.expander(f"**Producción {time_info['description_current']}**", icon="🍰"):
+        if f"ErcDC_PV(kWh/{timeLapse})" in columnsCurrent and f"ErcDC_AERO(kWh/{timeLapse})" in columnsCurrent:
+            list_params = [f"ErcDC_PV(kWh/{timeLapse})", f"ErcDC_AERO(kWh/{timeLapse})"]
+        else:
+            list_params = [f"Egen_PV(kWh/{timeLapse})", f"Egen_AERO(kWh/{timeLapse})"]
+
+        sizes = general.getSizesForPieChart(df=df_current, list_params=list_params)
+        labels = general.fromParametersGetLabels(list_params)
+        legend_title = "Fuente de generación:"
+        colors=["royalblue", "green"]
+        pull = [0.1, 0]
+
+        general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+    with st.expander(f"**Atención de la carga {time_info['description_current']}**", icon="🍰"):
+        list_params = [f"Eload_OffGrid(kWh/{timeLapse})", f"Eload_GE(kWh/{timeLapse})", f"Eload_OffLine(kWh/{timeLapse})"]
+        sizes = general.getSizesForPieChart(df=df_current, list_params=list_params)
+        labels = general.fromParametersGetLabels(list_params)
+        legend_title = "Atención:"
+        colors = ["purple", "orange", "maroon"]
+        pull = [0, 0.1, 0]
+
+        general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+    with st.expander(f"**Comportamiento del banco de baterías {time_info['description_current']}**", icon="🍰"):
+        tab1, tab2 = st.tabs(["🪫 Energía del banco de baterías", "🔋 Condiciones del estado de carga"])
+
+        with tab1:
+            list_params = [f"Ebb_absorbed(kWh/{timeLapse})", f"Ebb_delivered(kWh/{timeLapse})"]
+            sizes = general.getSizesForPieChart(df=df_current, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
+            legend_title = "Energía:"
+            colors = ["navy", "orange"]
+            pull = [0, 0]
+
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+        with tab2:
+            list_params = [f"conNORMAL(h/{timeLapse})", f"conSD(h/{timeLapse})", f"conSC(h/{timeLapse})"]
+            sizes = general.getSizesForPieChart(df=df_current, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
+            legend_title = "Condición:"
+            colors = ["turquoise", "violet", "gold"]
+            pull = [0, 0.1, 0.1]
+
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+
+    return
+
+def displayResultPrevius(df_previus: pd.DataFrame, time_info: dict, value_label: str, timeLapse: str):
+
+    with st.expander(f"**Energía generada {time_info['description_previus']}**", icon="📊"):
+
+        params_info ={
+            f"ErcDC_PV(kWh/{timeLapse})": {"label": "Fotovoltaica", "color": "royalblue"},
+            f"ErcDC_AERO(kWh/{timeLapse})": {"label": "Eólica", "color": "green"},
+            f"Eload_GE(kWh/{timeLapse})": {"label": "Grupo electrógeno", "color": "orange"}
+            }
+        serie_label = "Fuente de generación:"
+
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+
+    with st.expander(f"**Atención {time_info['description_previus']} de la carga**", icon="📊"):
+        
+        params_info ={
+            f"Eload_OffLine(kWh/{timeLapse})": {"label": "Demanda de la carga desatendida", "color": "maroon"},
+            f"Eload_OffGrid(kWh/{timeLapse})": {"label": "Atención fotovoltaica/eólica/banco de baterías", "color": "purple"},
+            f"Eload_GE(kWh/{timeLapse})": {"label": "Atención grupo electrógeno", "color": "orange"}
+            }
+        serie_label = "Descripción:"
+
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+
+    return
+
+def displayDailyResults(df_data, df_dailyAnalysis, PARAMS_data, pf_date, label_systems):
+
+    time_info ={"name": "Hora", "label": "Hora del día", "strftime": "%H:%M", "description_current": "diaria",
+                "description_previus": ""}
+    timeLapse_current = "day"
+    xrsv = False
+
+    df_current = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
+    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
+
+    df_datatime = getParamsDfTime(df=df_datatime)
+
+    displayResultCurrent(df_current, time_info, timeLapse_current)
+    displayResultDatatime(df_datatime, PARAMS_data, {"name": "date", "label": "Fecha"}, label_systems, xrsv)
+
     
 
-    st.plotly_chart(fig, use_container_width=True)
+
+
+
+    
+
+    return
+
+def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, df_monthlyAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, label_systems: str):
+
+    time_info ={"name": "Día", "label": "Día del mes", "strftime": "%d",
+                "description_current": "mensual", "description_previus": "diaria"}
+    timeLapse = {"current": "month", "previus": "day"}
+    previus_label = "Energía (kWh/día)"
+    xrsv = True
+
+    df_current = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == pf_date.month)]
+    df_previus = df_dailyAnalysis[(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year) & (df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == pf_date.month)]
+    df_previus = df_previus.copy()
+    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
+    df_datatime = df_data[(df_data["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year) & (df_data["dates (Y-M-D hh:mm:ss)"].dt.month == pf_date.month)]
+
+    df_datatime = getParamsDfTime(df=df_datatime)
+    
+    displayResultCurrent(df_current, time_info, timeLapse["current"])
+    displayResultDatatime(df_datatime, PARAMS_data, {"name": "date", "label": "Fecha"}, label_systems, xrsv)
+    displayResultPrevius(df_previus, time_info, previus_label, timeLapse["previus"])
+
+    
+
+    return
+
+def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, label_systems: str):
+
+    time_info = {"name": "Mes", "label": "Mes del año", "strftime": "%m",
+                 "description_current": "anual", "description_previus": "mensual"}
+    timeLapse = {"current": "year", "previus": "month"}
+    previus_label = "Energía (kWh/mes)"
+    xrsv = True
+
+    df_current = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year]
+    df_previus = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year]
+    df_previus = df_previus.copy()
+    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
+
+
+    displayResultCurrent(df_current, time_info, timeLapse["current"])
+    displayResultPrevius(df_previus, time_info, previus_label, timeLapse["previus"])
+
 
     return

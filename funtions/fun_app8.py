@@ -206,126 +206,8 @@ def getBytesFileExcelProjectOnGrid(dictDataOnGrid: dict, dataKeyList: list):
 
     return TOTAL_data, bytesFileExcel
 
-def getSizesForPieChart(df: pd.DataFrame, list_params: list) -> list:
-
-    return [df.loc[df.index[0], list_params[i]] for i in range(0,len(list_params),1)]
-
-def fromParametersGetLabels(list_params: list):
-
-    dict_replace_param = {
-        "Eauto": "Autoconsumo",
-        "Eexp": "Exportación",
-        "Eimp": "Importación",
-        "Exct1": "Excedentes tipo 1",
-        "Exct2": "Excedentes tipo 2",
-        "Egen_INVPV": "Generación fotovoltaica",
-        "Egen_INVAERO": "Generación Eólica",
-        "Egen": "Generación total",
-        "Eload": "Demanda de la carga",
-        "Edem": "Demanda neta a la red"
-    }
-
-    dict_replace_date = {
-        "(kWh/day)": " (kWh/día)",
-        "(kWh/month)": " (kWh/mes)",
-        "(kWh/year)": " (kWh/año)"
-    }
-
-    list_out = list_params.copy()
-
-    for i in range(0,len(list_params),1):
-        if list_params[i].count("(") == 1 and list_params[i].count(")"):
-            stringAux = list_params[i].split("(")[0]
-            if stringAux in dict_replace_param:
-                list_out[i] = list_params[i].replace(stringAux, dict_replace_param[stringAux])
-    
-    for i in range(0,len(list_out),1):
-        if list_out[i].count("(") == 1 and list_out[i].count(")"):
-            if list_out[i].find("(") > 0:
-                stringAux = list_out[i][list_out[i].find("("):list_out[i].find(")")+1]
-                if stringAux in dict_replace_date:
-                    list_out[i] = list_out[i].replace(stringAux, dict_replace_date[stringAux])
-
-    return list_out
-
-def get_df_plot(df: pd.DataFrame, time_info: dict, params_info: dict):
-
-    dict_plot ={
-        **{time_info["name"]: df["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])},
-        **{value["label"]: df[key] for key, value in params_info.items()}
-    }
-
-    df_plot = pd.DataFrame(dict_plot)
-    df_long = df_plot.melt(id_vars=time_info["name"], var_name="Serie", value_name="Value")
-
-    return df_long
-
-def get_color_discrete_map(params_info: dict):
-
-    return {params_info[key]["label"]: params_info[key]["color"] for key in params_info}
-
 #%% funtions streamlit
 
-def pieChartVisualizationStreamlit(sizes: list, labels: list, legend_title: str, colors: list, pull: list):
-    
-    fig = px.pie(
-        names=labels,
-        values=sizes
-        )
-    fig.update_traces(
-        hovertemplate="%{label}<br>Valor: %{value:.3f}<br>Porcentaje: %{percent:.2%}<extra></extra>",
-        marker=dict(colors=colors),
-        texttemplate="%{percent:.2%}",
-        textposition="inside",
-        pull=pull
-        )
-    fig.update_layout(
-        legend_title_text=legend_title,
-        legend=dict(orientation="h")
-        )
-    config ={
-        "displayModeBar": True,
-        "displaylogo": False,
-        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud"]
-    }
-
-    st.plotly_chart(fig, use_container_width=True, config=config)
-
-    return
-
-def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info: dict, value_label: str, serie_label: str, barmode="overlay", opacity=0.8):
-
-    df_long = get_df_plot(df, time_info, params_info)
-
-    fig = px.bar(
-        df_long,
-        x=time_info["name"], y="Value", color="Serie", barmode=barmode, opacity=opacity,
-        labels={
-            time_info["name"]: time_info["label"],
-            "Value": value_label,
-            "Serie": serie_label
-        },
-        color_discrete_map=get_color_discrete_map(params_info),
-        hover_data={
-            "Value": ":.3",
-            time_info["name"]: True,
-            "Serie": True
-        }
-    )
-    fig.update_layout(xaxis_tickangle=-90,
-                        legend=dict(orientation="h",
-                                    y=10,
-                                    yanchor="bottom"))
-    config ={
-        "displayModeBar": True,
-        "displaylogo": False,
-        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud",
-                                   "zoomIn", "zoomOut", "lasso2d", "select2d"]
-    }
-    
-    st.plotly_chart(fig, use_container_width=True, config=config)
-
-    return
 
 def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time):
 
@@ -357,7 +239,7 @@ def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: dat
 def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
 
     columnsPrint = df_current.drop(list_drop, axis=1).columns.tolist()
-    columnsPrintRename = fromParametersGetLabels(list_params=columnsPrint)
+    columnsPrintRename = general.fromParametersGetLabels(list_params=columnsPrint)
     dict_replace = {columnsPrint[i]: columnsPrintRename[i] for i in range(0,len(columnsPrint),1)}
     df_current = df_current.rename(columns=dict_replace)
 
@@ -366,6 +248,9 @@ def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
     return
 
 def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, day):
+
+    time_info ={"name": "Hora", "label": "Hora del día", "strftime": "%H:%M"}
+    value_label = "Potencia (kW)"
 
     df_dailyAnalysisFilter = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == day]
     df_DataDaily = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == day]
@@ -379,8 +264,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
     df_DataDaily["Excedentes (kW)"] = df_DataDaily["Exportación (kW)"]*(-1)
     df_DataDaily["Autoconsumo (kW)"] = df_DataDaily["Pgen(kW)"] - df_DataDaily["Excedentes (kW)"]
 
-    time_info ={"name": "Hora", "label": "Hora del día", "strftime": "%H:%M"}
-    value_label = "Potencia (kW)"
+    df_DataDaily[time_info["name"]] = df_DataDaily["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
 
     with st.expander("**Generación diaria**", icon="🍰"):
     
@@ -388,57 +272,56 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
 
         with col1:
             list_params = ["Eauto(kWh/day)", "Eexp(kWh/day)"]
-            sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
-            labels = fromParametersGetLabels(list_params)
+            sizes = general.getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
             legend_title = "Generación:"
             colors = ["magenta", "gold"]
             pull = [0.1, 0]
 
-            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
             
         with col2:
             list_params = ["Eauto(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
-            sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
-            labels = fromParametersGetLabels(list_params)
+            sizes =  general.getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
             legend_title = "Generación:"
             colors = ["magenta", "turquoise", "violet"]
             pull = [0.1, 0, 0]
 
-            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
         
     with st.expander("**Atención de la carga**", icon="🍰"):
         list_params = ["Eimp(kWh/day)", "Eauto(kWh/day)"]
-        sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
-        labels = fromParametersGetLabels(list_params)
+        sizes =  general.getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+        labels = general.fromParametersGetLabels(list_params)
         legend_title = "Atención:"
         colors = ["purple", "magenta"]
         pull = [0, 0, 0]
 
-        pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+        general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
     with st.expander(f"**Interacción entre demanda y generación**", icon="📊"):
 
         params_info ={
             "Load(kW)": {"label": "Demanda de la carga", "color": "teal"},
-            "Pgen(kW)": {"label": "Generación total", "color": "turquoise"}
-            
+            "Pgen(kW)": {"label": "Generación total", "color": "turquoise"}  
         }
         serie_label = "Interacción:"
 
-        plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
+        general.plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
 
     with st.expander(f"**Producción diaria**", icon="📊"):
         tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
 
         with tab1:
             list_params = ["Egen_INVPV(kWh/day)", "Egen_INVAERO(kWh/day)"]
-            sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
-            labels = fromParametersGetLabels(list_params)
+            sizes =  general.getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
             legend_title = "Fuente de generación:"
             colors=["royalblue", "green"]
             pull = [0.1, 0]
 
-            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
         with tab2:
             params_info ={
@@ -447,7 +330,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
                 }
             serie_label = "Fuente de generación:"
 
-            plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
+            general.plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
             
     with st.expander(f"**Demanda diaria**", icon="📊"):
         
@@ -457,23 +340,23 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
             col1, col2 = st.columns([0.5, 0.5])
             with col1:
                 list_params = ["Eimp(kWh/day)", "Eexp(kWh/day)"]
-                sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
-                labels = fromParametersGetLabels(list_params)
+                sizes =  general.getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+                labels = general.fromParametersGetLabels(list_params)
                 legend_title = "Demanda:"
                 colors = ["purple", "gold"]
                 pull = [0.1, 0]
 
-                pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+                general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
             with col2:
                 list_params = ["Eimp(kWh/day)", "Exct1(kWh/day)", "Exct2(kWh/day)"]
-                sizes = getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
-                labels = fromParametersGetLabels(list_params)
+                sizes =  general.getSizesForPieChart(df=df_dailyAnalysisFilter, list_params=list_params)
+                labels = general.fromParametersGetLabels(list_params)
                 legend_title = "Demanda:"
                 colors = ["purple", "turquoise", "violet"]
                 pull = [0.1, 0, 0]
 
-                pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+                general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
         with tab2:
             params_info ={
@@ -482,7 +365,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
                 }
             serie_label = "Demanda:"
 
-            plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
+            general.plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
 
     with st.expander(f"**Generación diaria - Uso**", icon="📊"):
         params_info ={
@@ -491,7 +374,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
             }
         serie_label = "Uso:"
 
-        plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
+        general.plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label)
 
     with st.expander(f"**Atención de la carga**", icon="📊"):
         
@@ -501,7 +384,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
             }
         serie_label = "Atención:"
 
-        plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
+        general.plotVisualizationPxStreamlit(df_DataDaily, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", "Egen_PV(kWh/day)", "Egen_AERO(kWh/day)"]
     printDataFloatResult(df_dailyAnalysisFilter, list_drop)
@@ -515,33 +398,33 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
         
         with col1:
             list_params = [f"Eauto(kWh/{timeAnalysis[0]})", f"Eexp(kWh/{timeAnalysis[0]})"]
-            sizes = getSizesForPieChart(df=df_current, list_params=list_params)
-            labels = fromParametersGetLabels(list_params)
+            sizes =  general.getSizesForPieChart(df=df_current, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
             legend_title = "Generación:"
             colors = ["magenta", "gold"]
             pull = [0.1, 0]
 
-            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
         with col2:
             list_params = [f"Eauto(kWh/{timeAnalysis[0]})", f"Exct1(kWh/{timeAnalysis[0]})", f"Exct2(kWh/{timeAnalysis[0]})"]
-            sizes = getSizesForPieChart(df=df_current, list_params=list_params)
-            labels = fromParametersGetLabels(list_params)
+            sizes =  general.getSizesForPieChart(df=df_current, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
             legend_title = "Generación:"
             colors = ["magenta", "turquoise", "violet"]
             pull = [0.1, 0, 0]
 
-            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
     with st.expander("**Atención de la carga**", icon="🍰"):
         list_params = [f"Eimp(kWh/{timeAnalysis[0]})", f"Eauto(kWh/{timeAnalysis[0]})"]
-        sizes = getSizesForPieChart(df=df_current, list_params=list_params)
-        labels = fromParametersGetLabels(list_params)
+        sizes =  general.getSizesForPieChart(df=df_current, list_params=list_params)
+        labels = general.fromParametersGetLabels(list_params)
         legend_title = "Atención:"
         colors = ["purple", "magenta"]
         pull = [0, 0, 0]
 
-        pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+        general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
     with st.expander("**Interacción entre demanda y generación**", icon="📊"):
 
@@ -552,20 +435,20 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
         }
         serie_label = "Interacción:"
 
-        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
     with st.expander(f"**Producción {time_info['description']}**", icon="📊"):
         tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
         
         with tab1:
             list_params = [f"Egen_INVPV(kWh/{timeAnalysis[0]})", f"Egen_INVAERO(kWh/{timeAnalysis[0]})"]
-            sizes = getSizesForPieChart(df=df_current, list_params=list_params)
-            labels = fromParametersGetLabels(list_params)
+            sizes =  general.getSizesForPieChart(df=df_current, list_params=list_params)
+            labels = general.fromParametersGetLabels(list_params)
             legend_title = "Fuente de generación:"
             colors=["royalblue", "green"]
             pull = [0.1, 0]
 
-            pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+            general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
         with tab2:
             params_info ={
@@ -574,7 +457,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
                 }
             serie_label = "Fuente de generación:"
 
-            plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+            general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
     with st.expander(f"**Demanda {time_info['description']}**", icon="📊"):
         tab1, tab2 = st.tabs(["🍰 Diagrama de torta", "📊 Gráfico de barras"])
@@ -583,23 +466,23 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
             col1, col2 = st.columns([0.5, 0.5])
             with col1:
                 list_params = [f"Eimp(kWh/{timeAnalysis[0]})", f"Eexp(kWh/{timeAnalysis[0]})"]
-                sizes = getSizesForPieChart(df=df_current, list_params=list_params)
-                labels = fromParametersGetLabels(list_params)
+                sizes =  general.getSizesForPieChart(df=df_current, list_params=list_params)
+                labels = general.fromParametersGetLabels(list_params)
                 legend_title = "Demanda:"
                 colors = ["purple", "gold"]
                 pull = [0.1, 0]
 
-                pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+                general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
             with col2:
                 list_params = [f"Eimp(kWh/{timeAnalysis[0]})", f"Exct1(kWh/{timeAnalysis[0]})", f"Exct2(kWh/{timeAnalysis[0]})"]
-                sizes = getSizesForPieChart(df=df_current, list_params=list_params)
-                labels = fromParametersGetLabels(list_params)
+                sizes =  general.getSizesForPieChart(df=df_current, list_params=list_params)
+                labels = general.fromParametersGetLabels(list_params)
                 legend_title = "Demanda:"
                 colors = ["purple", "turquoise", "violet"]
                 pull = [0.1, 0, 0]
 
-                pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
+                general.pieChartVisualizationStreamlit(sizes, labels, legend_title, colors, pull)
 
         with tab2:
             params_info ={
@@ -609,7 +492,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
             
             serie_label = "Demanda:"
 
-            plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
+            general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label, barmode="stack", opacity=1)
 
     with st.expander(f"**Generación {time_info['description']} - Uso**", icon="📊"):
         
@@ -619,7 +502,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
             }
         serie_label = "Uso:"
 
-        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label, barmode="overlay", opacity=0.8)
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label, barmode="overlay", opacity=0.8)
 
     with st.expander("**Atención de la carga**", icon="📊"):
         
@@ -629,7 +512,7 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
             }
         serie_label ="Atención:"
 
-        plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, value_label, serie_label)
 
     list_drop = ["dates (Y-M-D hh:mm:ss)", f"Egen_PV(kWh/{timeAnalysis[0]})", f"Egen_AERO(kWh/{timeAnalysis[0]})"]
     printDataFloatResult(df_current, list_drop)
@@ -638,26 +521,30 @@ def displayResult(df_current: pd.DataFrame, df_previus: pd.DataFrame, timeAnalys
 
 def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, df_monthlyAnalysis: pd.DataFrame, optionYearRange, optionMonthRange):
 
-    monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
-    df_current = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
-    df_previus = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex]
-
     timeAnalysis = ["month", "day"]
     time_info = {"name": "Día", "label": "Día del mes", "strftime": "%d", "description": "mensual"}
     value_label = "Energía (kWh/día)"
+
+    monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
+    df_current = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
+    df_previus = df_dailyAnalysis[(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
+
+    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
 
     displayResult(df_current, df_previus, timeAnalysis, time_info, value_label)
 
     return
 
 def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd.DataFrame, optionYearRange):
-    
-    df_current = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
-    df_previus = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
 
     timeAnalysis = ["year", "month"]
     time_info = {"name": "Mes", "label": "Mes del año", "strftime": "%m", "description": "anual"}
     value_label = "Energía (kWh/mes)"
+    
+    df_current = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+    df_previus = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange]
+
+    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
 
     displayResult(df_current, df_previus, timeAnalysis, time_info, value_label)
 

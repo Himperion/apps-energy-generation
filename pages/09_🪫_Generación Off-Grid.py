@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import yaml
-from datetime import datetime
+from datetime import datetime, date
 
 from funtions import general, fun_app9
 
@@ -414,6 +414,73 @@ with tab4:
 
                             if submittedDaily:
                                 fun_app9.displayDailyResults(df_data, df_dailyAnalysis, PARAMS_data, pf_date, label_systems)
+
+                with tab3:
+                    if df_dailyAnalysis is not None and df_monthlyAnalysis is not None:
+                        listLabelsMonths = general.timeInfoMonthsGetLabels(timeInfoMonths=timeInfo["months"])
+                        flagSubmittedMonth = False
+                        optionYearRange, optionMonthRange = None, None
+
+                        with st.container(border=True):
+                            col1, col2 = st.columns([0.4, 0.6], vertical_alignment="center")
+
+                            with col1:
+                                optionYearRange = st.selectbox(label="Seleccionar año:", options=timeInfo["years"], index=None)
+                            with col2:
+                                if optionYearRange is not None:
+                                    indexYear = timeInfo["years"].index(optionYearRange)
+
+                                    with st.form("analysisMonth", border=False):
+                                        col1, col2 = st.columns([0.6, 0.4], vertical_alignment="bottom")
+
+                                        with col1:
+                                            optionMonthRange = st.selectbox(label="Seleccionar mes:", options=listLabelsMonths[indexYear], index=None)
+                                        with col2:
+                                            submittedMonthly = st.form_submit_button("Aceptar")
+
+                                        if submittedMonthly:
+                                            flagSubmittedMonth = True
+
+                        if flagSubmittedMonth and optionYearRange is not None and optionMonthRange is not None:
+                            year = optionYearRange
+                            month = general.fromMonthGetIndex(month=optionMonthRange)
+                            pf_date = date(year, month, 1)
+                            fun_app9.displayMonthlyResults(df_data, df_dailyAnalysis, df_monthlyAnalysis, PARAMS_data, pf_date, label_systems)
+                    else:
+                        if df_dailyAnalysis is None:
+                            pesLabel = "DailyAnalysis"
+                            st.warning(f"**El archivo :blue[{nameFileXlsx}] no cuenta con datos: :blue[{pesLabel}]**", icon="⚠️")
+                        if df_monthlyAnalysis is None:
+                            pesLabel = "MonthlyAnalysis"
+                            st.warning(f"**El archivo :blue[{nameFileXlsx}] no cuenta con datos: :blue[{pesLabel}]**", icon="⚠️")
+
+                with tab4:
+                    if df_monthlyAnalysis is not None and df_annualAnalysis is not None:
+                        flagSubmittedYear, year = False, None
+
+                        with st.form("analysisYear", border=True):
+                            col1, col2 = st.columns([0.6, 0.4], vertical_alignment="bottom")
+
+                            with col1:
+                                year = st.selectbox(label="Seleccionar año:", options=timeInfo["years"], index=0, key="optionYearRange")
+                            with col2:
+                                submitted = st.form_submit_button("Aceptar")
+
+                            if submitted:
+                                flagSubmittedYear = True
+
+                        if flagSubmittedYear and year is not None:
+                            pf_date = date(year, 1, 1)
+                            fun_app9.displayAnnualResults(df_monthlyAnalysis, df_annualAnalysis, PARAMS_data, pf_date, label_systems)
+
+                    else:
+                        if df_monthlyAnalysis is None:
+                            pesLabel = "MonthlyAnalysis"
+                            st.warning(f"**El archivo :blue[{nameFileXlsx}] no cuenta con datos: :blue[{pesLabel}]**", icon="⚠️")
+                        if df_annualAnalysis is None:
+                            pesLabel = "AnnualAnalysis"
+                            st.warning(f"**El archivo :blue[{nameFileXlsx}] no cuenta con datos: :blue[{pesLabel}]**", icon="⚠️")         
+
 
         else:
             st.error(f"**Nombre de archivo no valido :blue[{nameFileXlsx}]**", icon="🚨")
