@@ -6,6 +6,7 @@ text = {
     "subheader_1" : "Página de pruebas para la implementación del proyecto **Diseño de un aplicativo para la estimación de la operación de sistemas de generación eléctrica a partir de balances de potencia y energía**"
 }
 
+st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
 
 st.markdown("# 🏠 Inicio")
 

@@ -61,6 +61,8 @@ if 'component_dict' not in st.session_state:
 if 'component_description' not in st.session_state:
     st.session_state['component_description'] = None
 
+st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+
 st.markdown("# 🧩 Componentes")
 
 tab1, tab2, tab3 = st.tabs(listTabs) 
@@ -71,6 +73,12 @@ with tab1:
 
     st.markdown("Este aplicativo para hacer rápido y sencillo el ingreso de datos permite la inserción de componentes por medio de archivos **YAML**.")
     st.markdown(f"Puede crear sus propios archivos de componentes **YAML** en la pestaña de **:red[{listTabs[1]}]** o puede descargarlos desde una selección predeterminada desde la pestaña **:red[{listTabs[2]}]**.")
+
+    with st.expander(":blue-badge[**Infografía**]", icon="📝"):
+        infographic_path = "files/infographic/01_COMPONENTS.pdf"
+        infographic_label = "Componentes"
+    
+        general.infographicViewer(infographic_path, infographic_label)
 
 with tab2:
     submitted_general, submitted_PV, submitted_AERO, submitted_GE, submitted_GE = False, False, False, False, False

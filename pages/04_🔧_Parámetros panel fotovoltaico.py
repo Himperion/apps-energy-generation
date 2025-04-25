@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import streamlit as st
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import yaml
-from scipy.special import lambertw
-from scipy.optimize import root_scalar, fsolve
 
 from funtions import general, fun_app4
 
@@ -36,24 +32,23 @@ selectDataEntryOptions = ["🪟 Datos del panel",
 
 #%% main
 
+st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+
 st.markdown("# 🔧 Obtención de parámetros STC")
 
 tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])
 
 with tab1:
-    with st.expander("**Marco teórico**"):
+    with st.expander(":violet-badge[**Marco teórico**]", icon="✏️"):
+        st.subheader("Introducción", divider="violet")
         st.markdown(text["subheader_1"])
         st.markdown(text["subheader_2"])
             
         col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
 
-        with col1:
-            st.write("")
         with col2:
             st.image("images//app4_img1.png")
-        with col3:
-            st.write("")
-
+        
         st.markdown(text["subheader_3"])
         st.latex(r"""I=I_{ph}-I_{d}-I_{R_{p}}=I_{ph}-I_{sat}\cdot \left ( e\tfrac{V+I\cdot R_{s}}{N_{s}nv_{t}} -1\right )-\frac{V+I\cdot R_{s}}{R_{p}}""")
 
@@ -65,14 +60,20 @@ with tab1:
         st.markdown(general.getLabelParams(dict_param=dict_params["Rs"]))
         st.markdown(general.getLabelParams(dict_param=dict_params["Rp"]))
 
-    with st.expander("**Ingreso de datos**"):
+        st.subheader("Ingreso de datos", divider="blue")
         st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
         with st.container(border=True):
             st.markdown(f"**:blue[{selectDataEntryOptions[0]}:]**")
             st.markdown("Sí cuenta con los datos de la ficha técnica del panel fotovoltaico puede ingresar manualmente desde este apartado.")
             st.markdown(f"**:blue[{selectDataEntryOptions[1]}:]**")
             st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
+
+    with st.expander(":blue-badge[**Infografía**]", icon="📝"):
+        infographic_path = "files/infographic/04_PARAMS-PV.pdf"
+        infographic_label = "Parámetros panel fotovoltaico"
     
+        general.infographicViewer(infographic_path, infographic_label)
+        
 with tab2:
     data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")

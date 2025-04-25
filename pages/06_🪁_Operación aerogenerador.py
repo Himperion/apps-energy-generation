@@ -3,9 +3,8 @@ import streamlit as st
 import pandas as pd
 import yaml
 from io import BytesIO
-from funtions import fun_app6
 
-from funtions import general
+from funtions import general, fun_app6
 
 #%% funtions
 
@@ -40,34 +39,40 @@ selectDataEntryOptions = ["🪁 Datos del aerogenerador",
 
 #%% main
 
+st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+
 st.markdown("# 🪁 Operación aerogenerador")
 
 tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"])  
 
 with tab1:
-    with st.expander("**Marco teórico**"): 
+    with st.expander(":violet-badge[**Marco teórico**]", icon="✏️"):
+        st.subheader("Introducción", divider="violet")
         st.markdown("El aerogenerador convierte la energía cinética del viento en energía eléctrica. Está compuesto de un rotor con palas, el generador, la torre y el sistema de control, entre otros elementos. Las palas capturan el viento y giran, transmitiendo este movimiento a un generador eléctrico a través de un eje de transmisión. El generador convierte la energía mecánica en energía eléctrica.")
         st.markdown("*Esquema del aerogenerador*")
 
         col1, col2, col3 = st.columns( [0.25, 0.5, 0.25])
-        with col1:
-            st.write("")
+    
         with col2:
             st.image("images//app6_img1.png")
-        with col3:
-            st.write("")
 
-        st.markdown("$v$: Velocidad del viento (m/s)")
-        st.markdown(r"$\rho$: Densidad del aire (kg/m³)")
-        st.markdown("*Pgen_aero:* Potencia generada (kW)")
+        st.markdown("$v$: Velocidad del viento *(m/s)*")
+        st.markdown(r"$\rho$: Densidad del aire *(kg/m³)*")
+        st.markdown("*Pgen_aero:* Potencia generada *(kW)*")
 
-    with st.expander("**Ingreso de datos**"):
-        st.markdown("Para esta sección, los datos pueden ingresarse de las siguientes maneras:")
+        st.subheader("Ingreso de datos", divider="blue")
+        st.markdown("**Para esta sección, los datos pueden ingresarse de las siguientes maneras:**")
         with st.container(border=True):
             st.markdown(f"**:blue[{selectDataEntryOptions[0]}:]**")
             st.markdown("Sí cuenta con los datos de la ficha técnica del aerogenerador puede ingresar manualmente desde este apartado.")
             st.markdown(f"**:blue[{selectDataEntryOptions[1]}:]**")
             st.markdown("Este archivo **YAML** para el ingreso rápido de información es descargado en la sección de **🧩 Componentes**.")
+
+    with st.expander(":blue-badge[**Infografía**]", icon="📝"):
+        infographic_path = "files/infographic/06_AERO.pdf"
+        infographic_label = "Operación aerogenerador"
+    
+        general.infographicViewer(infographic_path, infographic_label)
     
 with tab2:
     data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,

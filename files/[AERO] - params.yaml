@@ -10,7 +10,7 @@ D:
   unit: (m)
   data_type: float
 P_nom:
-  description: Pontencia nominal
+  description: Potencia nominal
   label: Pnom
   number_input:
     format: '%.3f'

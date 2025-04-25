@@ -68,24 +68,26 @@ if 'dictDataOnGrid' not in st.session_state:
 
 #%% main
 
+st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+
 st.markdown("# 🔌 Generación On-Grid")
 
 tab1, tab2, tab3, tab4 = st.tabs(["📑 Información", "💾 Entrada de datos", "📝 Análisis de resultados",  "👨‍🏫 Visualización de resultados"])
 
 with tab1:
-    st.markdown("**Marco teórico**")
-    st.markdown("Los sistemas híbridos combinan diferentes fuentes de energía renovable para maximizar la generación y asegurar un suministro constante y confiable. Al integrar tecnologías fotovoltaicas y eólicas, se puede aprovechar la energía del sol y del viento, compensando las limitaciones de cada una y proporcionando una solución más robusta y versátil. El sistema hibrido On-Grid está configurado de forma que se reduzca el consumo o que se puedan inyectar los excedentes a la red. Para este sistema se usa un inversor AC/DC integrado a la salida del aerogenerador priorizando la compatibilidad con los inversores DC/AC On-Grid disponibles en el mercado.")
+    with st.expander(":violet-badge[**Marco teórico**]", icon="✏️"):
+        st.markdown("Los sistemas híbridos combinan diferentes fuentes de energía renovable para mejorar el suministro de energía. Al integrar tecnologías fotovoltaicas y eólicas, se puede aprovechar la energía del sol y del viento, compensando las limitaciones de cada una y proporcionando una solución más robusta y versátil. El sistema hibrido On-Grid está configurado de forma que se reduzca el consumo o que se puedan inyectar los excedentes a la red. Para este sistema se usa un inversor AC/DC integrado a la salida del aerogenerador priorizando la compatibilidad con los inversores DC/AC On-Grid disponibles en el mercado.")
 
-    col1, col2, col3 = st.columns( [0.2, 0.6, 0.2])
-    with col1:
-        st.write("")
-    with col2:
-        st.image("images//app8_img2.png")
-    with col3:
-        st.write("")
-
-    st.markdown("**Recomendaciones**")
-    st.markdown("Antes de subir los archivos de los componentes, es necesario que consulte las fichas técnicas de cada componente del sistema. La potencia nominal del aerogenerador no debe superar la potencia máxima del inversor eólico, y el arreglo de paneles fotovoltaicos debe mantenerse dentro de los límites de potencia máxima del inversor fotovoltaico. Además, debe verificar que las tensiones de los inversores fotovoltaico y eólico coincidan con la del punto de conexión y que tengan el mismo número de fases.")
+        col1, col2, col3 = st.columns( [0.2, 0.6, 0.2])
+        with col2:
+            st.image("images//app8_img2.png")
+        
+    with st.expander(":orange-badge[**Recomendaciones**]", icon="⚠️"):
+        st.markdown("Antes de subir los archivos de los componentes, es necesario que consulte las fichas técnicas de cada componente del sistema.")
+        st.markdown("Es importante verificar lo siguiente:")
+        st.markdown(" - La potencia nominal del aerogenerador no debe superar la potencia máxima del inversor eólico.")
+        st.markdown(" - El arreglo de paneles fotovoltaicos debe mantenerse dentro de los límites de potencia máxima del inversor fotovoltaico.")
+        st.markdown(" - Las tensiones de los inversores fotovoltaico y eólico deben coincidir con la del punto de conexión y tener el mismo número de fases.")
 
 with tab2:
     generationOptions = None

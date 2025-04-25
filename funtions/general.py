@@ -7,6 +7,7 @@ import plotly.express as px
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode, StAggridTheme
+from streamlit_pdf_viewer import pdf_viewer
 
 from funtions import fun_app1, fun_app5, fun_app6, fun_app7, fun_app8, fun_app9
 
@@ -1402,5 +1403,21 @@ def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: dat
         addInformationSystemImage(img_path, dictNode, dictInfo, "V")
     with tab3:
         addInformationSystemImage(img_path, dictNode, dictInfo, "I")
+
+    return
+
+def infographicViewer(infographic_path: str, infographic_label: str):
+
+    pdf_viewer(infographic_path, pages_vertical_spacing=0)
+
+    with open(infographic_path, "rb") as f:
+        pdf_bytes = f.read()
+
+    st.download_button(
+        label="⬇️ Descargar infografía",
+        data=pdf_bytes,
+        file_name=f"{infographic_label}.pdf",
+        mime="application/pdf"
+        )
 
     return

@@ -20,5 +20,5 @@ node5:
 - IinvAC_AERO(A)
 node6:
 - Load(kW)
-- VinvAC_AERO(V)
+- Vdem(V)
 - Iload(A)
