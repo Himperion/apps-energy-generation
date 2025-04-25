@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import yaml
 from datetime import datetime
-import plotly.express as px
 
 from funtions import general
 
@@ -206,35 +206,27 @@ def getBytesFileExcelProjectOnGrid(dictDataOnGrid: dict, dataKeyList: list):
 
     return TOTAL_data, bytesFileExcel
 
-#%% funtions streamlit
+def getNodeParametersOnGrid(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str):
 
+    with open("files//[OnGrid] - nodes_labelsColumns.yaml", "r") as archivo:
+        nodesLabelsColumns = yaml.safe_load(archivo)
 
-def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time):
+    with open("files//[OnGrid] - nodes_position.yaml", "r") as archivo:
+        nodesPosition = yaml.safe_load(archivo)
 
-    pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
-    df_dataFilter = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime]
-    dictNode = general.getNodeParametersOnGrid(df_dataFilter=df_dataFilter)
+    dict_position = nodesPosition[label_systems]
 
-    col1, col2, col3, col4 = st.columns(4, vertical_alignment="top")
-    with col1:
-        general.getNodeVisualization(dictNode=dictNode["node1"], nodeNum=1)
-    with col2:
-        general.getNodeVisualization(dictNode=dictNode["node2"], nodeNum=2)
-    with col3:
-        general.getNodeVisualization(dictNode=dictNode["node3"], nodeNum=3)
-    with col4:
-        general.getNodeVisualization(dictNode=dictNode["node4"], nodeNum=4)
+    dictNodes = {}
+    for key in dict_position:
+        position = tuple(dict_position[key])
+        listLabelColumns = nodesLabelsColumns[key]
+        num_node = int(key.split("node")[1])
 
-    col1, col2, col3 = st.columns(3, vertical_alignment="top")
-
-    with col1:
-        general.getNodeVisualization(dictNode=dictNode["node5"], nodeNum=5)
-    with col2:
-        general.getNodeVisualization(dictNode=dictNode["node6"], nodeNum=6)
-    with col3:
-        general.getNodeVisualization(dictNode=dictNode["node7"], nodeNum=7)
+        dictNodes[key] = general.getDictNodeParams(df_datatime, listLabelColumns, round_decimal, num_node, position)
     
-    return
+    return dictNodes
+
+#%% funtions streamlit
 
 def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, day):
 
@@ -368,8 +360,8 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
     with st.expander(f"**Atención de la carga**", icon="📊"):
         
         params_info ={
-            "Importación (kW)": {"label": "Importación", "color": "purple"},
-            "Autoconsumo (kW)": {"label": "Autoconsumo", "color": "magenta"}
+            "Autoconsumo (kW)": {"label": "Autoconsumo", "color": "magenta"},
+            "Importación (kW)": {"label": "Importación", "color": "purple"}
             }
         serie_label = "Atención:"
 

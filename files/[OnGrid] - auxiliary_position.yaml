@@ -1,0 +1,21 @@
+AERO:
+  Vwind:
+  - 32
+  - 352
+PV:
+  Geff:
+  - 88
+  - 357
+  Toper:
+  - 88
+  - 372
+PV-AERO:
+  Geff:
+  - 88
+  - 247
+  Toper:
+  - 88
+  - 262
+  Vwind:
+  - 88
+  - 469

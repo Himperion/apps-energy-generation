@@ -6,7 +6,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import yaml, io, warnings
 from datetime import datetime
-from PIL import Image, ImageDraw, ImageFont
 
 from funtions import general
 
@@ -620,7 +619,6 @@ def getNodeParametersOffGrid(df_datatime: pd.DataFrame, numberPhases: int, round
         nodesPosition = yaml.safe_load(archivo)
 
     dict_position = nodesPosition[label_systems]
-    img_name = f"app9_img1({label_systems})"
 
     dictNodes = {}
     for key in dict_position:
@@ -630,59 +628,7 @@ def getNodeParametersOffGrid(df_datatime: pd.DataFrame, numberPhases: int, round
 
         dictNodes[key] = general.getDictNodeParams(df_datatime, listLabelColumns, round_decimal, num_node, position)
     
-    return dictNodes, img_name
-
-def getKeyValueParam(select_param: str, num_node: int) -> str:
-
-    if select_param == "P":
-        keyValue = f"Pn{num_node} (kW)"
-    elif select_param == "V":
-        keyValue = f"Vn{num_node} (V)"
-    else:
-        keyValue = f"In{num_node} (A)"
-
-    return keyValue
-
-def dictPositionInfoAddValues(df: pd.DataFrame, label_systems: str, columnsOptionsData: dict, round_decimal: int):
-
-    with open("files//[OffGrid] - auxiliary_position.yaml", "r") as archivo:
-        auxiliaryPositionInfo = yaml.safe_load(archivo)
-
-    dict_info = auxiliaryPositionInfo[label_systems]
-
-    for key, value in dict_info.items():
-        dictAux = {"position": value}
-
-        if key == "Geff":
-            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["PV"]["Geff"]]), round_decimal)
-            dictAux["label"] = "Irradiancia (W/m²)"
-        elif key == "Toper":
-            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["PV"]["Toper"]]), round_decimal)
-            dictAux["label"] = "Temperatura de operación del panel (°C)"
-        elif key == "Vwind":
-            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["AERO"]["Vwind"]]), round_decimal)
-            dictAux["label"] = "Velocidad del viento (m/s)"
-        elif key == "Consumo_GE":
-            dictAux["value"] = round(float(df.iloc[0]["Consumo_GE(l/h)"]), round_decimal)
-            dictAux["label"] = "Consumo (l/h)"
-        elif key == "SOC":
-            dictAux["value"] = round(float(df.iloc[0]["SOC(t)"]), round_decimal)
-            dictAux["label"] = "SOC"
-        elif key == "conSD":
-            dictAux["value"] = str(df.iloc[0]["conSD(t)"])
-            dictAux["label"] = "Sobredescarga"
-        elif key == "conSC":
-            dictAux["value"] = str(df.iloc[0]["conSC(t)"])
-            dictAux["label"] = "Sobrecarga"
-        elif key == "swLoad":
-            dictAux["value"] = int(df.iloc[0]["swLoad(t)"])
-            dictAux["label"] = "SW"
-
-        # Continuar
-        
-        dict_info[key] = dictAux
-
-    return dict_info
+    return dictNodes
 
 def getSOCparams(RCPV_data: dict, RCAERO_data: dict, label_systems: str):
 
@@ -734,59 +680,6 @@ def getCompValidationBattery(check_RCCOMP: bool, RCCOMP_data: dict, BAT_data: di
             st.error("**Regulador de carga**", icon="🚨")
         
     return outCheck
-
-def addInformationSystemImage(img_name: str, dictNode: dict, dictInfo: dict, select_param: str):
-
-    dictColor = {
-        "P": (0, 128, 0, 255),      # green
-        "V": (0, 0, 255, 255),      # blue
-        "I": (255, 0, 0, 255)       # red
-    }
-
-    image = Image.open(f"images/{img_name}.png").convert("RGBA")
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("font/Cabin-VariableFont_wdth,wght.ttf", 14)
-
-    for key, value in dictNode.items():
-        position = (value["position"][0]-20, value["position"][1]-20)
-        text = str(value["value"][getKeyValueParam(select_param, value["num_node"])])
-
-        draw.text(position, text, font=font, fill=dictColor[select_param])
-
-    for key, value in dictInfo.items():
-        position = (value["position"][0], value["position"][1])
-        text = f"{value['label']}: {value['value']}"
-
-        draw.text(position, text, font=font, fill=(0, 0, 0, 255))
-
-    buffer = io.BytesIO()
-    image.save(buffer, format="PNG")
-    buffer.seek(0)
-
-    st.image(buffer, use_container_width=True)
-
-    return
-
-def displayInstantResultsOffGrid(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, label_systems: str):
-
-    numberPhases, round_decimal = PARAMS_data["numberPhases"], 4
-
-    pf_datetime = general.getAnalizeTime(data_date=pf_date, data_time=pf_time)
-    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
-
-    dictNode, img_name = getNodeParametersOffGrid(df_datatime, numberPhases, round_decimal, label_systems)
-    dictInfo = dictPositionInfoAddValues(df_datatime, label_systems, PARAMS_data["columnsOptionsData"], round_decimal)
-
-    tab1, tab2, tab3 = st.tabs(["💡 Potencia (kW)", "🔋 Tensión (V)", "🔌 Corriente (A)"])
-
-    with tab1:
-        addInformationSystemImage(img_name, dictNode, dictInfo, "P")
-    with tab2:
-        addInformationSystemImage(img_name, dictNode, dictInfo, "V")
-    with tab3:
-        addInformationSystemImage(img_name, dictNode, dictInfo, "I")
-
-    return
 
 def getPowerCurveWithConditionOverTime(df: pd.DataFrame, time_info: dict, params_info: dict, condition: dict, condition_label: str, value_label: str, serie_label: str, config: dict, ignore_key: int, xrsv: bool):
     

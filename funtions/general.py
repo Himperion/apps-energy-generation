@@ -5,6 +5,7 @@ import numpy as np
 import yaml, io, calendar
 import plotly.express as px
 from datetime import datetime, timedelta
+from PIL import Image, ImageDraw, ImageFont
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSizeMode, StAggridTheme
 
 from funtions import fun_app1, fun_app5, fun_app6, fun_app7, fun_app8, fun_app9
@@ -912,48 +913,6 @@ def getAnalizeTime(data_date: datetime.date, data_time: datetime.time):
 
     return datetime.combine(data_date, data_time)
 
-def getNodeParametersOnGrid(df_dataFilter: pd.DataFrame):
-
-    round_decimal = 3
-
-    dictNodes = {
-        "node1": {
-            "Pn1 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], round_decimal),
-            "Vn1 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], round_decimal),
-            "In1 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], round_decimal),
-        },
-        "node2": {
-            "Pn2 (kW)": round(df_dataFilter.iloc[0]["Pgen_PV(kW)"], round_decimal),
-            "Vn2 (V)": round(df_dataFilter.iloc[0]["Vmpp_PV(V)"], round_decimal),
-            "In2 (A)": round(df_dataFilter.iloc[0]["Impp_PV(A)"], round_decimal),
-        },
-        "node3": {
-            "Pn3 (kW)": round(df_dataFilter.iloc[0]["PinvAC_PV(kW)"], round_decimal),
-            "Vn3 (V)": round(df_dataFilter.iloc[0]["VinvAC_PV(V)"], round_decimal),
-            "In3 (A)": round(df_dataFilter.iloc[0]["IinvAC_PV(A)"], round_decimal),
-        },
-        "node4": {
-            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Pdem(kW)"], round_decimal),
-            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vdem(V)"], round_decimal),
-            "In4 (A)": round(df_dataFilter.iloc[0]["Idem(A)"], round_decimal),
-        },
-        "node5": {
-            "Pn5 (kW)": round(df_dataFilter.iloc[0]["Pgen_AERO(kW)"], round_decimal),
-        },
-        "node6": {
-            "Pn6 (kW)": round(df_dataFilter.iloc[0]["PinvAC_AERO(kW)"], round_decimal),
-            "Vn6 (V)": round(df_dataFilter.iloc[0]["VinvAC_AERO(V)"], round_decimal),
-            "In6 (A)": round(df_dataFilter.iloc[0]["IinvAC_AERO(A)"], round_decimal),
-        },
-        "node7": {
-            "Pn4 (kW)": round(df_dataFilter.iloc[0]["Load(kW)"], round_decimal),
-            "Vn4 (V)": round(df_dataFilter.iloc[0]["Vload(V)"], round_decimal),
-            "In4 (A)": round(df_dataFilter.iloc[0]["Iload(A)"], round_decimal),
-        }      
-    }
-
-    return dictNodes
-
 def getGenerationSystemsNotationLabel(generationPV: bool, generationAERO: bool, generationGE: bool):
 
     if generationPV and not generationAERO and not generationGE:        # PV
@@ -973,13 +932,29 @@ def getGenerationSystemsNotationLabel(generationPV: bool, generationAERO: bool, 
 
 def getDictNodeValue(df: pd.DataFrame, listLabelColumns: list, round_decimal: int, num_node: int) -> dict:
 
-    nodeX = {
-        f"Pn{num_node} (kW)": round(df.iloc[0][listLabelColumns[0]], round_decimal),
-        f"Vn{num_node} (V)": round(df.iloc[0][listLabelColumns[1]], round_decimal),
-        f"In{num_node} (A)": round(df.iloc[0][listLabelColumns[2]], round_decimal)
-    }
+    nodeX = {}
+    dictKey = {0: ["P", "kW"], 1: ["V", "V"], 2: ["I", "A"]}
+
+    for i in range(0,len(listLabelColumns),1):
+        key = f"{dictKey[i][0]}n{num_node} ({dictKey[i][1]})"
+        if listLabelColumns[i] is not None:
+            value = round(df.iloc[0][listLabelColumns[i]], round_decimal)
+        else:
+            value = "No data"
+        nodeX[key] = value
 
     return nodeX
+
+def getKeyValueParam(select_param: str, num_node: int) -> str:
+
+    if select_param == "P":
+        keyValue = f"Pn{num_node} (kW)"
+    elif select_param == "V":
+        keyValue = f"Vn{num_node} (V)"
+    else:
+        keyValue = f"In{num_node} (A)"
+
+    return keyValue
 
 def getDictNodeParams(df: pd.DataFrame, listLabelColumns: list, round_decimal: int, num_node: int, position: tuple) -> dict:
 
@@ -989,6 +964,49 @@ def getDictNodeParams(df: pd.DataFrame, listLabelColumns: list, round_decimal: i
     dictNode["num_node"] = num_node
 
     return dictNode
+
+def dictPositionInfoAddValues(df: pd.DataFrame, label_systems: str, columnsOptionsData: dict, round_decimal: int, generationType: str):
+
+    if generationType == "OffGrid":
+        with open("files//[OffGrid] - auxiliary_position.yaml", "r") as archivo:
+            auxiliaryPositionInfo = yaml.safe_load(archivo)
+    elif generationType == "OnGrid":
+        with open("files//[OnGrid] - auxiliary_position.yaml", "r") as archivo:
+            auxiliaryPositionInfo = yaml.safe_load(archivo)
+
+    dict_info = auxiliaryPositionInfo[label_systems]
+
+    for key, value in dict_info.items():
+        dictAux = {"position": value}
+
+        if key == "Geff":
+            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["PV"]["Geff"]]), round_decimal)
+            dictAux["label"] = "Irradiancia (W/m²)"
+        elif key == "Toper":
+            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["PV"]["Toper"]]), round_decimal)
+            dictAux["label"] = "Temperatura de operación del panel (°C)"
+        elif key == "Vwind":
+            dictAux["value"] = round(float(df.iloc[0][columnsOptionsData["AERO"]["Vwind"]]), round_decimal)
+            dictAux["label"] = "Velocidad del viento (m/s)"
+        elif key == "Consumo_GE":
+            dictAux["value"] = round(float(df.iloc[0]["Consumo_GE(l/h)"]), round_decimal)
+            dictAux["label"] = "Consumo (l/h)"
+        elif key == "SOC":
+            dictAux["value"] = round(float(df.iloc[0]["SOC(t)"]), round_decimal)
+            dictAux["label"] = "SOC"
+        elif key == "conSD":
+            dictAux["value"] = str(df.iloc[0]["conSD(t)"])
+            dictAux["label"] = "Sobredescarga"
+        elif key == "conSC":
+            dictAux["value"] = str(df.iloc[0]["conSC(t)"])
+            dictAux["label"] = "Sobrecarga"
+        elif key == "swLoad":
+            dictAux["value"] = int(df.iloc[0]["swLoad(t)"])
+            dictAux["label"] = "SW"
+        
+        dict_info[key] = dictAux
+
+    return dict_info
 
 def timeInfoMonthsGetLabels(timeInfoMonths: list) -> list:
 
@@ -1315,5 +1333,74 @@ def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
     df_current = df_current.rename(columns=dict_replace)
 
     printDataFloat(dataframe=df_current, columns_print=columnsPrintRename, round_int=3)
+
+    return
+
+def addInformationSystemImage(img_path: str, dictNode: dict, dictInfo: dict, select_param: str):
+
+    dictColor = {
+        "P": (0, 128, 0, 255),      # green
+        "V": (0, 0, 255, 255),      # blue
+        "I": (255, 0, 0, 255)       # red
+    }
+
+    image = Image.open(img_path).convert("RGBA")
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype("font/Cabin-VariableFont_wdth,wght.ttf", 14)
+
+    for key, value in dictNode.items():
+        position = (value["position"][0]-20, value["position"][1]-25)
+        text = str(value["value"][getKeyValueParam(select_param, value["num_node"])])
+
+        draw.text(position, text, font=font, fill=dictColor[select_param])
+
+    for key, value in dictInfo.items():
+        position = (value["position"][0], value["position"][1])
+        text = f"{value['label']}: {value['value']}"
+
+        draw.text(position, text, font=font, fill=(0, 0, 0, 255))
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    st.image(buffer, use_container_width=True)
+
+    return
+
+def getNodeParametersGenerationType(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str, generationType: str):
+
+    dictNode = {}
+
+    if generationType == "OffGrid":
+        dictNode = fun_app9.getNodeParametersOffGrid(df_datatime, numberPhases, round_decimal, label_systems)
+    elif generationType == "OnGrid":
+        dictNode = fun_app8.getNodeParametersOnGrid(df_datatime, numberPhases, round_decimal, label_systems)
+
+    return dictNode
+
+def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, label_systems: str):
+
+    numberPhases, round_decimal = PARAMS_data["numberPhases"], 4
+
+    pf_datetime = getAnalizeTime(data_date=pf_date, data_time=pf_time)
+    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
+
+    dictNode = getNodeParametersGenerationType(df_datatime, numberPhases, round_decimal, label_systems, PARAMS_data["generationType"])
+    dictInfo = dictPositionInfoAddValues(df_datatime, label_systems, PARAMS_data["columnsOptionsData"], round_decimal, PARAMS_data["generationType"])
+
+    if PARAMS_data["generationType"] == "OffGrid":
+        img_path = f"images/app9/{label_systems}.png"
+    elif PARAMS_data["generationType"] == "OnGrid":
+        img_path = f"images/app8/{label_systems}.png"
+
+    tab1, tab2, tab3 = st.tabs(["💡 Potencia (kW)", "🔋 Tensión (V)", "🔌 Corriente (A)"])
+
+    with tab1:
+        addInformationSystemImage(img_path, dictNode, dictInfo, "P")
+    with tab2:
+        addInformationSystemImage(img_path, dictNode, dictInfo, "V")
+    with tab3:
+        addInformationSystemImage(img_path, dictNode, dictInfo, "I")
 
     return

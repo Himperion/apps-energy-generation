@@ -476,25 +476,26 @@ with tab4:
 
             if timeInfo is not None and PARAMS_data is not None:
                 listTimeRanges = general.getListOfTimeRanges(deltaMinutes=timeInfo["deltaMinutes"])
+                label_systems = general.getGenerationSystemsNotationLabel(**PARAMS_data["componentInTheProject"])
 
                 tab1, tab2, tab3, tab4 = st.tabs(["🕛 Flujos de potencia", "📅 Análisis diario", "📆 Análisis mensual", "🗓️ Análisis anual"])
 
                 with tab1:
                     with st.form("analysisTime", border=True):
-                        st.image("images//app8_img2.png")
-                        with st.container(border=True):
-                            col1, col2, col3 = st.columns([0.4, 0.4, 0.2], vertical_alignment="bottom")
+                        col1, col2, col3 = st.columns([0.4, 0.4, 0.2], vertical_alignment="bottom")
 
-                            with col1:
-                                pf_date = st.date_input(label="Seleccionar fecha", min_value=timeInfo["dateIni"], max_value=timeInfo["dateEnd"], value=timeInfo["dateIni"])
-                            with col2:
-                                pf_time = st.selectbox(label="Seleccionar hora", options=listTimeRanges)
-                            with col3:
-                                submitted = st.form_submit_button("Aceptar")
+                        with col1:
+                            pf_date = st.date_input(label="Seleccionar fecha", min_value=timeInfo["dateIni"], max_value=timeInfo["dateEnd"], value=timeInfo["dateIni"])
+                        with col2:
+                            pf_time = st.selectbox(label="Seleccionar hora", options=listTimeRanges)
+                        with col3:
+                            submitted = st.form_submit_button("Aceptar")
 
                         if submitted:
-                            pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()     # datetime.time
-                            fun_app8.displayInstantResults(df_data, PARAMS_data, pf_date, pf_time)
+                            pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()     
+                            
+                            with st.container(border=True):
+                                general.displayInstantResults(df_data, PARAMS_data, pf_date, pf_time, label_systems)
 
                 with tab2:
                     if df_dailyAnalysis is not None:

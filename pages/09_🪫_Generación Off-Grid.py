@@ -393,10 +393,10 @@ with tab4:
                             submitted = st.form_submit_button("Aceptar")
 
                         if submitted:
-                            pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()     # datetime.time
+                            pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()
 
                             with st.container(border=True):
-                                fun_app9.displayInstantResultsOffGrid(df_data, PARAMS_data, pf_date, pf_time, label_systems)
+                                general.displayInstantResults(df_data, PARAMS_data, pf_date, pf_time, label_systems)
                 
                 with tab2:
                     if df_dailyAnalysis is not None:

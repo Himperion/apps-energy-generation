@@ -1,0 +1,24 @@
+node1:
+- Pgen_PV(kW)
+- Vmpp_PV(V)
+- Impp_PV(A)
+node2:
+- PinvAC_PV(kW)
+- VinvAC_PV(V)
+- IinvAC_PV(A)
+node3:
+- Pdem(kW)
+- Vdem(V)
+- Idem(A)
+node4:
+- Pgen_AERO(kW)
+- null
+- null
+node5:
+- PinvAC_AERO(kW)
+- VinvAC_AERO(V)
+- IinvAC_AERO(A)
+node6:
+- Load(kW)
+- VinvAC_AERO(V)
+- Iload(A)
