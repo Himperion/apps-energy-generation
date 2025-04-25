@@ -192,11 +192,6 @@ with tab2:
                             if componentInTheProject["generationGE"]:       # Generación GE
                                 validateEntries, GE_data = general.getDataGEorBATValidation(uploadedYamlGE, validateEntries, "GE")
 
-                            for key, value in validateEntries.items():
-                                st.text(f"{key}: {value}")
-
-                            # Revisar check_BAT, check_GE
-
                             validateComponents = general.getDictValidateComponent(validateEntries=validateEntries, generationType="OffGrid")
                             checkProject = general.getCheckValidateGeneration(**componentInTheProject, **validateComponents, generationType="OffGrid")
 
