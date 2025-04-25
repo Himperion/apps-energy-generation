@@ -79,6 +79,7 @@ streamlit-extras==0.5.5
 streamlit-faker==0.0.3
 streamlit-image-coordinates==0.1.9
 streamlit-keyup==0.3.0
+streamlit-pdf-viewer==0.0.22
 streamlit-toggle-switch==1.0.2
 streamlit-vertical-slider==2.5.5
 streamlit_folium==0.22.0
