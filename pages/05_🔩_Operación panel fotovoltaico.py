@@ -63,7 +63,7 @@ keys_show_output, dict_show_output, list_show_output = fun_app5.get_show_output(
 
 #%% main
 
-st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+st.sidebar.link_button(":violet-badge[**Ir a la app de herramientas**]", "https://app-nasa-power.streamlit.app/", icon="🔧")
 
 st.markdown("# 🔩 Operación panel fotovoltaico")
 

@@ -53,7 +53,7 @@ list_sheet_components = [value["sheet_label"] for key, value in dict_components.
 
 listTabs = ["📑 Información", "📝 Entrada de datos", "📂 Listado de componentes"]
 
-#%% main
+#%% session_state
 
 if 'component_dict' not in st.session_state:
     st.session_state['component_dict'] = None
@@ -61,7 +61,9 @@ if 'component_dict' not in st.session_state:
 if 'component_description' not in st.session_state:
     st.session_state['component_description'] = None
 
-st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+#%% main
+
+st.sidebar.link_button(":violet-badge[**Ir a la app de herramientas**]", "https://app-nasa-power.streamlit.app/", icon="🔧")
 
 st.markdown("# 🧩 Componentes")
 

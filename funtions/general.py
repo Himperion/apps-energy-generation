@@ -496,6 +496,10 @@ def getCheckValidateGeneration(generationPV, generationAERO, generationGE, valid
 
     return checkProject
 
+def fromLabelObtainNumberOf(label):
+
+    return dictPhases[label]["Num"]
+
 def getNumberPhases(INVPV_data, INVAERO_data, GE_data) -> int:
 
     numberPhases = None
@@ -845,7 +849,6 @@ def getAnalysisInTime(df_data: pd.DataFrame, deltaMinutes: int, timeLapse: str, 
     
     for date, group in df_data.groupby(df_data["dates (Y-M-D hh:mm:ss)"].dt.to_period(timeLapse[0].upper())):
         if getTimeDimensionCheck(group, deltaMinutes, timeLapse, date):
-
             if generationType == "OnGrid":
                 dataAnalysis = fun_app8.getDataAnalysisOnGrid(group, deltaMinutes, timeLapse, date)
             elif generationType == "OffGrid":
@@ -974,6 +977,10 @@ def dictPositionInfoAddValues(df: pd.DataFrame, label_systems: str, columnsOptio
     elif generationType == "OnGrid":
         with open("files//[OnGrid] - auxiliary_position.yaml", "r") as archivo:
             auxiliaryPositionInfo = yaml.safe_load(archivo)
+    elif generationType == "GE":
+        auxiliaryPositionInfo = {
+            "GE": {"Consumo_GE": [26, 300]}
+        }
 
     dict_info = auxiliaryPositionInfo[label_systems]
 
@@ -1110,6 +1117,45 @@ def fromParametersGetLabels(list_params: list):
 
     return list_out
 
+def reorderDictForindividualGraph(dict_individualGraph: dict) -> dict:
+
+    dictOut = {}
+
+    for i in range(0,4,1):
+        dictAux = {}
+        dictAux["value_label"] = dict_individualGraph["value_label"][i]
+        dictAux["color"] = dict_individualGraph["color"][i]
+        dictAux["xt"] = dict_individualGraph["xt"][i]
+        dictAux["xrsv"] = dict_individualGraph["xrsv"][i]
+
+        dictOut[dict_individualGraph["column_name"][i]] = dictAux
+
+    return dictOut
+
+def valueLabelGetTabs(dictIG: dict) -> dict:
+
+    tabs_label = [f"{dictIG['icon'][i]} {dictIG['value_label'][i]}" for i in range(len(dictIG["column_name"]))]
+
+    if len(tabs_label) == 2:
+        tab1, tab2 = st.tabs(tabs_label)
+        tabs_items = [tab1, tab2]
+    elif len(tabs_label) == 3:
+        tab1, tab2, tab3 = st.tabs(tabs_label)
+        tabs_items = [tab1, tab2, tab3]
+    elif len(tabs_label) == 4:
+        tab1, tab2, tab3, tab4 = st.tabs(tabs_label)
+        tabs_items = [tab1, tab2, tab3, tab4]
+    elif len(tabs_label) == 5:
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(tabs_label)
+        tabs_items = [tab1, tab2, tab3, tab4, tab5]
+
+    dictTabs = {}
+
+    for i in range(0,len(dictIG["column_name"]),1):
+        dictTabs[dictIG["column_name"][i]] = tabs_items[i]
+
+    return dictTabs
+
 #%% funtions streamlit
 
 def getWidgetNumberInput(label: str, disabled: bool, key: str, variable: dict):
@@ -1147,7 +1193,8 @@ def yamlDownloadButton(bytesFileYaml, file_name, label):
         label=label,
         data=bytesFileYaml,
         file_name=nameFileHead(name=f"{file_name}.yaml"),
-        mime="text/yaml")
+        mime="text/yaml",
+        on_click="ignore")
 
     return buttonDownload
 
@@ -1326,6 +1373,60 @@ def plotVisualizationPxStreamlit(df: pd.DataFrame, time_info: dict, params_info:
 
     return
 
+def individualGraph(df: pd.DataFrame, time_info: dict, column_name: str, value_label: str, color: str, xt: int, xrsv: bool):
+
+    fig = px.line(df,
+                  x=time_info["name"],
+                  y=column_name,
+                  markers=True,
+                  color_discrete_sequence=[color],
+                  labels={
+                      "Value": value_label
+                  }
+    )
+
+    q1, q2, q3 = df[column_name].quantile(0.25), df[column_name].median(), df[column_name].quantile(0.75)
+    min_val, max_val = df[column_name].min(), df[column_name].max()
+
+    fig.add_hline(y=q1, line_dash="dash", line_color="green",
+                  annotation_text=f"Q1: {q1:.3f}", annotation_position="bottom right")
+    fig.add_hline(y=q2, line_dash="dash", line_color="red",
+                  annotation_text=f"Mediana: {q2:.3f}", annotation_position="top right")
+    fig.add_hline(y=q3, line_dash="dash", line_color="blue",
+                  annotation_text=f"Q3: {q3:.3f}", annotation_position="top right")
+    fig.add_hline(y=min_val, line_dash="dot", line_color="purple",
+                  annotation_text=f"Min: {min_val:.3f}", annotation_position="bottom left")
+    fig.add_hline(y=max_val, line_dash="dot", line_color="orange",
+                  annotation_text=f"Max: {max_val:.3f}", annotation_position="top left")
+    
+    fig.update_layout(
+        xaxis_tickangle=-90,
+        xaxis=dict(showgrid=True),
+        yaxis=dict(tickformat=".3f", showgrid=True),  
+        xaxis_title=time_info["label"],
+        yaxis_title=value_label,
+        xaxis_rangeslider_visible=xrsv
+    )
+
+    config ={
+        "displayModeBar": True,
+        "displaylogo": False,
+        "modeBarButtonsToRemove": ["zoom", "pan", "hoverClosestCartesian", "hoverCompareCartesian", "sendDataToCloud",
+                                   "zoomIn", "zoomOut", "lasso2d", "select2d"]
+    }
+
+    fig.update_layout(xaxis_tickangle=xt, legend=dict(title="Condición:", orientation="h", y=10, yanchor="bottom"),
+                      xaxis_rangeslider_visible=xrsv,
+                      yaxis=dict(showgrid=False))
+
+    st.plotly_chart(fig, use_container_width=True, config=config)
+
+    return
+
+def viewGeneratorSetParameters():
+
+    return
+
 def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
 
     columnsPrint = df_current.drop(list_drop, axis=1).columns.tolist()
@@ -1337,7 +1438,7 @@ def printDataFloatResult(df_current: pd.DataFrame, list_drop: list):
 
     return
 
-def addInformationSystemImage(img_path: str, dictNode: dict, dictInfo: dict, select_param: str):
+def addInformationSystemImage(img_path: str, dictNode: dict, dictInfo: dict, select_param: str, size: int):
 
     dictColor = {
         "P": (0, 128, 0, 255),      # green
@@ -1347,7 +1448,7 @@ def addInformationSystemImage(img_path: str, dictNode: dict, dictInfo: dict, sel
 
     image = Image.open(img_path).convert("RGBA")
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("font/Cabin-VariableFont_wdth,wght.ttf", 14)
+    font = ImageFont.truetype("font/Cabin-VariableFont_wdth,wght.ttf", size)
 
     for key, value in dictNode.items():
         position = (value["position"][0]-20, value["position"][1]-25)
@@ -1377,6 +1478,8 @@ def getNodeParametersGenerationType(df_datatime: pd.DataFrame, numberPhases: int
         dictNode = fun_app9.getNodeParametersOffGrid(df_datatime, numberPhases, round_decimal, label_systems)
     elif generationType == "OnGrid":
         dictNode = fun_app8.getNodeParametersOnGrid(df_datatime, numberPhases, round_decimal, label_systems)
+    elif generationType == "GE":
+        dictNode = fun_app7.getNodeParametersGE(df_datatime, round_decimal, label_systems)
 
     return dictNode
 
@@ -1390,19 +1493,23 @@ def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: dat
     dictNode = getNodeParametersGenerationType(df_datatime, numberPhases, round_decimal, label_systems, PARAMS_data["generationType"])
     dictInfo = dictPositionInfoAddValues(df_datatime, label_systems, PARAMS_data["columnsOptionsData"], round_decimal, PARAMS_data["generationType"])
 
+    size = 14
+
     if PARAMS_data["generationType"] == "OffGrid":
         img_path = f"images/app9/{label_systems}.png"
     elif PARAMS_data["generationType"] == "OnGrid":
         img_path = f"images/app8/{label_systems}.png"
+    elif PARAMS_data["generationType"] == "GE":
+        img_path, size = f"images/app7/{label_systems}.png", 22
 
     tab1, tab2, tab3 = st.tabs(["💡 Potencia (kW)", "🔋 Tensión (V)", "🔌 Corriente (A)"])
 
     with tab1:
-        addInformationSystemImage(img_path, dictNode, dictInfo, "P")
+        addInformationSystemImage(img_path, dictNode, dictInfo, "P", size)
     with tab2:
-        addInformationSystemImage(img_path, dictNode, dictInfo, "V")
+        addInformationSystemImage(img_path, dictNode, dictInfo, "V", size)
     with tab3:
-        addInformationSystemImage(img_path, dictNode, dictInfo, "I")
+        addInformationSystemImage(img_path, dictNode, dictInfo, "I", size)
 
     return
 

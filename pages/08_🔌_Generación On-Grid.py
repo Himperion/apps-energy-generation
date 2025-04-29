@@ -68,7 +68,7 @@ if 'dictDataOnGrid' not in st.session_state:
 
 #%% main
 
-st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+st.sidebar.link_button(":violet-badge[**Ir a la app de herramientas**]", "https://app-nasa-power.streamlit.app/", icon="🔧")
 
 st.markdown("# 🔌 Generación On-Grid")
 

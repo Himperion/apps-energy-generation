@@ -32,7 +32,7 @@ selectDataEntryOptions = ["🪟 Datos del panel",
 
 #%% main
 
-st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+st.sidebar.link_button(":violet-badge[**Ir a la app de herramientas**]", "https://app-nasa-power.streamlit.app/", icon="🔧")
 
 st.markdown("# 🔧 Obtención de parámetros STC")
 

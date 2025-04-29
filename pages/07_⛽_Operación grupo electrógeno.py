@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import yaml
 from io import BytesIO
+from datetime import datetime, date
 
 from funtions import general, fun_app7
 
@@ -48,13 +49,15 @@ items_options_columns_df = {
     "Load" : ["Load(kW)"]
 }
 
+dataKeyList = ["Pnom", "Voc", "Vpc", "phases", "FP", "Combustible", "PE_fuel", "C100", "C0"]
+
 #%% main
 
-st.sidebar.link_button("Ir a la app de herramientas", "https://app-nasa-power.streamlit.app/", icon="🔧")
+st.sidebar.link_button(":violet-badge[**Ir a la app de herramientas**]", "https://app-nasa-power.streamlit.app/", icon="🔧")
 
 st.markdown("# ⛽ Operación grupo electrógeno")
 
-tab1, tab2 = st.tabs(["📑 Información", "📝 Entrada de datos"]) 
+tab1, tab2, tab3 = st.tabs(["📑 Información", "💾 Entrada de datos", "👨‍🏫 Visualización de resultados"]) 
 
 with tab1:
     with st.expander(":violet-badge[**Marco teórico**]", icon="✏️"):
@@ -100,14 +103,12 @@ with tab1:
         infographic_label = "Operación grupo electrógeno"
     
         general.infographicViewer(infographic_path, infographic_label)
-    
-        
+           
 with tab2:
     data_entry_options = st.selectbox(label="Opciones de ingreso de datos", options=selectDataEntryOptions,
                                       index=0, placeholder="Selecciona una opción")
     
     if data_entry_options == selectDataEntryOptions[0]:
-    
         with st.container(border=True):
             st.markdown("🔌 **:blue[{0}:]**".format("Datos eléctricos"))
             
@@ -157,7 +158,7 @@ with tab2:
     app_submitted = st.button("Aceptar")
 
     if app_submitted:
-        GE_data, df_GE = None, None
+        GE_data, df_data, check, bytesFile = None, None, False, None
         if data_entry_options == selectDataEntryOptions[0]:
 
             GE_data = {
@@ -182,55 +183,42 @@ with tab2:
             In, Ra, dictPU = fun_app7.get_param_gp(GE_data, dict_phases)
 
             if option_sel == optionsSelInput[0]:
-                df_GE = fun_app7.get_df_option_characteristic_curve(dict_pu=dictPU, dict_param=GE_data)
+                df_data = fun_app7.get_df_option_characteristic_curve(dict_pu=dictPU, dict_param=GE_data)
 
             elif option_sel == optionsSelInput[1] and archive_Load is not None:
-                check = False
                 try:
                     df_input = pd.read_excel(archive_Load)
-                    df_GE, check, columnsOptionsSel = general.checkDataframeInput(dataframe=df_input, options=items_options_columns_df)
+                    df_data, check, columnsOptionsSel = general.checkDataframeInput(dataframe=df_input, options=items_options_columns_df)
 
                     if check:
-                        df_GE = fun_app7.getDataframeGE(df_GE, dictPU, GE_data, columnsOptionsSel)
-                        
+                        timeInfo = general.getTimeData(df_data)
+                        df_data = fun_app7.getDataframeGE(df_data, dictPU, GE_data, columnsOptionsSel)
+
+                        df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
+
+                        df_dailyResult = fun_app7.getAnalysisInTime(df_data, GE_data, timeInfo["deltaMinutes"], "day")
+                        df_monthlyResult = fun_app7.getAnalysisInTime(df_data, GE_data, timeInfo["deltaMinutes"], "month")
+                        df_annualResult = fun_app7.getAnalysisInTime(df_data, GE_data, timeInfo["deltaMinutes"], "year")
+                        bytesFile = general.toExcelAnalysis(df_data, GE_data, df_dailyResult, df_monthlyResult, df_annualResult)
+
                     else:
                         st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
-
                 except:
                     st.error("Error al cargar archivo **Excel** (.xlsx)", icon="🚨")
-                
-
-        if df_GE is not None:
+               
+        if df_data is not None and check:
             if option_sel == optionsSelInput[1]:
-
-                sub_tab1, sub_tab2 = st.tabs(["📋 Resultados",
-                                              "💾 Descargas"])
-                
-                with sub_tab1:
-                    with st.container(border=True):
-                        st.dataframe(df_GE)
-
-                with sub_tab2:
-                    excel = to_excel(df_GE)
-                    buffer_data = general.getBytesYaml(dictionary=GE_data)
-
-                    with st.container(border=True):
-                        st.markdown("**Archivos de opciones de ingreso de datos:**")
-                        buttonYaml1 = general.yamlDownloadButton(bytesFileYaml=buffer_data,
-                                                                file_name="GE_data",
-                                                                label="💾 Descargar **:blue[archivo de datos]** del grupo electrógeno **YAML**")
-                    
-                    with st.container(border=True):
-                        st.markdown("**Archivos de resultados:**")
-                        st.download_button(
-                                label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
-                                data=excel,
-                                file_name=general.nameFileHead(name="GE_operationAnalysis.xlsx"),
-                                mime="xlsx")
-
+                if bytesFile is not None:
+                    st.download_button(
+                        label="💾 Descargar **:blue[Análisis GE] XLSX**",
+                        data=bytesFile,
+                        file_name=general.nameFileHead(name="Analysis_GE.xlsx"),
+                        mime="xlsx",
+                        on_click="ignore"
+                        )
 
             elif option_sel == optionsSelInput[0]:
-                df_GE = fun_app7.getDataframeGE(dataframe=df_GE,
+                df_GE = fun_app7.getDataframeGE(dataframe=df_data,
                                                 dict_pu=dictPU,
                                                 dict_param=GE_data,
                                                 columnsOptionsSel={"Load": "Load(kW)"})
@@ -242,6 +230,7 @@ with tab2:
                 with sub_tab1:
                     with st.container(border=True):
                         st.dataframe(df_GE)
+                        st.text("En programación")
 
                 with sub_tab2:
                     with st.container(border=True):
@@ -272,4 +261,94 @@ with tab2:
                                 label="📄 Descargar **:blue[Resultados]** del grupo electrógeno **XLSX**",
                                 data=excel,
                                 file_name=general.nameFileHead(name="GE_characteristicCurve.xlsx"),
-                                mime="xlsx")                
+                                mime="xlsx")
+
+with tab3:
+    uploaderAnalysisXlsx = None
+
+    with st.container(border=True):
+        uploaderAnalysisXlsx = st.file_uploader(label="**Cargar archivo :blue[Analysis_GE] EXCEL**", type=["xlsx"], key="uploaderAnalysisXlsx")
+
+    if uploaderAnalysisXlsx is not None:
+        nameFileXlsx = uploaderAnalysisXlsx.name
+        if nameFileXlsx.split(" ")[1].split(".")[0] == "Analysis_GE":
+            df_data, df_dailyAnalysis, df_monthlyAnalysis, df_annualAnalysis = None, None, None, None
+            sheetNamesXls, PARAMS_data, timeInfo = [], None, None
+
+            try:
+                xls = pd.ExcelFile(uploaderAnalysisXlsx)
+                sheetNamesXls = xls.sheet_names
+                if "Data" in sheetNamesXls:
+                    df_data = pd.read_excel(xls, sheet_name="Data")
+                    df_data["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_data["dates (Y-M-D hh:mm:ss)"])
+                if "DailyAnalysis" in sheetNamesXls:
+                    df_dailyAnalysis = pd.read_excel(xls, sheet_name="DailyAnalysis")
+                    df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"])
+                if "MonthlyAnalysis" in sheetNamesXls:
+                    df_monthlyAnalysis = pd.read_excel(xls, sheet_name="MonthlyAnalysis")
+                    df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"])
+                if "AnnualAnalysis" in sheetNamesXls:
+                    df_annualAnalysis = pd.read_excel(xls, sheet_name="AnnualAnalysis")
+                    df_annualAnalysis["dates (Y-M-D hh:mm:ss)"] = pd.to_datetime(df_annualAnalysis["dates (Y-M-D hh:mm:ss)"], format="%Y")
+                if "Params" in sheetNamesXls:
+                    PARAMS_data = pd.read_excel(xls, sheet_name="Params").to_dict(orient="records")[0]
+                    PARAMS_data = general.getFixFormatDictParams(PARAMS_data, dataKeyList)
+            except:
+                st.error(f"**Error al cargar archivo :blue[{nameFileXlsx}]**", icon="🚨")
+
+            if df_data is not None:
+                timeInfo = general.getTimeData(df_data)
+
+            if timeInfo is not None and PARAMS_data is not None:
+                listTimeRanges = general.getListOfTimeRanges(deltaMinutes=timeInfo["deltaMinutes"])
+                numberPhases = general.fromLabelObtainNumberOf(PARAMS_data["phases"])
+                label_systems = "GE"
+                PARAMS_data = {**PARAMS_data, **{"generationType": "GE", "columnsOptionsData": None, "numberPhases": numberPhases}}
+
+                tab1, tab2, tab3, tab4 = st.tabs(["🕛 Flujos de potencia", "📅 Análisis diario", "📆 Análisis mensual", "🗓️ Análisis anual"])
+
+                with tab1:
+                    with st.form("analysisTime", border=True):
+                        col1, col2, col3 = st.columns(3, vertical_alignment="bottom")
+
+                        with col1:
+                            pf_date = st.date_input(label="Seleccionar fecha", min_value=timeInfo["dateIni"], max_value=timeInfo["dateEnd"], value=timeInfo["dateIni"])     # datetime.date
+                        with col2:
+                            pf_time = st.selectbox(label="Seleccionar hora", options=listTimeRanges)
+                        with col3:
+                            submitted = st.form_submit_button("Aceptar")
+
+                        if submitted:
+                            pf_time = datetime.strptime(pf_time, '%H:%M:%S').time()
+
+                            with st.container(border=True):
+                                general.displayInstantResults(df_data, PARAMS_data, pf_date, pf_time, label_systems)
+
+                with tab2:
+                    if df_dailyAnalysis is not None:
+                        dateIni = df_dailyAnalysis.loc[0, "dates (Y-M-D hh:mm:ss)"]
+                        dateEnd = df_dailyAnalysis.loc[df_dailyAnalysis.index[-1], "dates (Y-M-D hh:mm:ss)"]
+
+                        with st.form("analysisDaily", border=True):
+                            with st.container(border=True):
+                                col1, col2 = st.columns([0.8, 0.2], vertical_alignment="bottom")
+
+                                with col1:
+                                    pf_date = st.date_input(label="Seleccionar fecha", min_value=dateIni, max_value=dateEnd, value=dateIni)
+                                with col2:
+                                    submittedDaily = st.form_submit_button("Aceptar")
+
+                            if submittedDaily:
+                                fun_app7.displayDailyResults(df_data, df_dailyAnalysis, PARAMS_data, pf_date, label_systems)
+
+                
+
+
+
+
+
+
+
+    
+    
+
