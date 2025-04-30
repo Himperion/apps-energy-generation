@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import plotly.express as px
+from datetime import datetime, date
 
 
 from funtions import general
@@ -87,6 +88,7 @@ def getDataAnalysisGE(df_timeLapse: pd.DataFrame, GE_data: dict, deltaMinutes: i
 
     dataAnalysis = {
         f"dates (Y-M-D hh:mm:ss)": date,
+        f"Eload(kWh/{timeLapse})": df_timeLapse["Load(kW)"].sum()*(deltaMinutes/60),
         f"Pdem_prom(kW/{timeLapse})": df_timeLapse["Load(kW)"].mean(),
         f"Pdem_max(kW/{timeLapse})": df_timeLapse["Load(kW)"].max(),
         f"Pdem_min(kW/{timeLapse})": df_timeLapse["Load(kW)"].min(),
@@ -144,6 +146,17 @@ def getAnalysisInTime(df_data: pd.DataFrame, GE_data: dict, deltaMinutes: int, t
              
     return None
 
+def getCompleteDataframeGE(dict_param: dict, dict_phases: dict) -> pd.DataFrame:
+
+    In, Ra, dictPU = get_param_gp(dict_param, dict_phases)
+    df_data = get_df_option_characteristic_curve(dictPU, dict_param)
+    df_GE = getDataframeGE(dataframe=df_data,
+                           dict_pu=dictPU,
+                           dict_param=dict_param,
+                           columnsOptionsSel={"Load": "Load(kW)"})
+    
+    return df_GE
+
 #%% funtions streamlit
 
 def get_download_button(directory: str, name_file: str, format_file: str, description: str):
@@ -156,87 +169,217 @@ def get_download_button(directory: str, name_file: str, format_file: str, descri
                 
     return
 
-def getGraphConsumptionEfficiency(dataframe: pd.DataFrame):
+def get_dict_CE_LC(df: pd.DataFrame):
+
+    x = round(float(df.iloc[0]["Load(kW)"]), 4)
+    yc = round(float(df.iloc[0]["Consumo_GE(l/h)"]), 4)
+    ye = round(float(df.iloc[0]["Eficiencia_GE(%)"]), 4)
+    yv = round(float(df.iloc[0]["Vt_GE(V)"]), 4)
+
+    dict_CE = {
+        "Consumption":{
+            "x": x,
+            "y": yc,
+            "marker": "x",
+            "color": "darkblue",
+            "label": f"Consumo (L/h) = {yc}"
+        },
+        "Efficiency":{
+            "x": x,
+            "y": ye,
+            "marker": "x",
+            "color": "darkred",
+            "label": f"Eficiencia (%) = {ye}"
+        }
+    }
+
+    dict_LC = {
+        "x": x,
+        "y": yv,
+        "marker": "x",
+        "color": "darkred",
+        "label": f"Tensión (V) = {yv}"
+    }
+
+    return dict_CE, dict_LC
+
+def getGraphConsumptionEfficiency(dataframe: pd.DataFrame, dict_CE=None):
 
     fig, ax1 = plt.subplots()
 
-    ax1.set_xlabel("Load (kW)")
-    ax1.set_ylabel("Tasa de consumo (l/h)", color="tab:blue")
+    ax1.set_xlabel("Carga (kW)")
+    ax1.set_ylabel("Tasa de consumo (L/h)", color="tab:blue")
     ax1.plot(dataframe["Load(kW)"], dataframe["Consumo_GE(l/h)"], color="tab:blue")
     ax1.grid(True)
-    
 
     ax2 = ax1.twinx()
 
     ax2.set_ylabel("Eficiencia de conversión (%)", color="tab:red")
     ax2.plot(dataframe["Load(kW)"], dataframe["Eficiencia_GE(%)"], color="tab:red")
 
+    if dict_CE is not None:
+        if "Consumption" in dict_CE:
+            ax1.scatter(**dict_CE["Consumption"])
+        if "Efficiency" in dict_CE:
+            ax2.scatter(**dict_CE["Efficiency"])
+            
+        fig.legend()
+
     st.pyplot(fig)
 
     return
 
-def getGraphLoadCharacteristic(dataframe: pd.DataFrame):
+def getGraphLoadCharacteristic(dataframe: pd.DataFrame, dict_LC=None):
 
     fig, ax1 = plt.subplots()
 
-    ax1.set_xlabel("Load (kW)")
+    ax1.set_xlabel("Carga (kW)")
     ax1.set_ylabel("Tensión (V)", color="tab:red")
     ax1.plot(dataframe["Load(kW)"], dataframe["Vt_GE(V)"], color="tab:red")
     ax1.grid(True)
 
+    if dict_LC is not None:
+        ax1.scatter(**dict_LC)
+        fig.legend()
+
     st.pyplot(fig)
 
-def displayResultCurrent(df_current: pd.DataFrame, time_info: dict, timeLapse: str):
+def visualizeCurvesGE(df: pd.DataFrame, dict_CE=None, dict_LC=None):
 
-    columnsCurrent = df_current.columns.to_list()
+    re_tab1, re_tab2 = st.tabs(["🛢️ Curva de consumo y eficiencia del GE", "📉 Curva de carga del generador"])
+
+    with re_tab1:
+        getGraphConsumptionEfficiency(df, dict_CE)
+        
+    with re_tab2:
+        getGraphLoadCharacteristic(df, dict_LC)
 
     return
 
-def displayResultDatatime(df_datatime, PARAMS_data, time_info, label_systems, xrsv):
+def displayResultPrevius(df_previus: pd.DataFrame, time_info: dict, timeLapse: str):
 
+    dictAux = {
+        "day": "día",
+        "month": "mes"
+    }
+
+    tab1, tab2 = st.tabs([f"⚡ Energía demandada por la carga",
+                          f"⛽ Consumo de combustible del grupo electrógeno"])
+
+    with tab1:
+        params_info ={
+            f"Eload(kWh/{timeLapse})": {"label": "Demanda de la carga", "color": "deeppink"}
+            }
+        serie_label = "Descripción:"
+
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, f"Energía (kWh/{dictAux[timeLapse]})", serie_label)
+
+    with tab2:
+        params_info ={
+            f"Consumo_GE(l/{timeLapse})": {"label": "Consumo de combustible", "color": "turquoise"}
+            }
+        serie_label = "Descripción:"
+
+        general.plotVisualizationPxStreamlit(df_previus, time_info, params_info, f"Consumo de combustible (L/{dictAux[timeLapse]})", serie_label)
 
     return
 
-def displayDailyResults(df_data, df_dailyAnalysis, PARAMS_data, pf_date, label_systems):
+def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date, label_systems: str, dict_phases: dict):
 
     time_info ={"name": "Hora", "label": "Hora del día", "strftime": "%H:%M", "description_current": "diaria",
                 "description_previus": "horaria"}
-    
-    timeLapse_current = "day"
     xt, xrsv = -45, False
 
     df_current = df_dailyAnalysis[df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
+    
     df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"].dt.date == pf_date]
     df_datatime = df_datatime.copy()
     df_datatime[time_info["name"]] = df_datatime["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
 
-
-    #st.dataframe(df_datatime)
-
-    
-
     dictIG = {
-        "column_name": ["Load(kW)", "Vt_GE(V)", "Ia_GE(A)", "Consumo_GE(l/h)"],
-        "value_label": ["Potencia (kW)", "Tensión (V)", "Corriente (A)", "Consumo de combustible (L/h)"],
-        "color": ["deeppink", "yellowgreen", "darkturquoise", "gold"],
-        "xt": [-45, -45, -45, -45],
-        "xrsv": [False, False, False, False],
-        "icon": ["💡", "🔋", "🔌", "⛽"]
-    }
-
+        "column_name": ["Load(kW)", "Vt_GE(V)", "Ia_GE(A)", "Eficiencia_GE(%)", "Consumo_GE(l/h)"],
+        "value_label": ["Potencia (kW)", "Tensión (V)", "Corriente (A)", "Eficiencia (%)", "Consumo de combustible (L/h)"],
+        "color": ["deeppink", "yellowgreen", "darkturquoise", "green", "turquoise"],
+        "xt": [xt, xt, xt, xt, xt],
+        "xrsv": [xrsv, xrsv, xrsv, xrsv, xrsv],
+        "icon": ["💡", "🔋", "🔌", "🚦", "⛽"]
+        }
+    
     dictReorderIG = general.reorderDictForindividualGraph(dictIG)
 
-    with st.expander(f"**:red[Parámetros de operación {time_info['description_previus']} del grupo electrógeno]**", icon="🕛"):
+    with st.expander(f"**:red[Parámetros de operación horaria del grupo electrógeno]**", icon="🕛"):
         dictTabs = general.valueLabelGetTabs(dictIG)
         for key, value in dictReorderIG.items():
             with dictTabs[key]:
                 general.individualGraph(df_datatime, time_info, key, **value)
 
-    
+    list_drop = ["dates (Y-M-D hh:mm:ss)"]
 
-    
-    
+    general.printDataFloatResult(df_current, list_drop)
+        
+    return
 
+def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, df_monthlyAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date, label_systems: str):
+
+    time_info ={"name": "Día", "label": "Día del mes", "strftime": "%d",
+                "description_current": "mensual", "description_previus": "diaria"}
+    timeLapse = {"current": "month", "previus": "day"}
+    xrsv = True
+
+    df_current = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == pf_date.month)]
     
+    df_previus = df_dailyAnalysis[(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year) & (df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == pf_date.month)]
+    df_previus = df_previus.copy()
+    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
     
+    df_datatime = df_data[(df_data["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year) & (df_data["dates (Y-M-D hh:mm:ss)"].dt.month == pf_date.month)]
+    df_datatime = df_datatime.copy()
+    df_datatime[time_info["name"]] = df_datatime["dates (Y-M-D hh:mm:ss)"].dt.strftime("%d/%m/%y %H:%M")
+
+    dictIG = {
+        "column_name": ["Load(kW)", "Vt_GE(V)", "Ia_GE(A)", "Eficiencia_GE(%)", "Consumo_GE(l/h)"],
+        "value_label": ["Potencia (kW)", "Tensión (V)", "Corriente (A)", "Eficiencia (%)", "Consumo de combustible (L/h)"],
+        "color": ["deeppink", "yellowgreen", "darkturquoise", "green", "turquoise"],
+        "xt": [-90, -90, -90, -90, -90],
+        "xrsv": [xrsv, xrsv, xrsv, xrsv, xrsv],
+        "icon": ["💡", "🔋", "🔌", "🚦", "⛽"]
+        }
+    
+    dictReorderIG = general.reorderDictForindividualGraph(dictIG)
+
+    with st.expander(f"**:red[Parámetros de operación horaria del grupo electrógeno]**", icon="🕛"):
+        dictTabs = general.valueLabelGetTabs(dictIG)
+        for key, value in dictReorderIG.items():
+            with dictTabs[key]:
+                general.individualGraph(df_datatime, time_info, key, **value)
+
+    with st.expander(f"**:green[Parámetros de operación diaria del grupo electrógeno]**", icon="📅"):
+        displayResultPrevius(df_previus, time_info, timeLapse["previus"])
+
+    list_drop = ["dates (Y-M-D hh:mm:ss)"]
+
+    general.printDataFloatResult(df_current, list_drop)
+
+    return
+
+def displayAnnualResults(df_monthlyAnalysis: pd.DataFrame, df_annualAnalysis: pd.DataFrame, PARAMS_data: dict, pf_date: date, label_systems: str):
+
+    time_info = {"name": "Mes", "label": "Mes del año", "strftime": "%m",
+                 "description_current": "anual", "description_previus": "mensual"}
+    timeLapse = {"current": "year", "previus": "month"}
+    xrsv = True
+
+    df_current = df_annualAnalysis[df_annualAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year]
+
+    df_previus = df_monthlyAnalysis[df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == pf_date.year]
+    df_previus = df_previus.copy()
+    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
+
+    with st.expander(f"**:green[Parámetros de operación mensual del grupo electrógeno]**", icon="📅"):
+        displayResultPrevius(df_previus, time_info, timeLapse["previus"])
+
+    list_drop = ["dates (Y-M-D hh:mm:ss)"]
+
+    general.printDataFloatResult(df_current, list_drop)
+
     return

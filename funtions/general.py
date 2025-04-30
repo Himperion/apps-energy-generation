@@ -1056,6 +1056,25 @@ def getSizesForPieChart(df: pd.DataFrame, list_params: list) -> list:
 
     return [df.loc[df.index[0], list_params[i]] for i in range(0,len(list_params),1)]
 
+def get_dict_replace_date():
+
+    listPrams = ["kWh", "h", "l", "%", "V", "A", "kW"]
+    dictTimeReplace = {"day": "día", "month": "mes", "year": "año"}
+    dictParamReplace = {"l": "L"}
+
+    dict_replace_date = {}
+
+    for i in range(0,len(listPrams),1):
+        if listPrams[i] in dictParamReplace:
+            paramReplace = dictParamReplace[listPrams[i]]
+        else:
+            paramReplace = listPrams[i]
+
+        for key, value in dictTimeReplace.items():
+            dict_replace_date[f"({listPrams[i]}/{key})"] = f" ({paramReplace}/{value})"
+
+    return dict_replace_date
+
 def fromParametersGetLabels(list_params: list):
 
     dict_replace_param = {
@@ -1085,20 +1104,25 @@ def fromParametersGetLabels(list_params: list):
         "swLoad_1": "SW=1",
         "swLoad_2": "SW=2",
         "swLoad_3": "SW=3",
-        "Consumo_GE": "Consumo de combustible del grupo electrógeno"
+        "Consumo_GE": "Consumo de combustible del grupo electrógeno",
+        "Pdem_max": "Potencia máxima demandada",
+        "Pdem_min": "Potencia mínima demandada",
+        "Pdem_prom": "Potencia promedio demandada",
+        "Vdem_max": "Tensión máxima demandada",
+        "Vdem_min": "Tensión mínima demandada",
+        "Vdem_prom": "Tensión promedio demandada",
+        "Idem_max": "Corriente máxima demandada",
+        "Idem_min": "Corriente mínima demandada",
+        "Idem_prom": "Corriente promedio demandada",
+        "EficienciaMax_GE": "Eficiencia máxima del grupo electrógeno",
+        "EficienciaMin_GE": "Eficiencia mínima del grupo electrógeno",
+        "EficienciaProm_GE": "Eficiencia promedio del grupo electrógeno",
+        "OperGE": "Operación del grupo electrógeno",
+        "OperGEmaxNom": "Operación del grupo electrógeno mayor a su potencia nominal",
+        "OperGEminNom": "Operación del grupo electrógeno menor a su potencia nominal"
     }
 
-    dict_replace_date = {
-        "(kWh/day)": " (kWh/día)",
-        "(kWh/month)": " (kWh/mes)",
-        "(kWh/year)": " (kWh/año)",
-        "(h/day)": " (h/día)",
-        "(h/month)": " (h/mes)",
-        "(h/year)": " (h/año)",
-        "(l/day)": " (L/día)",
-        "(l/month)": " (L/mes)",
-        "(l/year)": " (L/año)",
-    }
+    dict_replace_date = get_dict_replace_date()
 
     list_out = list_params.copy()
 
@@ -1117,20 +1141,20 @@ def fromParametersGetLabels(list_params: list):
 
     return list_out
 
-def reorderDictForindividualGraph(dict_individualGraph: dict) -> dict:
+def reorderDictForindividualGraph(dictIG: dict) -> dict:
 
-    dictOut = {}
+    dictReorderIG = {}
 
-    for i in range(0,4,1):
+    for i in range(0,len(dictIG["column_name"]),1):
         dictAux = {}
-        dictAux["value_label"] = dict_individualGraph["value_label"][i]
-        dictAux["color"] = dict_individualGraph["color"][i]
-        dictAux["xt"] = dict_individualGraph["xt"][i]
-        dictAux["xrsv"] = dict_individualGraph["xrsv"][i]
+        dictAux["value_label"] = dictIG["value_label"][i]
+        dictAux["color"] = dictIG["color"][i]
+        dictAux["xt"] = dictIG["xt"][i]
+        dictAux["xrsv"] = dictIG["xrsv"][i]
 
-        dictOut[dict_individualGraph["column_name"][i]] = dictAux
+        dictReorderIG[dictIG["column_name"][i]] = dictAux
 
-    return dictOut
+    return dictReorderIG
 
 def valueLabelGetTabs(dictIG: dict) -> dict:
 
@@ -1148,6 +1172,9 @@ def valueLabelGetTabs(dictIG: dict) -> dict:
     elif len(tabs_label) == 5:
         tab1, tab2, tab3, tab4, tab5 = st.tabs(tabs_label)
         tabs_items = [tab1, tab2, tab3, tab4, tab5]
+    elif len(tabs_label) == 6:
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(tabs_label)
+        tabs_items = [tab1, tab2, tab3, tab4, tab5, tab6]
 
     dictTabs = {}
 
@@ -1378,7 +1405,7 @@ def individualGraph(df: pd.DataFrame, time_info: dict, column_name: str, value_l
     fig = px.line(df,
                   x=time_info["name"],
                   y=column_name,
-                  markers=True,
+                  markers=False,
                   color_discrete_sequence=[color],
                   labels={
                       "Value": value_label
@@ -1483,12 +1510,18 @@ def getNodeParametersGenerationType(df_datatime: pd.DataFrame, numberPhases: int
 
     return dictNode
 
+def get_df_datatime(df_data: pd.DataFrame, data_date, data_time):
+
+    pf_datetime = getAnalizeTime(data_date=data_date, data_time=data_time)
+    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
+
+    return df_datatime
+
 def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, label_systems: str):
 
     numberPhases, round_decimal = PARAMS_data["numberPhases"], 4
 
-    pf_datetime = getAnalizeTime(data_date=pf_date, data_time=pf_time)
-    df_datatime = df_data[df_data["dates (Y-M-D hh:mm:ss)"] == pf_datetime].copy()
+    df_datatime = get_df_datatime(df_data, pf_date, pf_time)
 
     dictNode = getNodeParametersGenerationType(df_datatime, numberPhases, round_decimal, label_systems, PARAMS_data["generationType"])
     dictInfo = dictPositionInfoAddValues(df_datatime, label_systems, PARAMS_data["columnsOptionsData"], round_decimal, PARAMS_data["generationType"])
