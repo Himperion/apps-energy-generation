@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+
 text = {
     "subheader_1" : "Implementación del proyecto **Diseño de un aplicativo para la estimación de la operación de sistemas de generación eléctrica a partir de balances de potencia y energía**"
 }
@@ -14,6 +15,8 @@ tab1, tab2 = st.tabs(["Descripción", "Equipo humano"])
 
 with tab1:
     st.markdown(text["subheader_1"])
+
+    st.link_button(":orange-badge[**Presentación TdeG**]", "https://www.canva.com/design/DAGmHexFq7U/mIh7Px5eheIPUwhtWkfnmw/edit?utm_content=DAGmHexFq7U&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton", icon="👨‍🏫")
 
 with tab2:
 
