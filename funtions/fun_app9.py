@@ -289,6 +289,8 @@ def getBatteryCalculations(df_grid: pd.DataFrame, BAT_data: dict,
             PinvAC_AERO_PU = 0.0
             PinvDC_PV = 0.0
             PinvDC_AERO = 0.0
+            IinvAC_PV_PU = 0.0
+            IinvAC_AERO_PU = 0.0
 
         # Potencia del banco de baterías Pbb
         Pbb_PV = PrcDC_PV - PinvDC_PV
