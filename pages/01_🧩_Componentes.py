@@ -34,6 +34,10 @@ with open("files//[GE] - PE.yaml", 'r') as archivo:
 with open("files//[COMP] - dict_components.yaml", 'r') as archivo:
     dict_components = yaml.safe_load(archivo)
 
+dict_components = fun_app1.addParametersComponenetsDictionary(dict_components,
+                                                              params_PV, params_INVPV, params_AERO,
+                                                              params_BAT, params_GE, params_RC)
+
 dict_phases = {
     "Monofásico": {"Num": 1, "label": "1️⃣ Monofásico"},
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
@@ -55,11 +59,11 @@ listTabs = ["📑 Información", "📝 Entrada de datos", "📂 Listado de compo
 
 #%% session_state
 
-if 'component_dict' not in st.session_state:
-    st.session_state['component_dict'] = None
+if "component_dict" not in st.session_state:
+    st.session_state["component_dict"] = None
 
-if 'component_description' not in st.session_state:
-    st.session_state['component_description'] = None
+if "component_description" not in st.session_state:
+    st.session_state["component_description"] = None
 
 #%% main
 
@@ -457,12 +461,18 @@ with tab3:
     
     if components_tab3 is not None:
         dict_key = list_key_components[list_sel_components.index(components_tab3)]
-        
+
         df_data = general.getDataComponent(sheetLabel=dict_components[dict_key]["sheet_label"],
                                            dir=dir_components, onLine=True)
         
+        
+        df_data = fun_app1.get_component_filter(df=df_data, comp=dict_key, params=dict_components[dict_key]["params"])
+        
     if df_data is not None:
-        selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)
+        #selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)
+        selected_row = general.dataframe_AgGrid(dataframe=df_data, height=500)
+
+        st.text(f"selected_row: {selected_row}")
 
     if selected_row is not None:
         selected_columns = selected_row.drop("datasheet", axis=1).columns.tolist()
