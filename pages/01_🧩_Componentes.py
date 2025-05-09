@@ -469,10 +469,7 @@ with tab3:
         df_data = fun_app1.get_component_filter(df=df_data, comp=dict_key, params=dict_components[dict_key]["params"])
         
     if df_data is not None:
-        #selected_row = fun_app1.dataframe_AgGrid(dataframe=df_data)
         selected_row = general.dataframe_AgGrid(dataframe=df_data, height=500)
-
-        st.text(f"selected_row: {selected_row}")
 
     if selected_row is not None:
         selected_columns = selected_row.drop("datasheet", axis=1).columns.tolist()

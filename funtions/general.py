@@ -2,7 +2,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import yaml, io, calendar
+import yaml, io, calendar, tomllib
 import plotly.express as px
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
@@ -10,6 +10,9 @@ from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, ColumnsAutoSiz
 from streamlit_pdf_viewer import pdf_viewer
 
 from funtions import fun_app1, fun_app5, fun_app6, fun_app7, fun_app8, fun_app9
+
+with open("files//[CONN] - GoogleSheet.toml", "rb") as f:
+    gd = tomllib.load(f)
 
 listGenerationOptions = ["Generación solar", "Generación eólica", "Respaldo grupo electrógeno"]
 
@@ -98,18 +101,18 @@ dictPhases = {
     "Trifásico": {"Num": 3, "label": "3️⃣ Trifásico"}
 }
 
-googleSheetID = st.secrets.GOOGLE_DRIVE["googleSheetID"]
+googleSheetID = gd["GOOGLE_DRIVE"]["googleSheetID"]
 
 urlGoogleSheet = "https://docs.google.com/spreadsheets/d/{0}/export?format=csv&gid={1}&format"
 
 dictGoogleSheet = {
-    "PV": st.secrets.GOOGLE_DRIVE["googleSheetPV"],
-    "INV_PV": st.secrets.GOOGLE_DRIVE["googleSheetINVPV"],
-    "INV_AERO": st.secrets.GOOGLE_DRIVE["googleSheetINVAERO"],
-    "BAT": st.secrets.GOOGLE_DRIVE["googleSheetBAT"],
-    "GE": st.secrets.GOOGLE_DRIVE["googleSheetGE"],
-    "AERO": st.secrets.GOOGLE_DRIVE["googleSheetAERO"],
-    "RC": st.secrets.GOOGLE_DRIVE["googleSheetRC"]
+    "PV": gd["GOOGLE_DRIVE"]["googleSheetPV"],
+    "INV_PV": gd["GOOGLE_DRIVE"]["googleSheetINVPV"],
+    "INV_AERO": gd["GOOGLE_DRIVE"]["googleSheetINVAERO"],
+    "BAT": gd["GOOGLE_DRIVE"]["googleSheetBAT"],
+    "GE": gd["GOOGLE_DRIVE"]["googleSheetGE"],
+    "AERO": gd["GOOGLE_DRIVE"]["googleSheetAERO"],
+    "RC": gd["GOOGLE_DRIVE"]["googleSheetRC"]
     }
 
 listMonths = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
