@@ -153,7 +153,7 @@ with tab2:
             label_Load = "Cargar archivo de carga del grupo electrógeno"
             archive_Load = st.file_uploader(label=label_Load, type={"xlsx"})
 
-            fun_app7.get_download_button(**template)
+            #fun_app7.get_download_button(**template)
         
     app_submitted = st.button("Aceptar")
 
