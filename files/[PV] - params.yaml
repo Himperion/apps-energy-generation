@@ -206,7 +206,7 @@ n:
   unit: ''
   data_type: float
 nNsVt:
-  description: "Producto del factor de idealida, el n\xFAmero de celdas en serie y\
+  description: "Producto del factor de idealidad, el n\xFAmero de celdas en serie y\
     \ el voltaje t\xE9rmico en condiciones STC"
   label: nNsVt
   number_input:
