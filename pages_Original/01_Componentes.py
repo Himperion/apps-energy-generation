@@ -67,8 +67,6 @@ if "component_description" not in st.session_state:
 
 #%% main
 
-st.sidebar.link_button(":violet-badge[**Ir a la app de herramientas**]", "https://app-nasa-power.streamlit.app/", icon="🔧")
-
 st.markdown("# 🧩 Componentes")
 
 tab1, tab2, tab3 = st.tabs(listTabs) 

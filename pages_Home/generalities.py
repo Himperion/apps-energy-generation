@@ -1,0 +1,65 @@
+# -*- coding: utf-8 -*-
+import streamlit as st
+import qrcode
+from io import BytesIO
+
+# st.markdown("# :material/home: Inicio")
+
+st.markdown("# :material/energy: Componentes de generación")
+
+tab1, tab2 = st.tabs([":material/ink_pen: Descripción", ":material/groups: Equipo humano"])
+
+with tab1:
+    # st.markdown(text["subheader_1"])
+    # st.link_button(":orange-badge[**Presentación TdeG**]", "https://www.canva.com/design/DAGmHexFq7U/mIh7Px5eheIPUwhtWkfnmw/edit?utm_content=DAGmHexFq7U&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton", icon="👨‍🏫")
+
+    # st.title("Herramientas de caracterización")
+    st.markdown("Apliación web para estimar la operación de sistemas de generación eléctrica a partir de balances de potencia y energía")
+
+    with st.container(border=True):
+        st.header(":material/qr_code_2: **Código QR de la aplicación**", divider="orange")
+
+        url = "https://apps-energy-generation-e3t.streamlit.app/"
+        qr = qrcode.make(url)
+        buffer = BytesIO()
+        qr.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        st.image(buffer.getvalue(), width=250)
+
+with tab2:
+
+    with st.container(border=True):
+        col1, col2 = st.columns([0.3, 0.7], vertical_alignment="center")
+
+        with col1:
+            st.image("files/HOME/member2.jpg", width=200)
+
+        with col2:
+            st.subheader("Darío Fernando Gonzalez Fontecha", divider="orange")
+            st.caption("Comprometido con el desarrollo sostenible, energias renovables y la implementación de tecnologías innovadoras para el sector agropecuario. Con conocimientos en MATLAB, Python y desarrollo Web, oriento mis habilidades hacia el uso de Big Data y computación en la nube para transformar el campo colombiano.")
+            st.markdown(":material/mail: dario.gonzalez@correo.uis.edu.co")
+
+    with st.container(border=True):
+        col1, col2 = st.columns([0.3, 0.7], vertical_alignment="center")
+
+        with col1:
+            st.image("files/HOME/member1.jpg", width=200)
+
+        with col2:
+            st.subheader("José Camilo Rojas Páez", divider="orange")
+            st.caption("Ingeniero electricista de la Universidad Industrial de Santander, con una sólida base en matemáticas y lógica de programación aplicadas a la resolución de problemas. Experiencia en el uso de herramientas de software y programación, como MATLAB, Python, Streamlit y Power BI, para el análisis y procesamiento de datos.")
+                
+            st.markdown(":material/mail: jose.rojas9@correo.uis.edu.co")
+            # st.markdown("🐈‍⬛ https://github.com/Himperion")
+
+    with st.container(border=True):
+        col1, col2 = st.columns([0.3, 0.7], vertical_alignment="center")
+
+        with col1:
+            st.image("files/HOME/member3.jpg", width=200)
+
+        with col2:
+            st.subheader("German Alfonso Osma Pinto", divider="orange")
+            st.caption("Investigador Senior MINCIENCIAS y miembro del Grupo de Investigación en Sistemas de Energía Eléctrica Eléctrica – GISEL. Cuenta con más de 10 años de experiencia docente en pregrado y posgrado. Ha participado en diversos proyectos con financiación MINCIENCIAS y UIS. Lleva más de 15 años en el quehacer investigativo relacionado con la generación renovable y construcción sostenible. Actualmente, apoya el Semillero de Investigación en Recursos Energéticos Distribuidos - SIRED.")
+            st.markdown(":material/mail: gealosma@uis.edu.co")

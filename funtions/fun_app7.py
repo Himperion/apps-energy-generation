@@ -137,7 +137,7 @@ def getAnalysisInTime(df_data: pd.DataFrame, GE_data: dict, deltaMinutes: int, t
 
     for date, group in df_data.groupby(df_data["dates (Y-M-D hh:mm:ss)"].dt.to_period(timeLapse[0].upper())):
         if general.getTimeDimensionCheck(group, deltaMinutes, timeLapse, date):
-            dataAnalysis =getDataAnalysisGE(group, GE_data, deltaMinutes, timeLapse, date)
+            dataAnalysis = getDataAnalysisGE(group, GE_data, deltaMinutes, timeLapse, date)
 
             result.append(dataAnalysis)
 
