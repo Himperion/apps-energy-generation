@@ -5,7 +5,7 @@ from io import BytesIO
 
 # st.markdown("# :material/home: Inicio")
 
-st.markdown("# :material/energy: Componentes de generación")
+st.markdown("# :material/electric_meter: Sistemas de Generación")
 
 tab1, tab2 = st.tabs([":material/ink_pen: Descripción", ":material/groups: Equipo humano"])
 
