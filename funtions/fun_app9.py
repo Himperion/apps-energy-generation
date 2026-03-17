@@ -550,7 +550,7 @@ def getDictCountSwLoad(df_timeLapse: pd.DataFrame) -> dict:
 
     return dictCountSwLoad
 
-def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLapse: str, date):
+def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, loadColumn: str, timeLapse: str, date):
 
     dictCountSwLoad = getDictCountSwLoad(df_timeLapse)
 
@@ -563,13 +563,13 @@ def getDataAnalysisOffGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLa
 
     Ebb_absorbed = df_timeLapse.loc[df_timeLapse["Pbb(kW)"] > 0, "Pbb(kW)"].sum()*(deltaMinutes/60)
     Ebb_delivered = df_timeLapse.loc[df_timeLapse["Pbb(kW)"] < 0, "Pbb(kW)"].sum()*(deltaMinutes/60)*(-1)
-    Eload_OffGrid = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 1, "Load(kW)"].sum()*(deltaMinutes/60)
-    Eload_OffLine = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 2, "Load(kW)"].sum()*(deltaMinutes/60)
-    Eload_GE = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 3, "Load(kW)"].sum()*(deltaMinutes/60)
+    Eload_OffGrid = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 1, loadColumn].sum()*(deltaMinutes/60)
+    Eload_OffLine = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 2, loadColumn].sum()*(deltaMinutes/60)
+    Eload_GE = df_timeLapse.loc[df_timeLapse["swLoad(t)"] == 3, loadColumn].sum()*(deltaMinutes/60)
 
     dataAnalysis = {
         f"dates (Y-M-D hh:mm:ss)": date,
-        f"Eload(kWh/{timeLapse})": df_timeLapse["Load(kW)"].sum()*(deltaMinutes/60),
+        f"Eload(kWh/{timeLapse})": df_timeLapse[loadColumn].sum()*(deltaMinutes/60),
         f"Egen_PV(kWh/{timeLapse})": df_timeLapse["Pgen_PV(kW)"].sum()*(deltaMinutes/60),
         f"Egen_AERO(kWh/{timeLapse})": df_timeLapse["Pgen_AERO(kW)"].sum()*(deltaMinutes/60),
         f"Egen_INVPV(kWh/{timeLapse})": df_timeLapse["PinvAC_PV(kW)"].sum()*(deltaMinutes/60),

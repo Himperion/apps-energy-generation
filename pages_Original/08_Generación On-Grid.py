@@ -416,12 +416,13 @@ with tab3:
                 df_data = pd.read_excel(uploaderXlsx, sheet_name="Result")
                 dict_params = pd.read_excel(uploaderXlsx, sheet_name="Params").to_dict(orient="records")[0]
                 timeInfo = general.getTimeData(df_data)
+                columnsOptionsData = general.get_dict_params_2_dict(dict_params=dict_params, dict_key="columnsOptionsData")
 
                 df_dailyResult, df_monthlyResult, df_annualResult = None, None, None
 
-                df_dailyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "day", "OnGrid")
-                df_monthlyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "month", "OnGrid")
-                df_annualResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], "year", "OnGrid")
+                df_dailyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], columnsOptionsData["DATA-Load"], "day", "OnGrid")
+                df_monthlyResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], columnsOptionsData["DATA-Load"], "month", "OnGrid")
+                df_annualResult = general.getAnalysisInTime(df_data, timeInfo["deltaMinutes"], columnsOptionsData["DATA-Load"], "year", "OnGrid")
                 bytesFile = general.toExcelAnalysis(df_data, dict_params, df_dailyResult, df_monthlyResult, df_annualResult)
 
                 st.download_button(
@@ -468,6 +469,7 @@ with tab4:
                 if "Params" in sheetNamesXls:
                     PARAMS_data = pd.read_excel(xls, sheet_name="Params").to_dict(orient="records")[0]
                     PARAMS_data = general.getFixFormatDictParams(PARAMS_data, dataKeyList)
+
             except:
                 st.error(f"**Error al cargar archivo :blue[{nameFileXlsx}]**", icon="🚨")
 
@@ -512,7 +514,7 @@ with tab4:
                                     submittedDaily = st.form_submit_button("Aceptar")
 
                             if submittedDaily:
-                                fun_app8.displayDailyResults(df_data, df_dailyAnalysis, day=day_imput)
+                                fun_app8.displayDailyResults(df_data, PARAMS_data, df_dailyAnalysis, day=day_imput)
                     else:
                         pesLabel = "DailyAnalysis"
                         st.warning(f"**El archivo :blue[{nameFileXlsx}] no cuenta con datos: :blue[{pesLabel}]**", icon="⚠️")

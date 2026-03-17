@@ -76,6 +76,7 @@ def generationOnGrid(df_data: pd.DataFrame,
     
     params_PV, rename_PV, showOutputPV =  general.getGlobalVariablesPV()
     timeInfo = general.getTimeData(df_data)
+    loadColumn = columnsOptionsData["DATA"]["Load"]
 
     df_onGrid = df_data.copy()
     df_onGrid = general.initializeDataFrameColumns(df_onGrid, generationType)
@@ -95,9 +96,9 @@ def generationOnGrid(df_data: pd.DataFrame,
         df_onGrid["IinvAC_AERO(A)"] = (df_onGrid["PinvAC_AERO(kW)"]*1000)/(np.sqrt(numberPhases)*V_PCC)
 
     df_onGrid["Vload(V)"] = V_PCC
-    df_onGrid["Iload(A)"] = (df_onGrid['Load(kW)']*1000)/(np.sqrt(numberPhases)*V_PCC)
+    df_onGrid["Iload(A)"] = (df_onGrid[loadColumn]*1000)/(np.sqrt(numberPhases)*V_PCC)
 
-    df_onGrid["Pdem(kW)"] = df_onGrid["Load(kW)"] - df_onGrid["PinvAC_PV(kW)"] - df_onGrid["PinvAC_AERO(kW)"]
+    df_onGrid["Pdem(kW)"] = df_onGrid[loadColumn] - df_onGrid["PinvAC_PV(kW)"] - df_onGrid["PinvAC_AERO(kW)"]
     df_onGrid["Vdem(V)"] = V_PCC
     df_onGrid["Idem(A)"] = df_onGrid["Iload(A)"] - df_onGrid["IinvAC_PV(A)"] - df_onGrid["IinvAC_AERO(A)"]
 
@@ -132,7 +133,7 @@ def getDictParams(COMP_data: dict):
 
     return PV_data, INVPV_data, AERO_data, INVAERO_data, PVs, PVp, V_PCC
 
-def getDataAnalysisOnGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLapse: str, date) -> dict:
+def getDataAnalysisOnGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, loadColumn: str, timeLapse: str, date) -> dict:
 
     Egen = (df_timeLapse["PinvAC_PV(kW)"].sum()+df_timeLapse["PinvAC_AERO(kW)"].sum())*(deltaMinutes/60)
     Eimp = df_timeLapse.loc[df_timeLapse["Pdem(kW)"] > 0, "Pdem(kW)"].sum()*(deltaMinutes/60)
@@ -150,7 +151,7 @@ def getDataAnalysisOnGrid(df_timeLapse: pd.DataFrame, deltaMinutes: int, timeLap
 
     dataAnalysis = {
         f"dates (Y-M-D hh:mm:ss)": date,
-        f"Eload(kWh/{timeLapse})": df_timeLapse["Load(kW)"].sum()*(deltaMinutes/60),
+        f"Eload(kWh/{timeLapse})": df_timeLapse[loadColumn].sum()*(deltaMinutes/60),
         f"Egen_PV(kWh/{timeLapse})": df_timeLapse["Pgen_PV(kW)"].sum()*(deltaMinutes/60),
         f"Egen_INVPV(kWh/{timeLapse})": df_timeLapse["PinvAC_PV(kW)"].sum()*(deltaMinutes/60),
         f"Egen_AERO(kWh/{timeLapse})": df_timeLapse["Pgen_AERO(kW)"].sum()*(deltaMinutes/60),
@@ -206,7 +207,7 @@ def getBytesFileExcelProjectOnGrid(dictDataOnGrid: dict, dataKeyList: list):
 
     return TOTAL_data, bytesFileExcel
 
-def getNodeParametersOnGrid(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str):
+def getNodeParametersOnGrid(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str, loadColumn: str):
 
     with open("files//[OnGrid] - nodes_labelsColumns.yaml", "r") as archivo:
         nodesLabelsColumns = yaml.safe_load(archivo)
@@ -219,7 +220,12 @@ def getNodeParametersOnGrid(df_datatime: pd.DataFrame, numberPhases: int, round_
     dictNodes = {}
     for key in dict_position:
         position = tuple(dict_position[key])
-        listLabelColumns = nodesLabelsColumns[key]
+        listLabelColumns: list = nodesLabelsColumns[key]
+
+        # Corrección loadColumn en listLabelColumns
+        if "Load(kW)" in listLabelColumns and "Load(kW)" != loadColumn:
+            listLabelColumns[listLabelColumns.index("Load(kW)")] = loadColumn
+
         num_node = int(key.split("node")[1])
 
         dictNodes[key] = general.getDictNodeParams(df_datatime, listLabelColumns, round_decimal, num_node, position)
@@ -228,8 +234,9 @@ def getNodeParametersOnGrid(df_datatime: pd.DataFrame, numberPhases: int, round_
 
 #%% funtions streamlit
 
-def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, day):
+def displayDailyResults(df_data: pd.DataFrame, PARAMS_data: dict, df_dailyAnalysis: pd.DataFrame, day):
 
+    loadColumn: str = PARAMS_data["columnsOptionsData"]["DATA"]["Load"]
     time_info ={"name": "Hora", "label": "Hora del día", "strftime": "%H:%M"}
     value_label = "Potencia (kW)"
 
@@ -284,7 +291,7 @@ def displayDailyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame, d
     with st.expander(f"**Interacción entre demanda y generación**", icon="📊"):
 
         params_info ={
-            "Load(kW)": {"label": "Demanda de la carga", "color": "teal"},
+            loadColumn: {"label": "Demanda de la carga", "color": "teal"},
             "Pgen(kW)": {"label": "Generación total", "color": "turquoise"}  
         }
         serie_label = "Interacción:"
@@ -508,9 +515,9 @@ def displayMonthlyResults(df_data: pd.DataFrame, df_dailyAnalysis: pd.DataFrame,
 
     monthIndex = general.fromMonthGetIndex(month=optionMonthRange)
     df_current = df_monthlyAnalysis[(df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_monthlyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
-    df_previus = df_dailyAnalysis[(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)]
+    df_previus: pd.DataFrame = df_dailyAnalysis[(df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.year == optionYearRange) & (df_dailyAnalysis["dates (Y-M-D hh:mm:ss)"].dt.month == monthIndex)].copy()
 
-    df_previus[time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
+    df_previus.loc[:, time_info["name"]] = df_previus["dates (Y-M-D hh:mm:ss)"].dt.strftime(time_info["strftime"])
 
     displayResult(df_current, df_previus, timeAnalysis, time_info, value_label)
 

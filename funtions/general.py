@@ -85,14 +85,14 @@ optKeysBAT = [
 itemsOptionsColumnsDf = {
     "DATA": {
         "Dates": ["dates (Y-M-D hh:mm:ss)"],
-        "Load" : ["Load(kW)"]
+        "Load" : ["Load(kW)", "Load (kW)"]
     },
     "PV" : {
-        "Geff" : ["Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)"],
-        "Toper" : ["Toper(°C)"]
+        "Geff" : ["Gef(W/m^2)", "Gef(W/m²)", "Gin(W/m²)", "Gin(W/m^2)", "Gin (W/m²)"],
+        "Toper" : ["Toper(°C)", "Toper (°C)"]
     },
     "AERO" : {
-        "Vwind" : ["Vwind(m/s)", "Vwind 10msnm(m/s)", "Vwind 50msnm(m/s)"]
+        "Vwind" : ["Vwind(m/s)", "Vwind 10msnm(m/s)", "Vwind 50msnm(m/s)", "Vwind 10 m (m/s)", "Vwind 50 m (m/s)"]
     }
 }
 
@@ -546,6 +546,18 @@ def getGlobalPerUnitSystem(INVPV_data: dict, INVAERO_data: dict, numberPhases: i
 
     return getPerUnitSystem(Pac_nom=Pac_nom, Vac_nom=Vac_nom, numberPhases=numberPhases)
 
+def get_dict_params_2_dict(dict_params: dict, dict_key: str):
+
+    dict_out = {}
+
+    for key, value in dict_params.items():
+        if  f"[{dict_key}]" in key and key.count(" ") == 1:
+            key_value = key.split(" ")[1]
+
+            dict_out[key_value] = value
+            
+    return dict_out
+
 def getTimeData(df_data: pd.DataFrame) -> dict:
 
     timeInfo = {}
@@ -846,16 +858,16 @@ def getTimeDimensionCheck(dataframe: pd.DataFrame, deltaMinutes: int, timeLapse:
 
     return finalTest
 
-def getAnalysisInTime(df_data: pd.DataFrame, deltaMinutes: int, timeLapse: str, generationType: str) -> pd.DataFrame:
+def getAnalysisInTime(df_data: pd.DataFrame, deltaMinutes: int, loadColumn: str, timeLapse: str, generationType: str) -> pd.DataFrame:
 
     result = []
     
     for date, group in df_data.groupby(df_data["dates (Y-M-D hh:mm:ss)"].dt.to_period(timeLapse[0].upper())):
         if getTimeDimensionCheck(group, deltaMinutes, timeLapse, date):
             if generationType == "OnGrid":
-                dataAnalysis = fun_app8.getDataAnalysisOnGrid(group, deltaMinutes, timeLapse, date)
+                dataAnalysis = fun_app8.getDataAnalysisOnGrid(group, deltaMinutes, loadColumn, timeLapse, date)
             elif generationType == "OffGrid":
-                dataAnalysis = fun_app9.getDataAnalysisOffGrid(group, deltaMinutes, timeLapse, date)
+                dataAnalysis = fun_app9.getDataAnalysisOffGrid(group, deltaMinutes, loadColumn, timeLapse, date)
 
             result.append(dataAnalysis)
 
@@ -1500,14 +1512,14 @@ def addInformationSystemImage(img_path: str, dictNode: dict, dictInfo: dict, sel
 
     return
 
-def getNodeParametersGenerationType(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str, generationType: str):
+def getNodeParametersGenerationType(df_datatime: pd.DataFrame, numberPhases: int, round_decimal: int, label_systems: str, generationType: str, loadColumn: str):
 
     dictNode = {}
 
     if generationType == "OffGrid":
         dictNode = fun_app9.getNodeParametersOffGrid(df_datatime, numberPhases, round_decimal, label_systems)
     elif generationType == "OnGrid":
-        dictNode = fun_app8.getNodeParametersOnGrid(df_datatime, numberPhases, round_decimal, label_systems)
+        dictNode = fun_app8.getNodeParametersOnGrid(df_datatime, numberPhases, round_decimal, label_systems, loadColumn)
     elif generationType == "GE":
         dictNode = fun_app7.getNodeParametersGE(df_datatime, round_decimal, label_systems)
 
@@ -1523,10 +1535,11 @@ def get_df_datatime(df_data: pd.DataFrame, data_date, data_time):
 def displayInstantResults(df_data: pd.DataFrame, PARAMS_data: dict, pf_date: datetime.date, pf_time: datetime.time, label_systems: str):
 
     numberPhases, round_decimal = PARAMS_data["numberPhases"], 4
+    loadColumn = PARAMS_data["columnsOptionsData"]["DATA"]["Load"]
 
     df_datatime = get_df_datatime(df_data, pf_date, pf_time)
 
-    dictNode = getNodeParametersGenerationType(df_datatime, numberPhases, round_decimal, label_systems, PARAMS_data["generationType"])
+    dictNode = getNodeParametersGenerationType(df_datatime, numberPhases, round_decimal, label_systems, PARAMS_data["generationType"], loadColumn)
     dictInfo = dictPositionInfoAddValues(df_datatime, label_systems, PARAMS_data["columnsOptionsData"], round_decimal, PARAMS_data["generationType"])
 
     size = 14
